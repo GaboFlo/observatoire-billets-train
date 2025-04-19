@@ -52,6 +52,19 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				train: {
+					'50': '#f3f1ff',
+					'100': '#ebe5ff',
+					'200': '#d9ceff',
+					'300': '#bda7ff',
+					'400': '#9f78ff',
+					'500': '#8b5cf6',
+					'600': '#7e3fee',
+					'700': '#6e2ad5',
+					'800': '#5a24ad',
+					'900': '#4a1e8a',
+					'950': '#2e1066',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
