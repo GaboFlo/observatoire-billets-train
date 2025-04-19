@@ -1,3 +1,4 @@
+
 // Mock data for train tickets price statistics
 
 // Types definitions
@@ -123,6 +124,9 @@ function generatePriceData(basePrice: number, maxPrice: number, minPrice: number
       const highestDayPrice = Math.min(maxPrice, Math.round(price * 1.2));
       const averageDayPrice = Math.round((lowestDayPrice + highestDayPrice) / 2);
       
+      // Fix: Ensure we use the literal string values for the class property
+      const ticketClass = Math.random() > 0.7 ? "première" : "seconde";
+      
       return {
         date: date.toISOString().split('T')[0],
         price,
@@ -130,7 +134,7 @@ function generatePriceData(basePrice: number, maxPrice: number, minPrice: number
         highestPrice: highestDayPrice,
         averagePrice: averageDayPrice,
         daysBeforeDeparture: Math.floor(Math.random() * 60),
-        class: Math.random() > 0.7 ? "première" : "seconde" as const,
+        class: ticketClass as "première" | "seconde",
         discount: discounts[Math.floor(Math.random() * discounts.length)],
         departureTime: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
         carrier: carriers[Math.floor(Math.random() * carriers.length)]
