@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TicketPrice } from "@/data/mockData";
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { TrendingDown, TrendingUp, Train, Clock, Ticket, Badge } from "lucide-react";
 
 interface PriceTableProps {
   data: TicketPrice[];
@@ -26,7 +26,6 @@ const PriceTable = ({
   className,
   limit = 10,
 }: PriceTableProps) => {
-  // Format the data to include month names for better readability
   const formattedData = data.map((item) => {
     const date = new Date(item.date);
     const prevDay = data.find(
@@ -47,7 +46,6 @@ const PriceTable = ({
     };
   });
 
-  // Sort by date descending (most recent first) and limit the number of rows
   const sortedData = [...formattedData]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit);
@@ -64,19 +62,20 @@ const PriceTable = ({
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Prix Min</TableHead>
-                <TableHead>Prix Moyen</TableHead>
-                <TableHead>Prix Max</TableHead>
+                <TableHead>Prix</TableHead>
                 <TableHead>Variation</TableHead>
+                <TableHead className="hidden md:table-cell">Délai</TableHead>
+                <TableHead className="hidden md:table-cell">Classe</TableHead>
+                <TableHead className="hidden lg:table-cell">Réduction</TableHead>
+                <TableHead className="hidden lg:table-cell">Horaire</TableHead>
+                <TableHead className="hidden xl:table-cell">Transporteur</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sortedData.map((item, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">{item.formattedDate}</TableCell>
-                  <TableCell>{item.lowestPrice}€</TableCell>
-                  <TableCell>{item.averagePrice}€</TableCell>
-                  <TableCell>{item.highestPrice}€</TableCell>
+                  <TableCell>{item.price}€</TableCell>
                   <TableCell>
                     {item.priceChange !== 0 ? (
                       <div className="flex items-center">
@@ -93,13 +92,42 @@ const PriceTable = ({
                           }
                         >
                           {item.priceChange > 0 ? "+" : ""}
-                          {item.priceChange.toFixed(2)}€ (
-                          {item.priceChangePercent.toFixed(1)}%)
+                          {item.priceChange.toFixed(2)}€
                         </span>
                       </div>
                     ) : (
                       <span className="text-gray-500">-</span>
                     )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span>J-{item.daysBeforeDeparture}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center gap-1">
+                      <Ticket className="h-4 w-4 text-gray-500" />
+                      <span>{item.class}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="flex items-center gap-1">
+                      <Badge className="h-4 w-4 text-gray-500" />
+                      <span>{item.discount}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span>{item.departureTime}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    <div className="flex items-center gap-1">
+                      <Train className="h-4 w-4 text-gray-500" />
+                      <span>{item.carrier}</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,4 +1,3 @@
-
 // Mock data for train tickets price statistics
 
 // Types definitions
@@ -8,6 +7,11 @@ export interface TicketPrice {
   lowestPrice: number;
   highestPrice: number;
   averagePrice: number;
+  daysBeforeDeparture: number;
+  class: "première" | "seconde";
+  discount: "aucune" | "avantage jeune" | "avantage senior" | "carte liberté";
+  departureTime: string;
+  carrier: "SNCF InOui" | "Ouigo" | "Trenitalia";
 }
 
 export interface JourneyData {
@@ -103,25 +107,37 @@ export const journeys: JourneyData[] = [
 function generatePriceData(basePrice: number, maxPrice: number, minPrice: number, days = 90): TicketPrice[] {
   const data: TicketPrice[] = [];
   const today = new Date();
+  const carriers: Array<"SNCF InOui" | "Ouigo" | "Trenitalia"> = ["SNCF InOui", "Ouigo", "Trenitalia"];
+  const discounts: Array<"aucune" | "avantage jeune" | "avantage senior" | "carte liberté"> = 
+    ["aucune", "avantage jeune", "avantage senior", "carte liberté"];
   
   for (let i = 0; i < days; i++) {
     const date = new Date();
     date.setDate(today.getDate() - days + i);
     
-    // Generate some fluctuation
-    const fluctuation = Math.sin(i / 10) * 15 + Math.random() * 10;
-    const price = Math.round(basePrice + fluctuation);
-    const lowestDayPrice = Math.max(minPrice, Math.round(price * 0.8));
-    const highestDayPrice = Math.min(maxPrice, Math.round(price * 1.2));
-    const averageDayPrice = Math.round((lowestDayPrice + highestDayPrice) / 2);
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      price,
-      lowestPrice: lowestDayPrice,
-      highestPrice: highestDayPrice,
-      averagePrice: averageDayPrice
+    // Generate variations for different combinations
+    const priceVariations = Array.from({ length: 4 }, () => {
+      const fluctuation = Math.sin(i / 10) * 15 + Math.random() * 10;
+      const price = Math.round(basePrice + fluctuation);
+      const lowestDayPrice = Math.max(minPrice, Math.round(price * 0.8));
+      const highestDayPrice = Math.min(maxPrice, Math.round(price * 1.2));
+      const averageDayPrice = Math.round((lowestDayPrice + highestDayPrice) / 2);
+      
+      return {
+        date: date.toISOString().split('T')[0],
+        price,
+        lowestPrice: lowestDayPrice,
+        highestPrice: highestDayPrice,
+        averagePrice: averageDayPrice,
+        daysBeforeDeparture: Math.floor(Math.random() * 60),
+        class: Math.random() > 0.7 ? "première" : "seconde" as const,
+        discount: discounts[Math.floor(Math.random() * discounts.length)],
+        departureTime: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
+        carrier: carriers[Math.floor(Math.random() * carriers.length)]
+      };
     });
+    
+    data.push(...priceVariations);
   }
   
   return data;
