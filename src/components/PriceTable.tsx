@@ -1,15 +1,9 @@
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TicketPrice } from "@/data/mockData";
-import { TrendingDown, TrendingUp, Train, Clock, Ticket, Badge } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
+import { useState } from "react";
 
 interface PriceTableProps {
   data: TicketPrice[];
@@ -17,125 +11,110 @@ interface PriceTableProps {
   description?: string;
   className?: string;
   limit?: number;
+  showFilters?: boolean;
+  onFiltersChange?: (filteredData: TicketPrice[]) => void;
 }
 
-const PriceTable = ({
-  data,
-  title,
-  description,
-  className,
-  limit = 10,
-}: PriceTableProps) => {
-  const formattedData = data.map((item) => {
-    const date = new Date(item.date);
-    const prevDay = data.find(
-      (d) => d.date === new Date(new Date(item.date).setDate(date.getDate() - 1)).toISOString().split('T')[0]
-    );
-    const priceChange = prevDay ? item.price - prevDay.price : 0;
-    const priceChangePercent = prevDay ? (priceChange / prevDay.price) * 100 : 0;
+const PriceTable = ({ data, title, description, className, limit, showFilters = false, onFiltersChange }: PriceTableProps) => {
+  const [filteredData, setFilteredData] = useState(data);
+
+  const handleFiltersChange = (newFilteredData: TicketPrice[], filters: PriceFilters) => {
+    setFilteredData(newFilteredData);
+    onFiltersChange?.(newFilteredData);
+  };
+
+  // Process and format the data
+  const formattedData = filteredData.map((item, index) => {
+    const previousPrice = index > 0 ? filteredData[index - 1]?.price : item.price;
+    const priceChange = item.price - previousPrice;
+    const priceChangePercent = previousPrice > 0 ? (priceChange / previousPrice) * 100 : 0;
     
     return {
       ...item,
-      formattedDate: date.toLocaleDateString('fr-FR', { 
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
+      formattedDate: new Date(item.date).toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
       }),
       priceChange,
-      priceChangePercent
+      priceChangePercent,
     };
   });
 
+  // Sort by date (most recent first) and apply limit
   const sortedData = [...formattedData]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, limit);
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Prix</TableHead>
-                <TableHead>Variation</TableHead>
-                <TableHead className="hidden md:table-cell">Délai</TableHead>
-                <TableHead className="hidden md:table-cell">Classe</TableHead>
-                <TableHead className="hidden lg:table-cell">Réduction</TableHead>
-                <TableHead className="hidden lg:table-cell">Horaire</TableHead>
-                <TableHead className="hidden xl:table-cell">Transporteur</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{item.formattedDate}</TableCell>
-                  <TableCell>{item.price}€</TableCell>
-                  <TableCell>
-                    {item.priceChange !== 0 ? (
-                      <div className="flex items-center">
-                        {item.priceChange > 0 ? (
-                          <TrendingUp className="mr-1 h-4 w-4 text-red-500" />
-                        ) : (
-                          <TrendingDown className="mr-1 h-4 w-4 text-emerald-500" />
-                        )}
-                        <span
-                          className={
-                            item.priceChange > 0
-                              ? "text-red-500"
-                              : "text-emerald-500"
-                          }
-                        >
-                          {item.priceChange > 0 ? "+" : ""}
-                          {item.priceChange.toFixed(2)}€
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span>J-{item.daysBeforeDeparture}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Ticket className="h-4 w-4 text-gray-500" />
-                      <span>{item.class}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Badge className="h-4 w-4 text-gray-500" />
-                      <span>{item.discount}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span>{item.departureTime}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Train className="h-4 w-4 text-gray-500" />
-                      <span>{item.carrier}</span>
-                    </div>
-                  </TableCell>
+    <div>
+      {showFilters && (
+        <PriceFiltersComponent 
+          data={data} 
+          onFiltersChange={handleFiltersChange}
+        />
+      )}
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Prix</TableHead>
+                  <TableHead>Variation</TableHead>
+                  <TableHead>J-X</TableHead>
+                  <TableHead>Classe</TableHead>
+                  <TableHead>Réduction</TableHead>
+                  <TableHead>Horaire</TableHead>
+                  <TableHead>Transporteur</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {sortedData.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{item.formattedDate}</TableCell>
+                    <TableCell>{item.price}€</TableCell>
+                    <TableCell>
+                      {Math.abs(item.priceChange) > 0.1 ? (
+                        <div className="flex items-center">
+                          {item.priceChange > 0 ? (
+                            <TrendingUp className="mr-1 h-4 w-4 text-red-500" />
+                          ) : (
+                            <TrendingDown className="mr-1 h-4 w-4 text-emerald-500" />
+                          )}
+                          <span
+                            className={
+                              item.priceChange > 0 ? "text-red-500" : "text-emerald-500"
+                            }
+                          >
+                            {item.priceChange > 0 ? "+" : ""}
+                            {item.priceChange.toFixed(2)}€
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>J-{item.daysBeforeDeparture}</TableCell>
+                    <TableCell className="capitalize">{item.class}</TableCell>
+                    <TableCell className="capitalize">
+                      {item.discount === "aucune" ? "Aucune" : item.discount}
+                    </TableCell>
+                    <TableCell>{item.departureTime}</TableCell>
+                    <TableCell>{item.carrier}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

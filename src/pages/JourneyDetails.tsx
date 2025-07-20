@@ -111,89 +111,35 @@ const JourneyDetails = () => {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Meilleur moment pour acheter</CardTitle>
-                  <CardDescription>Analyse basée sur les tendances historiques</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center border-b pb-3">
-                      <Calendar className="h-10 w-10 text-train-500 mr-3" />
-                      <div>
-                        <p className="font-medium text-lg">Jour de la semaine</p>
-                        <p className="text-muted-foreground">
-                          {bestDay} est généralement le jour le moins cher
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center border-b pb-3">
-                      <ChartLine className="h-10 w-10 text-train-500 mr-3" />
-                      <div>
-                        <p className="font-medium text-lg">Tendance actuelle</p>
-                        <div className="flex items-center">
-                          {journey.trend === "up" ? (
-                            <>
-                              <TrendingUp className="mr-1 h-4 w-4 text-red-500" />
-                              <span className="text-red-500">
-                                Les prix augmentent, achetez dès que possible
-                              </span>
-                            </>
-                          ) : journey.trend === "down" ? (
-                            <>
-                              <TrendingDown className="mr-1 h-4 w-4 text-emerald-500" />
-                              <span className="text-emerald-500">
-                                Les prix baissent, attendez si possible
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-gray-500">
-                              Les prix sont stables
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <PriceChart
-                data={journey.prices.slice(-30)}
-                title="Évolution Récente des Prix"
-                description="30 derniers jours"
-              />
-            </div>
+            <PriceChart
+              data={journey.prices.slice(-30)}
+              title="Évolution Récente des Prix"
+              description="30 derniers jours"
+              showFilters={true}
+            />
 
             <PriceTable
               data={journey.prices}
               title="Historique des Prix Récents"
-              description="10 derniers jours"
+              description="Données factuelles par trajet"
               limit={10}
+              showFilters={true}
             />
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Historique Complet des Prix</CardTitle>
-                <CardDescription>Tendance sur les 90 derniers jours</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PriceChart
-                  data={journey.prices}
-                  title=""
-                  className="border-0 shadow-none p-0 -mt-6"
-                />
-              </CardContent>
-            </Card>
+            <PriceChart
+              data={journey.prices}
+              title="Historique Complet des Prix"
+              description="Analyse factuelle sur 90 jours"
+              showFilters={true}
+            />
 
             <PriceTable
               data={journey.prices}
               title="Tableau Historique des Prix"
-              description="30 derniers jours"
-              limit={30}
+              description="Données complètes par trajet"
+              showFilters={true}
             />
           </TabsContent>
           
