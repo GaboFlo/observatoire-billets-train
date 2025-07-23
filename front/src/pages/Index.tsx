@@ -1,20 +1,23 @@
-
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { journeys } from "@/data/mockData";
-import Navbar from "@/components/Navbar";
-import { Link } from "react-router-dom";
 import { CalendarDays, TrendingDown, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("journeys");
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <div className="container px-4 py-8 mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -25,34 +28,49 @@ const Index = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="journeys" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs
+          defaultValue="journeys"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
           <TabsList>
             <TabsTrigger value="journeys">Trajets</TabsTrigger>
-            <TabsTrigger value="analysis">Analyse par Jour de Départ</TabsTrigger>
+            <TabsTrigger value="analysis">
+              Analyse par Jour de Départ
+            </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="journeys" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {journeys.map((journey) => (
                 <Card key={journey.id}>
                   <CardHeader>
                     <CardTitle>{journey.name}</CardTitle>
-                    <CardDescription>{journey.origin} → {journey.destination}</CardDescription>
+                    <CardDescription>
+                      {journey.origin} → {journey.destination}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex justify-between text-sm">
                         <div>
                           <p className="text-muted-foreground">Prix Min</p>
-                          <p className="font-medium text-lg">{journey.lowestPrice}€</p>
+                          <p className="font-medium text-lg">
+                            {journey.lowestPrice}€
+                          </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Prix Moyen</p>
-                          <p className="font-medium text-lg">{journey.averagePrice}€</p>
+                          <p className="font-medium text-lg">
+                            {journey.averagePrice}€
+                          </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Prix Max</p>
-                          <p className="font-medium text-lg">{journey.highestPrice}€</p>
+                          <p className="font-medium text-lg">
+                            {journey.highestPrice}€
+                          </p>
                         </div>
                       </div>
 
@@ -95,7 +113,7 @@ const Index = () => {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="analysis" className="space-y-4">
             <Card>
               <CardHeader>
@@ -106,14 +124,15 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Sélectionnez un trajet pour voir l'évolution des prix selon J-X
+                  Sélectionnez un trajet pour voir l'évolution des prix selon
+                  J-X
                 </p>
                 <div className="space-y-4">
                   {journeys.map((journey) => (
-                    <Button 
-                      key={journey.id} 
-                      variant="outline" 
-                      asChild 
+                    <Button
+                      key={journey.id}
+                      variant="outline"
+                      asChild
                       className="w-full justify-start"
                     >
                       <Link to={`/journey/${journey.id}`}>

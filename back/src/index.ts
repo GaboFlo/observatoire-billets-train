@@ -1,7 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 import { env } from "./env-loader";
 
 dotenv.config({ path: `.env.local`, override: true });
@@ -21,8 +21,7 @@ interface Pricing {
   is_sellable: boolean;
 }
 
-interface TrainDocument {
-  _id: string;
+interface TrainDocument extends Document {
   created_at: Date;
   departure_date: Date;
   arrival_date: Date;
@@ -32,6 +31,18 @@ interface TrainDocument {
   departure_station: Station;
   arrival_station: Station;
   pricing: Pricing;
+}
+
+interface AggregatedPricingResult {
+  departureStation: string;
+  arrivalStation: string;
+  travelClass: string;
+  discountCard: string;
+  trainName: string;
+  carrier: string;
+  minPrice: number;
+  avgPrice: number;
+  maxPrice: number;
 }
 
 const stationSchema = new Schema({
@@ -86,7 +97,6 @@ mongoose
 
 app.get("/api/trains", async (req: Request, res: Response) => {
   const { departure, arrival, date, trainNumber } = req.query;
-
   try {
     const data = await Train.find({
       "departure_station.name": departure,
@@ -94,16 +104,61 @@ app.get("/api/trains", async (req: Request, res: Response) => {
       train_number: trainNumber,
       departure_date: {
         $gte: new Date(date as string),
-        $lt: new Date(new Date(date as string).getTime() + 24 * 60 * 60 * 1000), // + 24 heures
+        $lt: new Date(new Date(date as string).getTime() + 24 * 60 * 60 * 1000),
       },
     });
-
     res.json(data);
   } catch (error) {
     console.error("Erreur lors de la récupération des données:", error);
     res
       .status(500)
       .json({ error: "Erreur lors de la récupération des données." });
+  }
+});
+
+app.get("/api/trains/pricing", async (req: Request, res: Response) => {
+  try {
+    const data = await Train.aggregate<AggregatedPricingResult>([
+      {
+        $match: {
+          "pricing.flexibility": "semiflexi",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            departureStation: "$departure_station.name",
+            arrivalStation: "$arrival_station.name",
+            travelClass: "$pricing.travel_class",
+            discountCard: "$pricing.discount_card",
+            trainName: "$train_name",
+            carrier: "$carrier",
+          },
+          minPrice: { $min: "$pricing.price" },
+          avgPrice: { $avg: "$pricing.price" },
+          maxPrice: { $max: "$pricing.price" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          departureStation: "$_id.departureStation",
+          arrivalStation: "$_id.arrivalStation",
+          travelClass: "$_id.travelClass",
+          discountCard: "$_id.discountCard",
+          trainName: "$_id.trainName",
+          carrier: "$_id.carrier",
+          minPrice: 1,
+          avgPrice: 1,
+          maxPrice: 1,
+        },
+      },
+    ]);
+
+    res.json(data);
+  } catch (error) {
+    console.error("Erreur lors de l'agrégation des données:", error);
+    res.status(500).json({ error: "Erreur lors de l'agrégation des données." });
   }
 });
 
