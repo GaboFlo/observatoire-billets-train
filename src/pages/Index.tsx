@@ -32,6 +32,15 @@ interface GroupedJourney {
   minPrice: number;
   maxPrice: number;
   avgPrice: number;
+  selectedClass?: string;
+  selectedDiscountCard?: string;
+}
+
+interface JourneyFilters {
+  [journeyId: string]: {
+    selectedClass?: string;
+    selectedDiscountCard?: string;
+  };
 }
 
 const Index = () => {
@@ -39,6 +48,69 @@ const Index = () => {
   const [journeys, setJourneys] = useState<GroupedJourney[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [journeyFilters, setJourneyFilters] = useState<JourneyFilters>({});
+
+  const calculateFilteredPrices = (journey: GroupedJourney, filters: { selectedClass?: string; selectedDiscountCard?: string }) => {
+    let filteredOffers = journey.offers;
+
+    if (filters.selectedClass) {
+      filteredOffers = filteredOffers.filter(offer => offer.travelClass === filters.selectedClass);
+    }
+
+    if (filters.selectedDiscountCard) {
+      filteredOffers = filteredOffers.filter(offer => offer.discountCard === filters.selectedDiscountCard);
+    }
+
+    if (filteredOffers.length === 0) {
+      return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
+    }
+
+    const allPrices = [
+      ...filteredOffers.map(o => o.minPrice),
+      ...filteredOffers.map(o => o.avgPrice),
+      ...filteredOffers.map(o => o.maxPrice),
+    ];
+
+    const minPrice = Math.min(...allPrices);
+    const maxPrice = Math.max(...allPrices);
+    const avgPrice = allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
+
+    return {
+      minPrice,
+      maxPrice,
+      avgPrice: Math.round(avgPrice),
+    };
+  };
+
+  const handleClassFilter = (journeyId: string, travelClass: string) => {
+    setJourneyFilters(prev => {
+      const currentFilters = prev[journeyId] || {};
+      const newSelectedClass = currentFilters.selectedClass === travelClass ? undefined : travelClass;
+      
+      return {
+        ...prev,
+        [journeyId]: {
+          ...currentFilters,
+          selectedClass: newSelectedClass,
+        }
+      };
+    });
+  };
+
+  const handleDiscountCardFilter = (journeyId: string, discountCard: string) => {
+    setJourneyFilters(prev => {
+      const currentFilters = prev[journeyId] || {};
+      const newSelectedCard = currentFilters.selectedDiscountCard === discountCard ? undefined : discountCard;
+      
+      return {
+        ...prev,
+        [journeyId]: {
+          ...currentFilters,
+          selectedDiscountCard: newSelectedCard,
+        }
+      };
+    });
+  };
 
   useEffect(() => {
     const fetchPricingData = async () => {
@@ -152,86 +224,121 @@ const Index = () => {
           
           <TabsContent value="journeys" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {journeys.map((journey) => (
-                <Card key={journey.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Train className="h-5 w-5" />
-                      {journey.name}
-                    </CardTitle>
-                    <CardDescription>{journey.departureStation} → {journey.arrivalStation}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Prix Min</p>
-                          <p className="font-medium text-lg">{journey.minPrice}€</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Prix Moyen</p>
-                          <p className="font-medium text-lg">{journey.avgPrice}€</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Prix Max</p>
-                          <p className="font-medium text-lg">{journey.maxPrice}€</p>
-                        </div>
-                      </div>
+              {journeys.map((journey) => {
+                const currentFilters = journeyFilters[journey.id] || {};
+                const filteredPrices = calculateFilteredPrices(journey, currentFilters);
+                const displayPrices = Object.keys(currentFilters).some(key => currentFilters[key as keyof typeof currentFilters]) 
+                  ? filteredPrices 
+                  : { minPrice: journey.minPrice, avgPrice: journey.avgPrice, maxPrice: journey.maxPrice };
 
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Compagnies:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {journey.carriers.map((carrier) => (
-                              <Badge key={carrier} variant="secondary" className="text-xs">
-                                {carrier}
-                              </Badge>
-                            ))}
+                return (
+                  <Card key={journey.id}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Train className="h-5 w-5" />
+                        {journey.name}
+                      </CardTitle>
+                      <CardDescription>{journey.departureStation} → {journey.arrivalStation}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        <div className="flex justify-between text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Prix Min</p>
+                            <p className="font-medium text-lg">{displayPrices.minPrice}€</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Prix Moyen</p>
+                            <p className="font-medium text-lg">{displayPrices.avgPrice}€</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Prix Max</p>
+                            <p className="font-medium text-lg">{displayPrices.maxPrice}€</p>
                           </div>
                         </div>
 
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Classes:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {journey.classes.map((travelClass) => (
-                              <Badge key={travelClass} variant="outline" className="text-xs">
-                                {travelClass}
-                              </Badge>
-                            ))}
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Compagnies:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {journey.carriers.map((carrier) => (
+                                <Badge key={carrier} variant="secondary" className="text-xs">
+                                  {carrier}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Classes:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {journey.classes.map((travelClass) => (
+                                <Badge 
+                                  key={travelClass} 
+                                  variant={currentFilters.selectedClass === travelClass ? "default" : "outline"}
+                                  className={`text-xs cursor-pointer transition-colors ${
+                                    currentFilters.selectedClass === travelClass 
+                                      ? "bg-primary text-primary-foreground" 
+                                      : "hover:bg-secondary"
+                                  }`}
+                                  onClick={() => handleClassFilter(journey.id, travelClass)}
+                                >
+                                  {travelClass}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Cartes de réduction:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {journey.discountCards.slice(0, 3).map((card) => (
+                                <Badge 
+                                  key={card} 
+                                  variant={currentFilters.selectedDiscountCard === card ? "default" : "secondary"}
+                                  className={`text-xs cursor-pointer transition-colors ${
+                                    currentFilters.selectedDiscountCard === card 
+                                      ? "bg-primary text-primary-foreground" 
+                                      : "hover:bg-secondary"
+                                  }`}
+                                  onClick={() => handleDiscountCardFilter(journey.id, card)}
+                                >
+                                  {card}
+                                </Badge>
+                              ))}
+                              {journey.discountCards.length > 3 && (
+                                <Badge variant="secondary" className="text-xs">
+                                  +{journey.discountCards.length - 3}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Cartes de réduction:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {journey.discountCards.slice(0, 3).map((card) => (
-                              <Badge key={card} variant="default" className="text-xs">
-                                {card}
-                              </Badge>
-                            ))}
-                            {journey.discountCards.length > 3 && (
-                              <Badge variant="default" className="text-xs">
-                                +{journey.discountCards.length - 3}
-                              </Badge>
-                            )}
-                          </div>
+                        <div className="text-sm text-muted-foreground">
+                          {Object.keys(currentFilters).some(key => currentFilters[key as keyof typeof currentFilters]) ? (
+                            <span>
+                              Offres filtrées: {journey.offers.filter(offer => 
+                                (!currentFilters.selectedClass || offer.travelClass === currentFilters.selectedClass) &&
+                                (!currentFilters.selectedDiscountCard || offer.discountCard === currentFilters.selectedDiscountCard)
+                              ).length} sur {journey.offers.length}
+                            </span>
+                          ) : (
+                            <span>{journey.offers.length} offre{journey.offers.length > 1 ? 's' : ''} disponible{journey.offers.length > 1 ? 's' : ''}</span>
+                          )}
                         </div>
                       </div>
-
-                      <div className="text-sm text-muted-foreground">
-                        {journey.offers.length} offre{journey.offers.length > 1 ? 's' : ''} disponible{journey.offers.length > 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" asChild className="w-full">
-                      <Link to={`/journey/${journey.id}`}>
-                        Analyser par J-X
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                    </CardContent>
+                    <CardFooter>
+                      <Button variant="outline" asChild className="w-full">
+                        <Link to={`/journey/${journey.id}`}>
+                          Analyser par J-X
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
           
