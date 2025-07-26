@@ -84,7 +84,8 @@ export const useJourneyData = () => {
         const groupedJourneys: GroupedJourney[] = Array.from(
           journeyMap.entries()
         ).map(([key, offers]) => {
-          const [departure, arrival] = key.split("-");
+          const departure = offers[0].departureStation;
+          const arrival = offers[0].arrivalStation;
           const carriers = [...new Set(offers.map((o) => o.carrier))];
           const classes = [...new Set(offers.map((o) => o.travelClass))];
           const discountCards = [...new Set(offers.map((o) => o.discountCard))];
@@ -102,7 +103,7 @@ export const useJourneyData = () => {
 
           return {
             id: key,
-            name: `${departure} - ${arrival}`,
+            name: `${departure} → ${arrival}`,
             departureStation: departure,
             arrivalStation: arrival,
             carriers,

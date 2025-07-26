@@ -38,7 +38,7 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
                 <div className="text-left">
                   <p className="font-medium">{journey.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {journey.departureStation} → {journey.arrivalStation}
+                    {journey.name}
                   </p>
                 </div>
               </Link>

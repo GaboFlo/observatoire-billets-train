@@ -97,9 +97,7 @@ const JourneyCard = ({
           <Train className="h-5 w-5" />
           {journey.name}
         </CardTitle>
-        <CardDescription>
-          {journey.departureStation} → {journey.arrivalStation}
-        </CardDescription>
+     
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
