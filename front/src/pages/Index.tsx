@@ -18,8 +18,14 @@ const Index = () => {
     error,
     journeyFilters,
     handleClassFilter,
+    handleSelectedClasses,
+    handleExcludedClasses,
     handleCarrierFilter,
+    handleSelectedCarriers,
+    handleExcludedCarriers,
     handleDiscountCardFilter,
+    handleSelectedDiscountCards,
+    handleExcludedDiscountCards,
   } = useJourneyData();
 
   if (loading) {
@@ -53,9 +59,15 @@ const Index = () => {
             <JourneysTab
               journeys={journeys}
               journeyFilters={journeyFilters}
-              onClassFilter={handleClassFilter}
-              onCarrierFilter={handleCarrierFilter}
-              onDiscountCardFilter={handleDiscountCardFilter}
+              onClassFilter={(journeyId, travelClass) => handleClassFilter(journeyId, travelClass)}
+              onSelectedClasses={(journeyId, travelClass) => handleSelectedClasses(journeyId, travelClass)}
+              onExcludedClasses={(journeyId, travelClass) => handleExcludedClasses(journeyId, travelClass)}
+              onCarrierFilter={(journeyId, carrier) => handleCarrierFilter(journeyId, carrier)}
+              onSelectedCarriers={(journeyId, carrier) => handleSelectedCarriers(journeyId, carrier)}
+              onExcludedCarriers={(journeyId, carrier) => handleExcludedCarriers(journeyId, carrier)}
+              onDiscountCardFilter={(journeyId, discountCard) => handleDiscountCardFilter(journeyId, discountCard)}
+              onSelectedDiscountCards={(journeyId, discountCard) => handleSelectedDiscountCards(journeyId, discountCard)}
+              onExcludedDiscountCards={(journeyId, discountCard) => handleExcludedDiscountCards(journeyId, discountCard)}
             />
           </TabsContent>
 

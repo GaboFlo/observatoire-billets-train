@@ -33,5 +33,11 @@ export interface JourneyFilters {
     selectedClass?: string;
     selectedDiscountCard?: string;
     selectedCarrier?: string;
+    selectedDiscountCards?: string[];
+    excludedDiscountCards?: string[];
+    selectedClasses?: string[];
+    excludedClasses?: string[];
+    selectedCarriers?: string[];
+    excludedCarriers?: string[];
   };
 } 
