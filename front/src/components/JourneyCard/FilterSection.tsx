@@ -58,9 +58,22 @@ export const FilterSection = ({
   };
 
   const getFilterState = (value: string) => {
-    const isSelected = filters[`selected${type.charAt(0).toUpperCase() + type.slice(1)}`] === value || 
-                      filters[`selected${type.charAt(0).toUpperCase() + type.slice(1)}s`]?.includes(value);
-    const isExcluded = filters[`excluded${type.charAt(0).toUpperCase() + type.slice(1)}s`]?.includes(value);
+    let isSelected = false;
+    let isExcluded = false;
+
+    if (type === "travelClass") {
+      // Pour les classes, vérifier à la fois selectedClass et selectedClasses
+      isSelected = filters.selectedClass === value || filters.selectedClasses?.includes(value);
+      isExcluded = filters.excludedClasses?.includes(value);
+    } else if (type === "carrier") {
+      // Pour les compagnies, vérifier à la fois selectedCarrier et selectedCarriers
+      isSelected = filters.selectedCarrier === value || filters.selectedCarriers?.includes(value);
+      isExcluded = filters.excludedCarriers?.includes(value);
+    } else if (type === "discountCard") {
+      // Pour les cartes de réduction, vérifier à la fois selectedDiscountCard et selectedDiscountCards
+      isSelected = filters.selectedDiscountCard === value || filters.selectedDiscountCards?.includes(value);
+      isExcluded = filters.excludedDiscountCards?.includes(value);
+    }
     
     return { isSelected, isExcluded };
   };
@@ -70,7 +83,11 @@ export const FilterSection = ({
     
     if (isSelected) {
       // Si incluse (verte), on l'exclut
-      if (filters[`selected${type.charAt(0).toUpperCase() + type.slice(1)}`] === value) {
+      if (type === "travelClass" && filters.selectedClass === value) {
+        onFilter(value);
+      } else if (type === "carrier" && filters.selectedCarrier === value) {
+        onFilter(value);
+      } else if (type === "discountCard" && filters.selectedDiscountCard === value) {
         onFilter(value);
       } else {
         onSelected(value);
@@ -81,7 +98,11 @@ export const FilterSection = ({
       onExcluded(value);
     } else {
       // Si neutre, on l'inclut
-      if (filters[`selected${type.charAt(0).toUpperCase() + type.slice(1)}`] === value) {
+      if (type === "travelClass" && filters.selectedClass === value) {
+        onFilter(value);
+      } else if (type === "carrier" && filters.selectedCarrier === value) {
+        onFilter(value);
+      } else if (type === "discountCard" && filters.selectedDiscountCard === value) {
         onFilter(value);
       } else {
         onSelected(value);
