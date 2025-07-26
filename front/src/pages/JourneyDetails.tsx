@@ -1,5 +1,12 @@
+import { useParams } from "react-router-dom";
+import { useJourneyDetails } from "@/hooks/useJourneyDetails";
+import LoadingAnimation from "@/components/LoadingAnimation";
+import ErrorDisplay from "@/components/ErrorDisplay";
+import PageHeader from "@/components/PageHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PriceChart from "@/components/PriceChart";
 import PriceTable from "@/components/PriceTable";
+import PriceFilters from "@/components/PriceFilters";
 import StatCard from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,10 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useJourneyDetails } from "@/hooks/useJourneyData";
-import LoadingAnimation from "@/components/LoadingAnimation";
-import ErrorDisplay from "@/components/ErrorDisplay";
 import {
   ArrowLeft,
   ChartBar,
@@ -21,7 +24,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const JourneyDetails = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
