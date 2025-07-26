@@ -2,6 +2,35 @@ import { useEffect, useState } from "react";
 import { AggregatedPricingResult, GroupedJourney, JourneyFilters } from "@/types/journey";
 import { logMissingTranslations } from "@/utils/generateMissingTranslations";
 
+// Cache pour les données de pricing
+interface PricingCache {
+  data: AggregatedPricingResult[];
+  timestamp: number;
+}
+
+const CACHE_DURATION = 30 * 1000; // 30 secondes en millisecondes
+let pricingCache: PricingCache | null = null;
+
+const isCacheValid = (): boolean => {
+  if (!pricingCache) return false;
+  const now = Date.now();
+  return (now - pricingCache.timestamp) < CACHE_DURATION;
+};
+
+const getCachedData = (): AggregatedPricingResult[] | null => {
+  if (isCacheValid()) {
+    return pricingCache!.data;
+  }
+  return null;
+};
+
+const setCachedData = (data: AggregatedPricingResult[]) => {
+  pricingCache = {
+    data,
+    timestamp: Date.now()
+  };
+};
+
 export const useJourneyData = () => {
   const [activeTab, setActiveTab] = useState("journeys");
   const [journeys, setJourneys] = useState<GroupedJourney[]>([]);
@@ -175,84 +204,101 @@ export const useJourneyData = () => {
     const fetchPricingData = async () => {
       try {
         setLoading(true);
+        
+        // Vérifier le cache en premier
+        const cachedData = getCachedData();
+        if (cachedData) {
+          console.log("Utilisation des données en cache");
+          processPricingData(cachedData);
+          return;
+        }
+
+        console.log("Appel à l'API pricing");
         const response = await fetch("http://localhost:3000/api/trains/pricing");
         if (!response.ok) {
           throw new Error("Erreur lors du chargement des données");
         }
         const data: AggregatedPricingResult[] = await response.json();
-
-        // Grouper les données par trajet (departure + arrival)
-        const journeyMap = new Map<string, AggregatedPricingResult[]>();
-
-        data.forEach((item) => {
-          const key = `${item.departureStationId}-${item.arrivalStationId}`;
-          if (!journeyMap.has(key)) {
-            journeyMap.set(key, []);
-          }
-          journeyMap.get(key)!.push(item);
-        });
-
-        // Créer les objets GroupedJourney
-        const groupedJourneys: GroupedJourney[] = Array.from(
-          journeyMap.entries()
-        ).map(([key, offers]) => {
-          const departure = offers[0].departureStation;
-          const departureId = offers[0].departureStationId;
-          const arrival = offers[0].arrivalStation;
-          const arrivalId = offers[0].arrivalStationId;
-          const carriers = [...new Set(offers.map((o) => o.carrier))];
-          const classes = [...new Set(offers.map((o) => o.travelClass))];
-          const discountCards = [...new Set(offers.map((o) => o.discountCard))];
-
-          const allPrices = [
-            ...offers.map((o) => o.minPrice),
-            ...offers.map((o) => o.avgPrice),
-            ...offers.map((o) => o.maxPrice),
-          ];
-
-          const minPrice = Math.min(...allPrices);
-          const maxPrice = Math.max(...allPrices);
-          const avgPrice =
-            allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
-
-          return {
-            id: key,
-            name: `${departure} → ${arrival}`,
-            departureStation: departure,
-            departureStationId: departureId,
-            arrivalStation: arrival,
-            arrivalStationId: arrivalId,
-            carriers,
-            classes,
-            discountCards,
-            offers,
-            minPrice,
-            maxPrice,
-            avgPrice: Math.round(avgPrice),
-          };
-        });
-
-        setJourneys(groupedJourneys);
         
-        // Initialiser les filtres avec l'exclusion de MAX par défaut
-        const defaultFilters: JourneyFilters = {};
-        groupedJourneys.forEach((journey) => {
-          if (journey.discountCards.includes("MAX")) {
-            defaultFilters[journey.id] = {
-              excludedDiscountCards: ["MAX"]
-            };
-          }
-        });
-        setJourneyFilters(defaultFilters);
+        // Mettre en cache les nouvelles données
+        setCachedData(data);
         
-        // Analyser les traductions manquantes en mode développement
-        if (process.env.NODE_ENV === 'development') {
-          logMissingTranslations(groupedJourneys);
-        }
+        processPricingData(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Une erreur est survenue");
       } finally {
         setLoading(false);
+      }
+    };
+
+    const processPricingData = (data: AggregatedPricingResult[]) => {
+      // Grouper les données par trajet (departure + arrival)
+      const journeyMap = new Map<string, AggregatedPricingResult[]>();
+
+      data.forEach((item) => {
+        const key = `${item.departureStationId}-${item.arrivalStationId}`;
+        if (!journeyMap.has(key)) {
+          journeyMap.set(key, []);
+        }
+        journeyMap.get(key)!.push(item);
+      });
+
+      // Créer les objets GroupedJourney
+      const groupedJourneys: GroupedJourney[] = Array.from(
+        journeyMap.entries()
+      ).map(([key, offers]) => {
+        const departure = offers[0].departureStation;
+        const departureId = offers[0].departureStationId;
+        const arrival = offers[0].arrivalStation;
+        const arrivalId = offers[0].arrivalStationId;
+        const carriers = [...new Set(offers.map((o) => o.carrier))];
+        const classes = [...new Set(offers.map((o) => o.travelClass))];
+        const discountCards = [...new Set(offers.map((o) => o.discountCard))];
+
+        const allPrices = [
+          ...offers.map((o) => o.minPrice),
+          ...offers.map((o) => o.avgPrice),
+          ...offers.map((o) => o.maxPrice),
+        ];
+
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const avgPrice =
+          allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
+
+        return {
+          id: key,
+          name: `${departure} → ${arrival}`,
+          departureStation: departure,
+          departureStationId: departureId,
+          arrivalStation: arrival,
+          arrivalStationId: arrivalId,
+          carriers,
+          classes,
+          discountCards,
+          offers,
+          minPrice,
+          maxPrice,
+          avgPrice: Math.round(avgPrice),
+        };
+      });
+
+      setJourneys(groupedJourneys);
+      
+      // Initialiser les filtres avec l'exclusion de MAX par défaut
+      const defaultFilters: JourneyFilters = {};
+      groupedJourneys.forEach((journey) => {
+        if (journey.discountCards.includes("MAX")) {
+          defaultFilters[journey.id] = {
+            excludedDiscountCards: ["MAX"]
+          };
+        }
+      });
+      setJourneyFilters(defaultFilters);
+      
+      // Analyser les traductions manquantes en mode développement
+      if (process.env.NODE_ENV === 'development') {
+        logMissingTranslations(groupedJourneys);
       }
     };
 
@@ -287,71 +333,88 @@ export const useJourneyDetails = (journeyId: string) => {
     const fetchJourneyDetails = async () => {
       try {
         setLoading(true);
+        
+        // Vérifier le cache en premier
+        const cachedData = getCachedData();
+        if (cachedData) {
+          console.log("Utilisation des données en cache pour les détails");
+          processJourneyDetails(cachedData);
+          return;
+        }
+
+        console.log("Appel à l'API pricing pour les détails");
         const response = await fetch("http://localhost:3000/api/trains/pricing");
         if (!response.ok) {
           throw new Error("Erreur lors du chargement des données");
         }
         const data: AggregatedPricingResult[] = await response.json();
-
-        // Trouver le trajet spécifique par son ID
-        const journeyMap = new Map<string, AggregatedPricingResult[]>();
-
-        data.forEach((item) => {
-          const key = `${item.departureStationId}-${item.arrivalStationId}`;
-          if (!journeyMap.has(key)) {
-            journeyMap.set(key, []);
-          }
-          journeyMap.get(key)!.push(item);
-        });
-
-        const journeyData = journeyMap.get(journeyId);
         
-        if (!journeyData) {
-          setError("Trajet non trouvé");
-          return;
-        }
-
-        const departure = journeyData[0].departureStation;
-        const departureId = journeyData[0].departureStationId;
-        const arrival = journeyData[0].arrivalStation;
-        const arrivalId = journeyData[0].arrivalStationId;
-        const carriers = [...new Set(journeyData.map((o) => o.carrier))];
-        const classes = [...new Set(journeyData.map((o) => o.travelClass))];
-        const discountCards = [...new Set(journeyData.map((o) => o.discountCard))];
-
-        const allPrices = [
-          ...journeyData.map((o) => o.minPrice),
-          ...journeyData.map((o) => o.avgPrice),
-          ...journeyData.map((o) => o.maxPrice),
-        ];
-
-        const minPrice = Math.min(...allPrices);
-        const maxPrice = Math.max(...allPrices);
-        const avgPrice =
-          allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
-
-        const groupedJourney: GroupedJourney = {
-          id: journeyId,
-          name: `${departure} → ${arrival}`,
-          departureStation: departure,
-          departureStationId: departureId,
-          arrivalStation: arrival,
-          arrivalStationId: arrivalId,
-          carriers,
-          classes,
-          discountCards,
-          offers: journeyData,
-          minPrice,
-          maxPrice,
-          avgPrice: Math.round(avgPrice),
-        };
-
-        setJourney(groupedJourney);
+        // Mettre en cache les nouvelles données
+        setCachedData(data);
+        
+        processJourneyDetails(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Une erreur est survenue");
       } finally {
         setLoading(false);
       }
+    };
+
+    const processJourneyDetails = (data: AggregatedPricingResult[]) => {
+      // Trouver le trajet spécifique par son ID
+      const journeyMap = new Map<string, AggregatedPricingResult[]>();
+
+      data.forEach((item) => {
+        const key = `${item.departureStationId}-${item.arrivalStationId}`;
+        if (!journeyMap.has(key)) {
+          journeyMap.set(key, []);
+        }
+        journeyMap.get(key)!.push(item);
+      });
+
+      const journeyData = journeyMap.get(journeyId);
+      
+      if (!journeyData) {
+        setError("Trajet non trouvé");
+        return;
+      }
+
+      const departure = journeyData[0].departureStation;
+      const departureId = journeyData[0].departureStationId;
+      const arrival = journeyData[0].arrivalStation;
+      const arrivalId = journeyData[0].arrivalStationId;
+      const carriers = [...new Set(journeyData.map((o) => o.carrier))];
+      const classes = [...new Set(journeyData.map((o) => o.travelClass))];
+      const discountCards = [...new Set(journeyData.map((o) => o.discountCard))];
+
+      const allPrices = [
+        ...journeyData.map((o) => o.minPrice),
+        ...journeyData.map((o) => o.avgPrice),
+        ...journeyData.map((o) => o.maxPrice),
+      ];
+
+      const minPrice = Math.min(...allPrices);
+      const maxPrice = Math.max(...allPrices);
+      const avgPrice =
+        allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
+
+      const groupedJourney: GroupedJourney = {
+        id: journeyId,
+        name: `${departure} → ${arrival}`,
+        departureStation: departure,
+        departureStationId: departureId,
+        arrivalStation: arrival,
+        arrivalStationId: arrivalId,
+        carriers,
+        classes,
+        discountCards,
+        offers: journeyData,
+        minPrice,
+        maxPrice,
+        avgPrice: Math.round(avgPrice),
+      };
+
+      setJourney(groupedJourney);
     };
 
     if (journeyId) {
