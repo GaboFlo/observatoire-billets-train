@@ -1,40 +1,19 @@
-export interface TranslationMap {
-  [key: string]: string;
-}
+// Import des traductions depuis le package partagé
+import type { TranslationMap } from '@observatoire-billets-train/shared';
+import {
+  travelClassTranslations,
+  discountCardTranslations,
+  carrierTranslations,
+  trainNameTranslations,
+} from '@observatoire-billets-train/shared';
 
-export const travelClassTranslations: TranslationMap = {
-  economy: "Seconde",
-  first: "Première",
-  business: "Affaires",
-  standard: "Standard",
-  premium: "Premium",
-  comfort: "Confort",
-  basic: "Basique",
-};
-
-export const discountCardTranslations: TranslationMap = {
-  AVANTAGE_JEUNE: "Avantage Jeune",
-  NONE: "Aucune",
-  MAX:"TGV Max"
-};
-
-export const carrierTranslations: TranslationMap = {
-  sncf: "SNCF",
-  db: "Deutsche Bahn",
-  ouigo: "OUIGO",
-  eurostar: "Eurostar",
-
-};
-
-export const trainNameTranslations: TranslationMap = {
-  TGV: "TGV",
-  OUIGO: "Ouigo",
-  "TRAIN TER": "TER",
-  "TRAIN TER HDF":"TER",
-  INOUI: "TGV InOui",
-  IC: "Intercités",
-  ES: "Eurostar",
-  ICE: "Trains Ice"
+// Ré-export des traductions
+export type { TranslationMap };
+export {
+  travelClassTranslations,
+  discountCardTranslations,
+  carrierTranslations,
+  trainNameTranslations,
 };
 
 export const translate = (

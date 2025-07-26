@@ -1,0 +1,22 @@
+{
+  "name": "observatoire-billets-train",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "front",
+    "back"
+  ],
+  "scripts": {
+    "build:shared": "cd shared && npm run build",
+    "dev:shared": "cd shared && npm run dev",
+    "install:all": "npm install && npm run build:shared",
+    "build:all": "npm run build:shared && cd front && npm run build && cd ../back && npm run build",
+    "dev:front": "cd front && npm run dev",
+    "dev:back": "cd back && npm run dev",
+    "dev": "concurrently \"npm run dev:shared\" \"npm run dev:front\" \"npm run dev:back\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+} 
