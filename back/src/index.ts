@@ -128,7 +128,9 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
         $group: {
           _id: {
             departureStation: "$departure_station.name",
+            departureStationId: "$departure_station.id",
             arrivalStation: "$arrival_station.name",
+            arrivalStationId: "$arrival_station.id",
             travelClass: "$pricing.travel_class",
             discountCard: "$pricing.discount_card",
             trainName: "$train_name",
@@ -143,7 +145,9 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
         $project: {
           _id: 0,
           departureStation: "$_id.departureStation",
+          departureStationId: "$_id.departureStationId",
           arrivalStation: "$_id.arrivalStation",
+          arrivalStationId: "$_id.arrivalStationId",
           travelClass: "$_id.travelClass",
           discountCard: "$_id.discountCard",
           trainName: "$_id.trainName",

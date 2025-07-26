@@ -10,7 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { journeys } from "@/data/mockData";
+import { useJourneyDetails } from "@/hooks/useJourneyData";
+import LoadingAnimation from "@/components/LoadingAnimation";
+import ErrorDisplay from "@/components/ErrorDisplay";
 import {
   ArrowLeft,
   ChartBar,
@@ -24,12 +26,13 @@ import { Link, useParams } from "react-router-dom";
 const JourneyDetails = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
   const [activeTab, setActiveTab] = useState("overview");
+  const { journey, loading, error } = useJourneyDetails(journeyId || "");
 
-  // Find the journey data based on the ID
-  const journey = journeys.find((j) => j.id === journeyId);
+  if (loading) {
+    return <LoadingAnimation />;
+  }
 
-  // If journey is not found, show error
-  if (!journey) {
+  if (error || !journey) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container px-4 py-16 mx-auto text-center">
@@ -47,24 +50,8 @@ const JourneyDetails = () => {
     );
   }
 
-  // Calculate monthly averages
-  const lastThreeMonths = journey.prices.slice(-90);
-  const lastMonth = lastThreeMonths.slice(-30);
-  const previousMonth = lastThreeMonths.slice(-60, -30);
-
-  const lastMonthAvg =
-    lastMonth.reduce((sum, item) => sum + item.price, 0) / lastMonth.length;
-  const previousMonthAvg =
-    previousMonth.reduce((sum, item) => sum + item.price, 0) /
-    previousMonth.length;
-  const monthlyChange =
-    ((lastMonthAvg - previousMonthAvg) / previousMonthAvg) * 100;
-
-  // Get best day to buy (lowest price in the last 30 days)
-  const bestDayToBuy = [...lastMonth].sort((a, b) => a.price - b.price)[0];
-  const bestDay = new Date(bestDayToBuy.date).toLocaleDateString("fr-FR", {
-    weekday: "long",
-  });
+  // Calculer la variation (pour l'instant, on utilise une valeur fixe car nous n'avons pas d'historique temporel)
+  const monthlyChange = 0; // À remplacer par un calcul réel quand l'historique sera disponible
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,7 +78,6 @@ const JourneyDetails = () => {
         >
           <TabsList>
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
-            <TabsTrigger value="history">Historique</TabsTrigger>
             <TabsTrigger value="details">Détails</TabsTrigger>
           </TabsList>
 
@@ -99,19 +85,19 @@ const JourneyDetails = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 title="Prix Moyen"
-                value={`${journey.averagePrice}€`}
-                description="Sur les 90 derniers jours"
+                value={`${journey.avgPrice}€`}
+                description="Prix moyen des offres disponibles"
                 icon={<ChartLine className="h-4 w-4" />}
               />
               <StatCard
                 title="Prix Minimum"
-                value={`${journey.lowestPrice}€`}
+                value={`${journey.minPrice}€`}
                 description="Le tarif le plus bas observé"
                 icon={<TrendingDown className="h-4 w-4" />}
               />
               <StatCard
                 title="Prix Maximum"
-                value={`${journey.highestPrice}€`}
+                value={`${journey.maxPrice}€`}
                 description="Le tarif le plus élevé observé"
                 icon={<TrendingUp className="h-4 w-4" />}
               />
@@ -126,144 +112,76 @@ const JourneyDetails = () => {
               />
             </div>
 
-            <PriceChart
-              data={journey.prices.slice(-30)}
-              title="Évolution Récente des Prix"
-              description="30 derniers jours"
-              showFilters={true}
-            />
-
-            <PriceTable
-              data={journey.prices}
-              title="Historique des Prix Récents"
-              description="Données factuelles par trajet"
-              limit={10}
-              showFilters={true}
-            />
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            <PriceChart
-              data={journey.prices}
-              title="Historique Complet des Prix"
-              description="Analyse factuelle sur 90 jours"
-              showFilters={true}
-            />
-
-            <PriceTable
-              data={journey.prices}
-              title="Tableau Historique des Prix"
-              description="Données complètes par trajet"
-              showFilters={true}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Offres Disponibles</CardTitle>
+                <CardDescription>
+                  {journey.offers.length} offre{journey.offers.length > 1 ? "s" : ""} disponible{journey.offers.length > 1 ? "s" : ""}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Compagnies</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {journey.carriers.map((carrier) => (
+                        <span key={carrier} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                          {carrier}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Classes de voyage</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {journey.classes.map((travelClass) => (
+                        <span key={travelClass} className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                          {travelClass}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Cartes de réduction</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {journey.discountCards.map((card) => (
+                        <span key={card} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                          {card}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="details" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Analyse des Prix</CardTitle>
+                  <CardTitle>Informations du Trajet</CardTitle>
                   <CardDescription>
-                    Informations détaillées sur ce trajet
+                    Détails sur ce trajet
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Distance</span>
-                      <span className="font-medium">
-                        {journey.id === "paris-lyon"
-                          ? "465 km"
-                          : journey.id === "paris-marseille"
-                          ? "773 km"
-                          : journey.id === "lyon-nice"
-                          ? "472 km"
-                          : journey.id === "paris-nantes"
-                          ? "385 km"
-                          : journey.id === "bordeaux-lille"
-                          ? "803 km"
-                          : journey.id === "strasbourg-toulouse"
-                          ? "945 km"
-                          : "Non disponible"}
-                      </span>
+                      <span className="text-muted-foreground">Station de départ</span>
+                      <span className="font-medium">{journey.departureStation}</span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">
-                        Durée moyenne
-                      </span>
-                      <span className="font-medium">
-                        {journey.id === "paris-lyon"
-                          ? "2h"
-                          : journey.id === "paris-marseille"
-                          ? "3h30"
-                          : journey.id === "lyon-nice"
-                          ? "4h30"
-                          : journey.id === "paris-nantes"
-                          ? "2h10"
-                          : journey.id === "bordeaux-lille"
-                          ? "5h"
-                          : journey.id === "strasbourg-toulouse"
-                          ? "7h30"
-                          : "Non disponible"}
-                      </span>
+                      <span className="text-muted-foreground">Station d'arrivée</span>
+                      <span className="font-medium">{journey.arrivalStation}</span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Prix par km</span>
-                      <span className="font-medium">
-                        {journey.id === "paris-lyon"
-                          ? "0,11€"
-                          : journey.id === "paris-marseille"
-                          ? "0,09€"
-                          : journey.id === "lyon-nice"
-                          ? "0,12€"
-                          : journey.id === "paris-nantes"
-                          ? "0,11€"
-                          : journey.id === "bordeaux-lille"
-                          ? "0,09€"
-                          : journey.id === "strasbourg-toulouse"
-                          ? "0,09€"
-                          : "Non disponible"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">
-                        Période d'affluence
-                      </span>
-                      <span className="font-medium">
-                        {journey.id === "paris-lyon"
-                          ? "Ven-Dim"
-                          : journey.id === "paris-marseille"
-                          ? "Ven-Dim"
-                          : journey.id === "lyon-nice"
-                          ? "Sam-Dim"
-                          : journey.id === "paris-nantes"
-                          ? "Ven-Dim"
-                          : journey.id === "bordeaux-lille"
-                          ? "Ven-Sam"
-                          : journey.id === "strasbourg-toulouse"
-                          ? "Ven-Sam"
-                          : "Non disponible"}
-                      </span>
+                      <span className="text-muted-foreground">ID du trajet</span>
+                      <span className="font-medium">{journey.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Trains par jour
-                      </span>
-                      <span className="font-medium">
-                        {journey.id === "paris-lyon"
-                          ? "25-30"
-                          : journey.id === "paris-marseille"
-                          ? "15-20"
-                          : journey.id === "lyon-nice"
-                          ? "8-12"
-                          : journey.id === "paris-nantes"
-                          ? "15-20"
-                          : journey.id === "bordeaux-lille"
-                          ? "6-10"
-                          : journey.id === "strasbourg-toulouse"
-                          ? "4-8"
-                          : "Non disponible"}
-                      </span>
+                      <span className="text-muted-foreground">Nombre d'offres</span>
+                      <span className="font-medium">{journey.offers.length}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -271,48 +189,28 @@ const JourneyDetails = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Conseils pour ce Trajet</CardTitle>
+                  <CardTitle>Statistiques de Prix</CardTitle>
                   <CardDescription>
-                    Recommandations pour obtenir les meilleurs tarifs
+                    Analyse des prix pour ce trajet
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="rounded-lg bg-train-50 p-4 text-sm">
-                      <p className="font-medium mb-2">Réservez à l'avance</p>
-                      <p className="text-gray-600">
-                        Les billets pour ce trajet sont généralement disponibles
-                        3 mois à l'avance. Les meilleurs prix sont souvent
-                        trouvés 40-60 jours avant le départ.
-                      </p>
+                    <div className="flex justify-between border-b pb-3">
+                      <span className="text-muted-foreground">Prix minimum</span>
+                      <span className="font-medium">{journey.minPrice}€</span>
                     </div>
-                    <div className="rounded-lg bg-blue-50 p-4 text-sm">
-                      <p className="font-medium mb-2">Horaires flexibles?</p>
-                      <p className="text-gray-600">
-                        Les trains en milieu de journée (11h-15h) et les
-                        premiers/derniers trains de la journée sont souvent
-                        moins chers pour ce trajet.
-                      </p>
+                    <div className="flex justify-between border-b pb-3">
+                      <span className="text-muted-foreground">Prix moyen</span>
+                      <span className="font-medium">{journey.avgPrice}€</span>
                     </div>
-                    <div className="rounded-lg bg-green-50 p-4 text-sm">
-                      <p className="font-medium mb-2">Cartes de réduction</p>
-                      <p className="text-gray-600">
-                        Une carte de réduction peut être rentabilisée en
-                        {journey.id === "paris-lyon"
-                          ? " 2-3 allers-retours"
-                          : journey.id === "paris-marseille"
-                          ? " 1-2 allers-retours"
-                          : journey.id === "lyon-nice"
-                          ? " 2-3 allers-retours"
-                          : journey.id === "paris-nantes"
-                          ? " 2-3 allers-retours"
-                          : journey.id === "bordeaux-lille"
-                          ? " 1-2 allers-retours"
-                          : journey.id === "strasbourg-toulouse"
-                          ? " 1 aller-retour"
-                          : " quelques trajets"}{" "}
-                        sur cette ligne.
-                      </p>
+                    <div className="flex justify-between border-b pb-3">
+                      <span className="text-muted-foreground">Prix maximum</span>
+                      <span className="font-medium">{journey.maxPrice}€</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Écart de prix</span>
+                      <span className="font-medium">{journey.maxPrice - journey.minPrice}€</span>
                     </div>
                   </div>
                 </CardContent>

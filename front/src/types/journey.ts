@@ -1,6 +1,8 @@
 export interface AggregatedPricingResult {
   departureStation: string;
+  departureStationId: number;
   arrivalStation: string;
+  arrivalStationId: number;
   travelClass: string;
   discountCard: string;
   trainName: string;
@@ -14,7 +16,9 @@ export interface GroupedJourney {
   id: string;
   name: string;
   departureStation: string;
+  departureStationId: number;
   arrivalStation: string;
+  arrivalStationId: number;
   carriers: string[];
   classes: string[];
   discountCards: string[];
