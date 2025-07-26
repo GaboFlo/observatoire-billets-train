@@ -11,6 +11,8 @@ import {
 import { Train } from "lucide-react";
 import { Link } from "react-router-dom";
 import { GroupedJourney } from "@/types/journey";
+import TranslatedText from "./TranslatedText";
+import { translateCarrier, translateTravelClass, translateDiscountCard } from "@/utils/translations";
 
 interface JourneyFilters {
   selectedClass?: string;
@@ -49,6 +51,45 @@ const JourneyCard = ({
         maxPrice: journey.maxPrice,
       };
 
+  // Fonctions de tri
+  const sortCarriers = (carriers: string[]) => {
+    return [...carriers].sort((a, b) => 
+      translateCarrier(a).localeCompare(translateCarrier(b), 'fr')
+    );
+  };
+
+  const sortClasses = (classes: string[]) => {
+    return [...classes].sort((a, b) => {
+      const aTranslated = translateTravelClass(a);
+      const bTranslated = translateTravelClass(b);
+      
+      // Seconde en premier
+      if (aTranslated === "Seconde") return -1;
+      if (bTranslated === "Seconde") return 1;
+      
+      // Première en deuxième
+      if (aTranslated === "Première") return -1;
+      if (bTranslated === "Première") return 1;
+      
+      // Puis ordre alphabétique
+      return aTranslated.localeCompare(bTranslated, 'fr');
+    });
+  };
+
+  const sortDiscountCards = (cards: string[]) => {
+    return [...cards].sort((a, b) => {
+      const aTranslated = translateDiscountCard(a);
+      const bTranslated = translateDiscountCard(b);
+      
+      // "Aucune" en premier
+      if (aTranslated === "Aucune") return -1;
+      if (bTranslated === "Aucune") return 1;
+      
+      // Puis ordre alphabétique
+      return aTranslated.localeCompare(bTranslated, 'fr');
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -79,72 +120,72 @@ const JourneyCard = ({
 
           <div className="space-y-2">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Compagnies :</p>
-              <div className="flex flex-wrap gap-1">
-                {journey.carriers.map((carrier) => (
-                  <Badge
-                    key={carrier}
-                    variant={
-                      filters.selectedCarrier === carrier ? "default" : "outline"
-                    }
-                    className={`text-xs cursor-pointer transition-colors ${
-                      filters.selectedCarrier === carrier
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-secondary"
-                    }`}
-                    onClick={() => onCarrierFilter(carrier)}
-                  >
-                    {carrier}
-                  </Badge>
-                ))}
-              </div>
+              <p className="text-sm text-muted-foreground mb-1">Compagnies</p>
+                                          <div className="flex flex-wrap gap-1">
+                              {sortCarriers(journey.carriers).map((carrier) => (
+                                <Badge
+                                  key={carrier}
+                                  variant={
+                                    filters.selectedCarrier === carrier ? "default" : "outline"
+                                  }
+                                  className={`text-xs cursor-pointer transition-colors ${
+                                    filters.selectedCarrier === carrier
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-secondary"
+                                  }`}
+                                  onClick={() => onCarrierFilter(carrier)}
+                                >
+                                  <TranslatedText value={carrier} type="carrier" />
+                                </Badge>
+                              ))}
+                            </div>
             </div>
 
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Classes :</p>
-              <div className="flex flex-wrap gap-1">
-                {journey.classes.map((travelClass) => (
-                  <Badge
-                    key={travelClass}
-                    variant={
-                      filters.selectedClass === travelClass ? "default" : "outline"
-                    }
-                    className={`text-xs cursor-pointer transition-colors ${
-                      filters.selectedClass === travelClass
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-secondary"
-                    }`}
-                    onClick={() => onClassFilter(travelClass)}
-                  >
-                    {travelClass}
-                  </Badge>
-                ))}
-              </div>
+              <p className="text-sm text-muted-foreground mb-1">Classes</p>
+                                          <div className="flex flex-wrap gap-1">
+                              {sortClasses(journey.classes).map((travelClass) => (
+                                <Badge
+                                  key={travelClass}
+                                  variant={
+                                    filters.selectedClass === travelClass ? "default" : "outline"
+                                  }
+                                  className={`text-xs cursor-pointer transition-colors ${
+                                    filters.selectedClass === travelClass
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-secondary"
+                                  }`}
+                                  onClick={() => onClassFilter(travelClass)}
+                                >
+                                  <TranslatedText value={travelClass} type="travelClass" />
+                                </Badge>
+                              ))}
+                            </div>
             </div>
 
             <div>
               <p className="text-sm text-muted-foreground mb-1">
-                Cartes de réduction:
+                Cartes de réduction
               </p>
-              <div className="flex flex-wrap gap-1">
-                {journey.discountCards.slice(0, 3).map((card) => (
-                  <Badge
-                    key={card}
-                    variant={
-                      filters.selectedDiscountCard === card
-                        ? "default"
-                        : "secondary"
-                    }
-                    className={`text-xs cursor-pointer transition-colors ${
-                      filters.selectedDiscountCard === card
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-secondary"
-                    }`}
-                    onClick={() => onDiscountCardFilter(card)}
-                  >
-                    {card}
-                  </Badge>
-                ))}
+                                          <div className="flex flex-wrap gap-1">
+                              {sortDiscountCards(journey.discountCards).slice(0, 3).map((card) => (
+                                <Badge
+                                  key={card}
+                                  variant={
+                                    filters.selectedDiscountCard === card
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className={`text-xs cursor-pointer transition-colors ${
+                                    filters.selectedDiscountCard === card
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-secondary"
+                                  }`}
+                                  onClick={() => onDiscountCardFilter(card)}
+                                >
+                                  <TranslatedText value={card} type="discountCard" />
+                                </Badge>
+                              ))}
                 {journey.discountCards.length > 3 && (
                   <Badge variant="secondary" className="text-xs">
                     +{journey.discountCards.length - 3}

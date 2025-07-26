@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AggregatedPricingResult, GroupedJourney, JourneyFilters } from "@/types/journey";
+import { logMissingTranslations } from "@/utils/generateMissingTranslations";
 
 export const useJourneyData = () => {
   const [activeTab, setActiveTab] = useState("journeys");
@@ -115,6 +116,11 @@ export const useJourneyData = () => {
         });
 
         setJourneys(groupedJourneys);
+        
+        // Analyser les traductions manquantes en mode développement
+        if (process.env.NODE_ENV === 'development') {
+          logMissingTranslations(groupedJourneys);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Une erreur est survenue");
       } finally {
