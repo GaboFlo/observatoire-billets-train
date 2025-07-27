@@ -175,49 +175,7 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   }
 });
 
-// Mapping des IDs de stations Paris vers les IDs spécifiques selon la destination
-const parisStationMapping: { [key: string]: { departureId: number; arrivalId: number } } = {
-  // Paris (4916) → Ville avec gare Paris spécifique
-  "4916-828": { departureId: 4920, arrivalId: 828 },      // Paris → Bordeaux (Montparnasse)
-  "4916-4718": { departureId: 4924, arrivalId: 4676 },    // Paris → Lyon (Gare de Lyon)
-  "4916-4791": { departureId: 4924, arrivalId: 4791 },    // Paris → Marseille (Gare de Lyon)
-  "4916-5097": { departureId: 4920, arrivalId: 5097 },    // Paris → Rennes (Montparnasse)
-  "4916-153": { departureId: 4919, arrivalId: 153 },      // Paris → Strasbourg (Gare de Lyon)
-  "4916-4652": { departureId: 4922, arrivalId: 4652 },    // Paris → Lille (Paris Nord)
-  "4916-5892": { departureId: 4922, arrivalId: 5892 },    // Paris → London (Paris Nord)
-  "4916-4687": { departureId: 4920, arrivalId: 4687 },    // Paris → La-Rochelle (Montparnasse)
-  "4916-1193": { departureId: 4917, arrivalId: 8925 },    // Paris → Clermont-Ferrand (Gare de Lyon)
-  "4916-10498": { departureId: 4924, arrivalId: 10498 },  // Paris → Besançon (Gare de Lyon)
-  "4916-1339": { departureId: 4924, arrivalId: 1339 },    // Paris → Chambéry (Gare de Lyon)
-  "4916-6617": { departureId: 4924, arrivalId: 6625 },    // Paris → Barcelone (Gare de Lyon)
-  
-  // Ville → Paris (4916) avec gare Paris spécifique
-  "828-4916": { departureId: 828, arrivalId: 4920 },      // Bordeaux → Paris (Montparnasse)
-  "4718-4916": { departureId: 4676, arrivalId: 4924 },    // Lyon → Paris (Gare de Lyon)
-  "4791-4916": { departureId: 4791, arrivalId: 4924 },    // Marseille → Paris (Gare de Lyon)
-  "5097-4916": { departureId: 5097, arrivalId: 4920 },    // Rennes → Paris (Montparnasse)
-  "153-4916": { departureId: 153, arrivalId: 4919 },      // Strasbourg → Paris (Gare de Lyon)
-  "4652-4916": { departureId: 4652, arrivalId: 4922 },    // Lille → Paris (Paris Nord)
-  "5892-4916": { departureId: 5892, arrivalId: 4922 },    // London → Paris (Paris Nord)
-  "4687-4916": { departureId: 4687, arrivalId: 4920 },    // La-Rochelle → Paris (Montparnasse)
-  "1193-4916": { departureId: 8925, arrivalId: 4917 },    // Clermont-Ferrand → Paris (Gare de Lyon)
-  "10498-4916": { departureId: 10498, arrivalId: 4924 },  // Besançon → Paris (Gare de Lyon)
-  "1339-4916": { departureId: 1339, arrivalId: 4924 },    // Chambéry → Paris (Gare de Lyon)
-  "6617-4916":{departureId:6625, arrivalId:4924},    // Barcelone → Paris (Gare de Lyon)
-};
 
-// Coordonnées géographiques pour le fallback (stations problématiques)
-const stationCoordinates: { [key: string]: { lat: number; lng: number } } = {
-  // Gares Paris
-  "4920": { lat: 48.838255, lng: 2.315691 },  // Paris (Bordeaux)
-  "4919": { lat: 48.87744, lng: 2.359728 },  // Paris (Strasbourg)
-  "4917": { lat: 48.837373, lng: 2.384444 },  // Paris Gare de Lyon (Clermont-Ferrand)
-  
-  // Villes avec problèmes
-  "828": { lat: 44.825513, lng: -0.555597 },   // Bordeaux St-Jean
-  "153": { lat: 48.585125, lng: 7.734254 },    // Strasbourg
-  "8925": { lat: 45.778581, lng: 3.10082 }    // Clermont-Ferrand
-};
 
 app.get("/api/trains/routes", async (req: Request, res: Response) => {
   const { dep, arr } = req.query;
@@ -227,31 +185,18 @@ app.get("/api/trains/routes", async (req: Request, res: Response) => {
   }
 
   try {
-    // Vérifier s'il y a un mapping spécifique pour ce trajet
     const depStr = dep as string;
     const arrStr = arr as string;
-    const routeKey = `${depStr}-${arrStr}`;
-    
-    const mappedRoute = parisStationMapping[routeKey];
-    
-    let finalDep = depStr;
-    let finalArr = arrStr;
-    
-    if (mappedRoute) {
-      finalDep = mappedRoute.departureId.toString();
-      finalArr = mappedRoute.arrivalId.toString();
-      console.log(`Mapping appliqué: ${depStr}-${arrStr} → ${finalDep}-${finalArr}`);
-    }
     
     // Chercher la route dans les fichiers individuels (aller ou retour)
-    const routeKeyFinal = `${finalDep}-${finalArr}`;
-    const routeKeyReverse = `${finalArr}-${finalDep}`;
+    const routeKey = `${depStr}-${arrStr}`;
+    const routeKeyReverse = `${arrStr}-${depStr}`;
     
     let routeData = null;
     let isReversed = false;
     
     // Essayer d'abord le trajet direct
-    const routeFilePath = path.join(__dirname, 'routes', `${routeKeyFinal}.json`);
+    const routeFilePath = path.join(__dirname, 'routes', `${routeKey}.json`);
     if (fs.existsSync(routeFilePath)) {
       routeData = JSON.parse(fs.readFileSync(routeFilePath, 'utf8'));
     }
@@ -265,9 +210,7 @@ app.get("/api/trains/routes", async (req: Request, res: Response) => {
       }
     }
     
-    if (routeData) {
-      console.log(`Route trouvée dans le fichier statique: ${isReversed ? routeKeyReverse : routeKeyFinal}${isReversed ? ' (inversée)' : ''}`);
-      
+    if (routeData) {    
       // Si c'est un trajet retour, inverser les coordonnées
       if (isReversed) {
         const reversedRouteData = {
@@ -287,12 +230,11 @@ app.get("/api/trains/routes", async (req: Request, res: Response) => {
       return;
     }
     
-    console.log(`Route non trouvée dans le fichier statique: ${routeKeyFinal} ou ${routeKeyReverse}`);
+    console.log(`Route non trouvée: ${routeKey} ou ${routeKeyReverse}`);
     return res.status(404).json({ 
       error: "Route non trouvée",
-      message: `Route non disponible pour dep=${finalDep}, arr=${finalArr}`,
-      originalRequest: { dep: depStr, arr: arrStr },
-      mappedRequest: { dep: finalDep, arr: finalArr }
+      message: `Route non disponible pour dep=${depStr}, arr=${arrStr}`,
+      request: { dep: depStr, arr: arrStr }
     });
     
   } catch (error) {
