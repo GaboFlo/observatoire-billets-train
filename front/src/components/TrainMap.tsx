@@ -6,6 +6,7 @@ import { GroupedJourney } from '@/types/journey';
 
 interface TrainMapProps {
   journeys: GroupedJourney[];
+  onRouteSelect?: (selectedJourneyIds: string[]) => void;
 }
 
 interface RouteData {
@@ -32,31 +33,22 @@ const createCustomIcon = (color: string) => new Icon({
   popupAnchor: [0, -12]
 });
 
-const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
-  const [routeDirection, setRouteDirection] = useState<'paris-regions' | 'regions-paris'>('paris-regions');
+const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const [routeData, setRouteData] = useState<{ [key: string]: RouteData }>({});
   const [loading, setLoading] = useState(false);
+  const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
 
   const filteredJourneys = useMemo(() => {
-    if (routeDirection === 'paris-regions') {
-      return journeys.filter(journey => 
-        journey.departureStation.toLowerCase().includes('paris')
-      );
-    } else {
-      return journeys.filter(journey => 
-        journey.arrivalStation.toLowerCase().includes('paris')
-      );
-    }
-  }, [journeys, routeDirection]);
+    // Afficher tous les trajets sans distinction aller/retour
+    return journeys;
+  }, [journeys]);
 
   const fetchRouteData = async (journey: GroupedJourney) => {
     const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
     
     if (routeData[key]) return;
 
-    try {
-      console.log(`Récupération de la route pour ${journey.name} (${journey.departureStationId} → ${journey.arrivalStationId})`);
-      
+    try {     
       const response = await fetch(
         `http://localhost:3000/api/trains/routes?dep=${journey.departureStationId}&arr=${journey.arrivalStationId}`
       );
@@ -87,12 +79,9 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
   const routeLines = useMemo(() => {
     const lines: any[] = [];
     
- 
-    
     filteredJourneys.forEach(journey => {
       const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
       const route = routeData[key];
-      
       
       if (route) {
         // L'API retourne soit un FeatureCollection soit un Feature direct
@@ -104,9 +93,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
           features = [route];
         }
         
-        
         features.forEach((feature, featureIndex) => {
-          
           if (feature.geometry && feature.geometry.coordinates) {
             let coordinates = [];
             
@@ -137,70 +124,70 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
                 featureIndex: featureIndex,
                 geometryType: feature.geometry.type
               });
-            } else {
-              console.warn(`Aucune coordonnée valide pour ${journey.name}, feature ${featureIndex}`);
             }
-          } else {
-            console.warn(`Feature ${featureIndex} invalide pour ${journey.name}:`, feature);
           }
         });
       } 
     });
 
     return lines;
-  }, [filteredJourneys, routeData]);
+  }, [filteredJourneys.length, Object.keys(routeData).length]); // Dépendances simplifiées
 
-  const minPrice = Math.min(...filteredJourneys.map(j => j.avgPrice));
-  const maxPrice = Math.max(...filteredJourneys.map(j => j.avgPrice));
+  // Calcul sécurisé des prix min/max
+  const priceStats = useMemo(() => {
+    const validJourneys = filteredJourneys.filter(j => typeof j.avgPrice === 'number' && !isNaN(j.avgPrice));
+    
+    if (validJourneys.length === 0) {
+      return { minPrice: 0, maxPrice: 100 };
+    }
+    
+    const prices = validJourneys.map(j => j.avgPrice);
+    return {
+      minPrice: Math.min(...prices),
+      maxPrice: Math.max(...prices)
+    };
+  }, [filteredJourneys.length]); // Dépendance simplifiée
 
   const getColor = (price: number) => {
-    const normalizedPrice = (price - minPrice) / (maxPrice - minPrice);
+    if (priceStats.maxPrice === priceStats.minPrice) {
+      return 'rgb(100, 100, 100)'; // Gris si tous les prix sont identiques
+    }
+    
+    const normalizedPrice = (price - priceStats.minPrice) / (priceStats.maxPrice - priceStats.minPrice);
     const red = Math.round(255 * normalizedPrice);
     const blue = Math.round(255 * (1 - normalizedPrice));
     return `rgb(${red}, 100, ${blue})`;
   };
 
+  const handleRouteClick = (routeKey: string, journeyIds: string[]) => {
+    if (selectedRouteKey === routeKey) {
+      // Désélectionner si déjà sélectionné
+      setSelectedRouteKey(null);
+      onRouteSelect?.([]);
+    } else {
+      // Sélectionner la nouvelle route
+      setSelectedRouteKey(routeKey);
+      onRouteSelect?.(journeyIds);
+    }
+  };
+
   // Calculer le centre de la carte basé sur les routes disponibles
   const mapCenter = useMemo(() => {
-    if (routeLines.length === 0) {
-      return [48.8566, 2.3522]; // Paris par défaut
-    }
-
-    const allCoords = routeLines.flatMap(line => line.coordinates);
-    const lats = allCoords.map(coord => coord[0]);
-    const lngs = allCoords.map(coord => coord[1]);
-    
-    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
-    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
-    
-    return [centerLat, centerLng];
-  }, [routeLines]);
+    // Utiliser un centre fixe pour éviter les problèmes de récursion
+    return [48.8566, 2.3522]; // Paris par défaut
+  }, []); // Dépendances vides pour éviter les recalculs
 
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-200">
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Carte des trajets</h3>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium">Direction:</label>
-            <select
-              value={routeDirection}
-              onChange={(e) => setRouteDirection(e.target.value as 'paris-regions' | 'regions-paris')}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="paris-regions">Paris → Régions</option>
-              <option value="regions-paris">Régions → Paris</option>
-            </select>
-          </div>
         </div>
         {loading && (
           <div className="mt-2 text-sm text-gray-600">
             Chargement des routes...
           </div>
         )}
-        <div className="mt-2 text-xs text-gray-500">
-          {routeLines.length} segments de route chargés
-        </div>
       </div>
       
       <div className="relative h-80">
@@ -214,64 +201,78 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           
-          {routeLines.map((line) => (
-            <React.Fragment key={line.id}>
-              <Polyline
-                positions={line.coordinates}
-                color={getColor(line.avgPrice)}
-                weight={3}
-                opacity={0.8}
-              >
-                <Popup>
-                  <div className="p-2">
-                    <div className="font-medium text-sm">{line.name}</div>
-                    <div className="text-sm font-semibold text-blue-600">
-                      Prix moyen: {Math.round(line.avgPrice)}€
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Prix min: {Math.round(minPrice)}€ | Prix max: {Math.round(maxPrice)}€
-                    </div>
-                    {line.properties && (
-                      <div className="text-xs text-gray-500">
-                        {line.properties.name && <div>Route: {line.properties.name}</div>}
-                        {line.properties.distance && <div>Distance: {Math.round(line.properties.distance)}km</div>}
+          {routeLines.map((line) => {
+            const routeKey = `${line.departureStationId}-${line.arrivalStationId}`;
+            const isSelected = selectedRouteKey === routeKey;
+            const journeyIds = filteredJourneys
+              .filter(j => 
+                (j.departureStationId === line.departureStationId && j.arrivalStationId === line.arrivalStationId) ||
+                (j.departureStationId === line.arrivalStationId && j.arrivalStationId === line.departureStationId)
+              )
+              .map(j => j.id);
+
+            return (
+              <React.Fragment key={line.id}>
+                <Polyline
+                  positions={line.coordinates}
+                  color={isSelected ? '#ff6b35' : getColor(line.avgPrice)}
+                  weight={isSelected ? 5 : 3}
+                  opacity={isSelected ? 1 : 0.8}
+                  eventHandlers={{
+                    click: () => handleRouteClick(routeKey, journeyIds)
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Popup>
+                    <div className="p-2">
+                      <div className="font-medium text-sm">{line.name}</div>
+                      <div className="text-sm font-semibold text-blue-600">
+                        Prix moyen: {Math.round(line.avgPrice)}€
                       </div>
-                    )}
-                  </div>
-                </Popup>
-              </Polyline>
-              
-              {/* Marqueur de départ */}
-              {line.coordinates.length > 0 && (
-                <Marker
-                  position={line.coordinates[0]}
-                  icon={createCustomIcon('#3b82f6')}
-                >
-                  <Popup>
-                    <div className="p-2">
-                      <div className="font-medium text-sm">Départ</div>
-                      <div className="text-xs text-gray-600">{line.departureStation}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Prix min: {Math.round(priceStats.minPrice)}€ | Prix max: {Math.round(priceStats.maxPrice)}€
+                      </div>
+                      {line.properties && (
+                        <div className="text-xs text-gray-500">
+                          {line.properties.name && <div>Route: {line.properties.name}</div>}
+                          {line.properties.distance && <div>Distance: {Math.round(line.properties.distance)}km</div>}
+                        </div>
+                      )}
                     </div>
                   </Popup>
-                </Marker>
-              )}
-              
-              {/* Marqueur d'arrivée */}
-              {line.coordinates.length > 1 && (
-                <Marker
-                  position={line.coordinates[line.coordinates.length - 1]}
-                  icon={createCustomIcon('#ef4444')}
-                >
-                  <Popup>
-                    <div className="p-2">
-                      <div className="font-medium text-sm">Arrivée</div>
-                      <div className="text-xs text-gray-600">{line.arrivalStation}</div>
-                    </div>
-                  </Popup>
-                </Marker>
-              )}
-            </React.Fragment>
-          ))}
+                </Polyline>
+                
+                {/* Marqueurs sur les gares (début et fin) */}
+                {line.coordinates.length > 0 && (
+                  <Marker
+                    position={line.coordinates[0]}
+                    icon={createCustomIcon('#6b7280')}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <div className="font-medium text-sm">Gare</div>
+                        <div className="text-xs text-gray-600">{line.departureStation}</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
+                
+                {line.coordinates.length > 1 && (
+                  <Marker
+                    position={line.coordinates[line.coordinates.length - 1]}
+                    icon={createCustomIcon('#6b7280')}
+                  >
+                    <Popup>
+                      <div className="p-2">
+                        <div className="font-medium text-sm">Gare</div>
+                        <div className="text-xs text-gray-600">{line.arrivalStation}</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
+              </React.Fragment>
+            );
+          })}
         </MapContainer>
 
         {/* Légende */}
@@ -279,32 +280,14 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
           <div className="text-sm font-medium mb-2">Prix moyen</div>
           <div className="flex items-center space-x-2">
             <div className="w-4 h-2 bg-blue-500 rounded"></div>
-            <span className="text-xs">{Math.round(minPrice)}€</span>
+            <span className="text-xs">{Math.round(priceStats.minPrice)}€</span>
             <div className="w-4 h-2 bg-red-500 rounded"></div>
-            <span className="text-xs">{Math.round(maxPrice)}€</span>
+            <span className="text-xs">{Math.round(priceStats.maxPrice)}€</span>
           </div>
           <div className="mt-2 text-xs text-gray-500">
-            <div>🔵 Départ</div>
-            <div>🔴 Arrivée</div>
             <div>Cliquez sur une ligne pour les détails</div>
           </div>
         </div>
-
-        {/* Statistiques */}
-        <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg border border-gray-200 z-[1000]">
-          <div className="text-sm font-medium mb-1">Statistiques</div>
-          <div className="text-xs text-gray-600">
-            {routeLines.length} segments affichés
-          </div>
-          <div className="text-xs text-gray-600">
-            {filteredJourneys.length} trajets
-          </div>
-          <div className="text-xs text-gray-600">
-            Prix moyen: {Math.round(filteredJourneys.reduce((sum, j) => sum + j.avgPrice, 0) / filteredJourneys.length)}€
-          </div>
-        </div>
-
-
       </div>
     </div>
   );
