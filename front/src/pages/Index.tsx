@@ -5,6 +5,7 @@ import JourneysTab from "@/components/JourneysTab";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import PageHeader from "@/components/PageHeader";
 import TranslationStats from "@/components/TranslationStats";
+import TrainMap from "@/components/TrainMap";
 import { useJourneyData } from "@/hooks/useJourneyData";
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -49,6 +50,7 @@ const Index = () => {
         >
           <TabsList>
             <TabsTrigger value="journeys">Trajets</TabsTrigger>
+            <TabsTrigger value="map">Carte</TabsTrigger>
             <TabsTrigger value="analysis">Analyses détaillées</TabsTrigger>
             {isDevelopment && (
               <TabsTrigger value="translations">Traductions</TabsTrigger>
@@ -69,6 +71,10 @@ const Index = () => {
               onSelectedDiscountCards={(journeyId, discountCard) => handleSelectedDiscountCards(journeyId, discountCard)}
               onExcludedDiscountCards={(journeyId, discountCard) => handleExcludedDiscountCards(journeyId, discountCard)}
             />
+          </TabsContent>
+
+          <TabsContent value="map" className="space-y-4">
+            <TrainMap journeys={journeys} />
           </TabsContent>
 
           <TabsContent value="analysis" className="space-y-4">
