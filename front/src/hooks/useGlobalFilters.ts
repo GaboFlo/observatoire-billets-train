@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { GroupedJourney } from "@/types/journey";
 
 export interface GlobalFilters {
@@ -17,8 +17,18 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
     selectedClasses: [],
     excludedClasses: [],
     selectedDiscountCards: [],
-    excludedDiscountCards: [],
+    excludedDiscountCards: ["MAX"], // Exclure MAX des cartes de réduction par défaut
   });
+
+  // S'assurer que MAX soit exclu une fois que les données sont chargées
+  useEffect(() => {
+    if (journeys.length > 0 && !filters.excludedDiscountCards.includes("MAX")) {
+      setFilters(prev => ({
+        ...prev,
+        excludedDiscountCards: [...prev.excludedDiscountCards, "MAX"]
+      }));
+    }
+  }, [journeys, filters.excludedDiscountCards]);
 
   // Extraire toutes les options disponibles
   const availableOptions = useMemo(() => {
@@ -43,9 +53,8 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
 
   // Filtrer les trajets selon les filtres globaux
   const filteredJourneys = useMemo(() => {
-    return journeys.map(journey => ({
-      ...journey,
-      offers: journey.offers.filter(offer => {
+    return journeys.map(journey => {
+      const filteredOffers = journey.offers.filter(offer => {
         // Filtre par compagnies
         if (filters.selectedCarriers.length > 0 && !filters.selectedCarriers.includes(offer.carrier)) {
           return false;
@@ -71,8 +80,25 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
         }
 
         return true;
-      })
-    })).filter(journey => journey.offers.length > 0);
+      });
+
+      // Recalculer le prix moyen basé sur les offres filtrées
+      let avgPrice = journey.avgPrice;
+      if (filteredOffers.length > 0) {
+        const allPrices = [
+          ...filteredOffers.map((o) => o.minPrice),
+          ...filteredOffers.map((o) => o.avgPrice),
+          ...filteredOffers.map((o) => o.maxPrice),
+        ];
+        avgPrice = allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
+      }
+
+      return {
+        ...journey,
+        offers: filteredOffers,
+        avgPrice: Math.round(avgPrice)
+      };
+    }).filter(journey => journey.offers.length > 0);
   }, [journeys, filters]);
 
   const handleCarrierFilter = (carrier: string, isSelected: boolean) => {
@@ -100,15 +126,20 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
   };
 
   const handleDiscountCardFilter = (discountCard: string, isSelected: boolean) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedDiscountCards: isSelected 
-        ? [...prev.selectedDiscountCards, discountCard]
-        : prev.selectedDiscountCards.filter(c => c !== discountCard),
-      excludedDiscountCards: !isSelected 
-        ? [...prev.excludedDiscountCards, discountCard]
-        : prev.excludedDiscountCards.filter(c => c !== discountCard),
-    }));
+    setFilters(prev => {
+      const newFilters = {
+        ...prev,
+        selectedDiscountCards: isSelected 
+          ? [...prev.selectedDiscountCards, discountCard]
+          : prev.selectedDiscountCards.filter(c => c !== discountCard),
+        excludedDiscountCards: !isSelected 
+          ? [...prev.excludedDiscountCards, discountCard]
+          : prev.excludedDiscountCards.filter(c => c !== discountCard),
+      };
+      
+      console.log('Nouvelle valeur des cartes de réduction exclues:', newFilters.excludedDiscountCards);
+      return newFilters;
+    });
   };
 
   const clearFilters = () => {
@@ -118,7 +149,7 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
       selectedClasses: [],
       excludedClasses: [],
       selectedDiscountCards: [],
-      excludedDiscountCards: [],
+      excludedDiscountCards: ["MAX"], // Remettre MAX dans les exclusions
     });
   };
 

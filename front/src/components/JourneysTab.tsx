@@ -99,16 +99,6 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
             <JourneyCard
               key={journey.id}
               journey={journey}
-              filters={{}}
-              onClassFilter={() => {}}
-              onSelectedClasses={() => {}}
-              onExcludedClasses={() => {}}
-              onCarrierFilter={() => {}}
-              onSelectedCarriers={() => {}}
-              onExcludedCarriers={() => {}}
-              onDiscountCardFilter={() => {}}
-              onSelectedDiscountCards={() => {}}
-              onExcludedDiscountCards={() => {}}
               filteredPrices={filteredPrices}
             />
           );

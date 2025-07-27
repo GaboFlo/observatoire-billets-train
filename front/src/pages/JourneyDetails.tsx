@@ -6,7 +6,6 @@ import PageHeader from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PriceChart from "@/components/PriceChart";
 import PriceTable from "@/components/PriceTable";
-import PriceFilters from "@/components/PriceFilters";
 import StatCard from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import {

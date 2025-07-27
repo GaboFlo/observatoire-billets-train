@@ -38,10 +38,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const [loading, setLoading] = useState(false);
   const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
 
-  const filteredJourneys = useMemo(() => {
-    // Afficher tous les trajets sans distinction aller/retour
-    return journeys;
-  }, [journeys]);
+  // Utiliser directement les journeys passées en props (déjà filtrées)
+  const filteredJourneys = journeys;
 
   const fetchRouteData = async (journey: GroupedJourney) => {
     const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
@@ -138,7 +136,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
     const validJourneys = filteredJourneys.filter(j => typeof j.avgPrice === 'number' && !isNaN(j.avgPrice));
     
     if (validJourneys.length === 0) {
-      return { minPrice: 0, maxPrice: 100 };
+      return { minPrice: 0, maxPrice: 0 };
     }
     
     const prices = validJourneys.map(j => j.avgPrice);
@@ -173,12 +171,12 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
 
   // Calculer le centre de la carte basé sur les routes disponibles
   const mapCenter = useMemo(() => {
-    // Utiliser un centre fixe pour éviter les problèmes de récursion
-    return [48.8566, 2.3522]; // Paris par défaut
+    // Centre entre Londres et Barcelone pour couvrir toute l'Europe de l'Ouest
+    return [47.0, 2.0]; // Centre approximatif entre Londres (51.5, -0.1) et Barcelone (41.4, 2.2)
   }, []); // Dépendances vides pour éviter les recalculs
 
   return (
-    <div className="w-full h-96 rounded-lg overflow-hidden border border-gray-200">
+    <div className="w-full h-[446px] rounded-lg overflow-hidden border border-gray-200">
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Carte des trajets</h3>
@@ -190,10 +188,10 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
         )}
       </div>
       
-      <div className="relative h-80">
+      <div className="relative h-[350px]">
         <MapContainer
           center={mapCenter as [number, number]}
-          zoom={6}
+          zoom={5}
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer
