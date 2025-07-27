@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import mongoose, { Document, Schema } from "mongoose";
 import { env } from "./env-loader";
+import fs from "fs";
+import path from "path";
 
 dotenv.config({ path: `.env.local`, override: true });
 
@@ -204,6 +206,19 @@ const parisStationMapping: { [key: string]: { departureId: number; arrivalId: nu
   "6617-4916":{departureId:6625, arrivalId:4924},    // Barcelone → Paris (Gare de Lyon)
 };
 
+// Coordonnées géographiques pour le fallback (stations problématiques)
+const stationCoordinates: { [key: string]: { lat: number; lng: number } } = {
+  // Gares Paris
+  "4920": { lat: 48.838255, lng: 2.315691 },  // Paris (Bordeaux)
+  "4919": { lat: 48.87744, lng: 2.359728 },  // Paris (Strasbourg)
+  "4917": { lat: 48.837373, lng: 2.384444 },  // Paris Gare de Lyon (Clermont-Ferrand)
+  
+  // Villes avec problèmes
+  "828": { lat: 44.825513, lng: -0.555597 },   // Bordeaux St-Jean
+  "153": { lat: 48.585125, lng: 7.734254 },    // Strasbourg
+  "8925": { lat: 45.778581, lng: 3.10082 }    // Clermont-Ferrand
+};
+
 app.get("/api/trains/routes", async (req: Request, res: Response) => {
   const { dep, arr } = req.query;
   
@@ -213,36 +228,73 @@ app.get("/api/trains/routes", async (req: Request, res: Response) => {
 
   try {
     // Vérifier s'il y a un mapping spécifique pour ce trajet
-    const routeKey = `${dep}-${arr}`;
+    const depStr = dep as string;
+    const arrStr = arr as string;
+    const routeKey = `${depStr}-${arrStr}`;
+    
     const mappedRoute = parisStationMapping[routeKey];
     
-    let finalDep = dep;
-    let finalArr = arr;
+    let finalDep = depStr;
+    let finalArr = arrStr;
     
     if (mappedRoute) {
       finalDep = mappedRoute.departureId.toString();
       finalArr = mappedRoute.arrivalId.toString();
-      console.log(`Mapping appliqué: ${dep}-${arr} → ${finalDep}-${finalArr}`);
+      console.log(`Mapping appliqué: ${depStr}-${arrStr} → ${finalDep}-${finalArr}`);
     }
     
-    const url = `https://trainmap.ntag.fr/api/route?dep=${finalDep}&arr=${finalArr}`;
-    console.log(`Tentative de récupération de la route: ${url}`);
-    const response = await fetch(url);
+    // Chercher la route dans les fichiers individuels (aller ou retour)
+    const routeKeyFinal = `${finalDep}-${finalArr}`;
+    const routeKeyReverse = `${finalArr}-${finalDep}`;
     
-    if (response.ok) {
-      const routeData = await response.json();
-      console.log(`Route récupérée avec succès pour dep=${finalDep}, arr=${finalArr}`);
+    let routeData = null;
+    let isReversed = false;
+    
+    // Essayer d'abord le trajet direct
+    const routeFilePath = path.join(__dirname, 'routes', `${routeKeyFinal}.json`);
+    if (fs.existsSync(routeFilePath)) {
+      routeData = JSON.parse(fs.readFileSync(routeFilePath, 'utf8'));
+    }
+    
+    // Si pas trouvé, essayer le trajet inverse
+    if (!routeData) {
+      const reverseRouteFilePath = path.join(__dirname, 'routes', `${routeKeyReverse}.json`);
+      if (fs.existsSync(reverseRouteFilePath)) {
+        routeData = JSON.parse(fs.readFileSync(reverseRouteFilePath, 'utf8'));
+        isReversed = true;
+      }
+    }
+    
+    if (routeData) {
+      console.log(`Route trouvée dans le fichier statique: ${isReversed ? routeKeyReverse : routeKeyFinal}${isReversed ? ' (inversée)' : ''}`);
+      
+      // Si c'est un trajet retour, inverser les coordonnées
+      if (isReversed) {
+        const reversedRouteData = {
+          ...routeData,
+          geometry: {
+            ...routeData.geometry,
+            coordinates: routeData.geometry.coordinates.map((ring: number[][]) =>
+              ring.slice().reverse()
+            )
+          }
+        };
+        res.json(reversedRouteData);
+        return;
+      }
+      
       res.json(routeData);
       return;
     }
     
-    console.error(`Erreur HTTP ${response.status} de ${url}`);
+    console.log(`Route non trouvée dans le fichier statique: ${routeKeyFinal} ou ${routeKeyReverse}`);
     return res.status(404).json({ 
       error: "Route non trouvée",
-      message: `Impossible de récupérer la route pour dep=${finalDep}, arr=${finalArr}`,
-      originalRequest: { dep, arr },
+      message: `Route non disponible pour dep=${finalDep}, arr=${finalArr}`,
+      originalRequest: { dep: depStr, arr: arrStr },
       mappedRequest: { dep: finalDep, arr: finalArr }
     });
+    
   } catch (error) {
     console.error("Erreur lors de la récupération de la route:", error);
     return res.status(500).json({ 
