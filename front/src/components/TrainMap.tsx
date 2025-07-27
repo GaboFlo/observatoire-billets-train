@@ -63,14 +63,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`Route récupérée pour ${journey.name}:`, data);
-        console.log(`Nombre de features:`, data.features?.length);
-        if (data.features && data.features.length > 0) {
-          console.log(`Première feature:`, data.features[0]);
-          console.log(`Type de géométrie:`, data.features[0].geometry?.type);
-          console.log(`Nombre de coordonnées:`, data.features[0].geometry?.coordinates?.length);
-          console.log(`Premières coordonnées:`, data.features[0].geometry?.coordinates?.slice(0, 3));
-        }
+ 
         setRouteData(prev => ({ ...prev, [key]: data }));
       } else {
         console.error(`Erreur HTTP ${response.status} pour la route ${key}`);
@@ -94,14 +87,12 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
   const routeLines = useMemo(() => {
     const lines: any[] = [];
     
-    console.log('Génération des lignes de route...');
-    console.log('RouteData:', routeData);
+ 
     
     filteredJourneys.forEach(journey => {
       const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
       const route = routeData[key];
       
-      console.log(`Traitement de ${journey.name}, route:`, route);
       
       if (route) {
         // L'API retourne soit un FeatureCollection soit un Feature direct
@@ -113,10 +104,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
           features = [route];
         }
         
-        console.log(`Features trouvées:`, features.length);
         
         features.forEach((feature, featureIndex) => {
-          console.log(`Feature ${featureIndex}:`, feature);
           
           if (feature.geometry && feature.geometry.coordinates) {
             let coordinates = [];
@@ -133,9 +122,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
               coordinates = feature.geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
             }
             
-            if (coordinates.length > 0) {
-              console.log(`Coordonnées converties pour ${journey.name}:`, coordinates.slice(0, 3));
-              
+            if (coordinates.length > 0) {            
               lines.push({
                 id: `${journey.id}-${featureIndex}`,
                 journeyId: journey.id,
@@ -157,12 +144,9 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys }) => {
             console.warn(`Feature ${featureIndex} invalide pour ${journey.name}:`, feature);
           }
         });
-      } else {
-        console.warn(`Pas de route trouvée pour ${journey.name}`);
-      }
+      } 
     });
 
-    console.log(`Nombre total de lignes générées:`, lines.length);
     return lines;
   }, [filteredJourneys, routeData]);
 
