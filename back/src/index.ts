@@ -35,7 +35,9 @@ interface TrainDocument extends Document {
 
 interface AggregatedPricingResult {
   departureStation: string;
+  departureStationId: number;
   arrivalStation: string;
+  arrivalStationId: number;
   travelClass: string;
   discountCard: string;
   trainName: string;
@@ -44,6 +46,10 @@ interface AggregatedPricingResult {
   avgPrice: number;
   maxPrice: number;
 }
+
+
+
+
 
 const stationSchema = new Schema({
   id: { type: Number, required: true },
@@ -107,6 +113,7 @@ app.get("/api/trains", async (req: Request, res: Response) => {
         $lt: new Date(new Date(date as string).getTime() + 24 * 60 * 60 * 1000),
       },
     });
+    
     res.json(data);
   } catch (error) {
     console.error("Erreur lors de la récupération des données:", error);
@@ -166,6 +173,8 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   }
 });
 
+
+
 app.get("/api/trains/routes", async (req: Request, res: Response) => {
   const { dep, arr } = req.query;
   
@@ -174,69 +183,33 @@ app.get("/api/trains/routes", async (req: Request, res: Response) => {
   }
 
   try {
-    console.log(`Tentative de récupération de la route: dep=${dep}, arr=${arr}`);
+    const url = `https://trainmap.ntag.fr/api/route?dep=${dep}&arr=${arr}`;
+    console.log(`Tentative de récupération de la route: ${url}`);
+    const response = await fetch(url);
     
-    const response = await fetch(`https://trainmap.ntag.fr/api/route?dep=${dep}&arr=${arr}`);
-    
-    if (!response.ok) {
-      console.error(`Erreur HTTP ${response.status} de trainmap.ntag.fr`);
-      
-      // Retourner des données de test si l'API n'est pas disponible
-      const testRoute = {
-        type: "FeatureCollection",
-        features: [
-          {
-            type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates: [
-                [2.3522, 48.8566], // Paris
-                [2.3522, 48.8566], // Point intermédiaire
-                [2.3522, 48.8566]  // Destination
-              ]
-            },
-            properties: {
-              name: "Route de test",
-              distance: 0
-            }
-          }
-        ]
-      };
-      
-      return res.json(testRoute);
+    if (response.ok) {
+      const routeData = await response.json();
+      console.log(`Route récupérée avec succès pour dep=${dep}, arr=${arr}`);
+      res.json(routeData);
+      return;
     }
     
-    const routeData = await response.json();
-    console.log(`Route récupérée avec succès pour dep=${dep}, arr=${arr}`);
-    res.json(routeData);
+    console.error(`Erreur HTTP ${response.status} de ${url}`);
+    return res.status(404).json({ 
+      error: "Route non trouvée",
+      message: `Impossible de récupérer la route pour dep=${dep}, arr=${arr}`
+    });
   } catch (error) {
     console.error("Erreur lors de la récupération de la route:", error);
-    
-    // Retourner des données de test en cas d'erreur
-    const testRoute = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          geometry: {
-            type: "LineString",
-            coordinates: [
-              [2.3522, 48.8566], // Paris
-              [2.3522, 48.8566], // Point intermédiaire
-              [2.3522, 48.8566]  // Destination
-            ]
-          },
-          properties: {
-            name: "Route de test",
-            distance: 0
-          }
-        }
-      ]
-    };
-    
-    res.json(testRoute);
+    return res.status(500).json({ 
+      error: "Erreur interne",
+      message: "Erreur lors de la récupération de la route",
+      details: error instanceof Error ? error.message : "Erreur inconnue"
+    });
   }
 });
+
+
 
 app.listen(port, () => {
   console.log(`Serveur écoutant sur http://localhost:${port}`);
