@@ -212,19 +212,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   }, []); // Dépendances vides pour éviter les recalcules
 
   return (
-    <div className="w-full h-[446px] rounded-lg overflow-hidden border border-gray-200">
-      <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Carte des trajets</h3>
-        </div>
-        {loading && (
-          <div className="mt-2 text-sm text-gray-600">
-            Chargement des routes...
-          </div>
-        )}
-      </div>
-
-      <div className="relative h-[350px]">
+    <div className="w-full h-full rounded-lg overflow-hidden">
+      <div className="relative h-full w-full">
         <MapContainer
           center={mapCenter as [number, number]}
           zoom={5}

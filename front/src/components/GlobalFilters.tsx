@@ -1,11 +1,7 @@
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { GlobalFilters as GlobalFiltersType } from "../hooks/useGlobalFilters";
 import {
   translateCarrier,
@@ -34,6 +30,8 @@ const GlobalFilters = ({
   onDiscountCardFilter,
   onClearFilters,
 }: GlobalFiltersProps) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const hasActiveFilters =
     filters.selectedCarriers.length > 0 ||
     filters.excludedCarriers.length > 0 ||
@@ -72,134 +70,165 @@ const GlobalFilters = ({
   };
 
   return (
-    <Card className="border-gray-200">
-      <CardHeader className="pb-3">
+    <Card className="border-0 shadow-none">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle>Filtres globaux</CardTitle>
-          {hasActiveFilters && (
-            <Button variant="outline" size="sm" onClick={onClearFilters}>
-              Effacer les filtres
-            </Button>
-          )}
+          <h3 className="text-sm font-medium text-gray-800">Filtres</h3>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-3 w-3" />
+                Réduire
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3" />
+                Déplier
+              </>
+            )}
+          </button>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Compagnies */}
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-gray-700">
-              {"Compagnies"}
-            </h4>
-            <div className="flex flex-wrap gap-1">
-              {availableOptions.carriers.map((carrier: string) => {
-                const isSelected = filters.selectedCarriers.includes(carrier);
-                const isExcluded = filters.excludedCarriers.includes(carrier);
+        {isExpanded && (
+          <>
+            <div className="space-y-4">
+              {/* Compagnies */}
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-800">
+                  Compagnies
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {availableOptions.carriers.map((carrier: string) => {
+                    const isSelected =
+                      filters.selectedCarriers.includes(carrier);
+                    const isExcluded =
+                      filters.excludedCarriers.includes(carrier);
 
-                return (
-                  <Badge
-                    key={carrier}
-                    variant="secondary"
-                    className={`cursor-pointer text-xs px-2 py-1 ${
-                      isSelected
-                        ? "bg-blue-500 hover:bg-blue-600 text-white"
-                        : isExcluded
-                        ? "bg-gray-100 text-gray-400 line-through"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                    onClick={() =>
-                      handleFilterClick(
-                        carrier,
-                        isSelected,
-                        isExcluded,
-                        onCarrierFilter
-                      )
+                    return (
+                      <Badge
+                        key={carrier}
+                        variant="secondary"
+                        className={`cursor-pointer text-xs px-3 py-1.5 transition-colors ${
+                          isSelected
+                            ? "bg-blue-500 hover:bg-blue-600 text-white"
+                            : isExcluded
+                            ? "bg-gray-100 text-gray-400 line-through"
+                            : "bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}
+                        onClick={() =>
+                          handleFilterClick(
+                            carrier,
+                            isSelected,
+                            isExcluded,
+                            onCarrierFilter
+                          )
+                        }
+                      >
+                        {translateCarrier(carrier)}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Classes */}
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-800">
+                  Classes
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {availableOptions.classes.map((travelClass: string) => {
+                    const isSelected =
+                      filters.selectedClasses.includes(travelClass);
+                    const isExcluded =
+                      filters.excludedClasses.includes(travelClass);
+
+                    return (
+                      <Badge
+                        key={travelClass}
+                        variant="secondary"
+                        className={`cursor-pointer text-xs px-3 py-1.5 transition-colors ${
+                          isSelected
+                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            : isExcluded
+                            ? "bg-gray-100 text-gray-400 line-through"
+                            : "bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}
+                        onClick={() =>
+                          handleFilterClick(
+                            travelClass,
+                            isSelected,
+                            isExcluded,
+                            onClassFilter
+                          )
+                        }
+                      >
+                        {translateTravelClass(travelClass)}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Cartes de réduction */}
+              <div>
+                <h4 className="text-sm font-medium mb-3 text-gray-800">
+                  Cartes de réduction
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {availableOptions.discountCards.map(
+                    (discountCard: string) => {
+                      const isSelected =
+                        filters.selectedDiscountCards.includes(discountCard);
+                      const isExcluded =
+                        filters.excludedDiscountCards.includes(discountCard);
+
+                      return (
+                        <Badge
+                          key={discountCard}
+                          variant="secondary"
+                          className={`cursor-pointer text-xs px-3 py-1.5 transition-colors ${
+                            isSelected
+                              ? "bg-purple-500 hover:bg-purple-600 text-white"
+                              : isExcluded
+                              ? "bg-gray-100 text-gray-400 line-through"
+                              : "bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200"
+                          }`}
+                          onClick={() =>
+                            handleFilterClick(
+                              discountCard,
+                              isSelected,
+                              isExcluded,
+                              onDiscountCardFilter
+                            )
+                          }
+                        >
+                          {translateDiscountCard(discountCard)}
+                        </Badge>
+                      );
                     }
-                  >
-                    {translateCarrier(carrier)}
-                  </Badge>
-                );
-              })}
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Classes */}
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-gray-700">
-              {"Classes"}
-            </h4>
-            <div className="flex flex-wrap gap-1">
-              {availableOptions.classes.map((travelClass: string) => {
-                const isSelected =
-                  filters.selectedClasses.includes(travelClass);
-                const isExcluded =
-                  filters.excludedClasses.includes(travelClass);
-
-                return (
-                  <Badge
-                    key={travelClass}
-                    variant="secondary"
-                    className={`cursor-pointer text-xs px-2 py-1 ${
-                      isSelected
-                        ? "bg-green-500 hover:bg-green-600 text-white"
-                        : isExcluded
-                        ? "bg-gray-100 text-gray-400 line-through"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                    onClick={() =>
-                      handleFilterClick(
-                        travelClass,
-                        isSelected,
-                        isExcluded,
-                        onClassFilter
-                      )
-                    }
-                  >
-                    {translateTravelClass(travelClass)}
-                  </Badge>
-                );
-              })}
+            {/* Boutons d'action en bas */}
+            <div className="mt-4">
+              {hasActiveFilters && (
+                <button
+                  onClick={onClearFilters}
+                  className="w-full text-xs text-gray-500 hover:text-gray-700 underline"
+                >
+                  Effacer tous les filtres
+                </button>
+              )}
             </div>
-          </div>
-
-          {/* Cartes de réduction */}
-          <div>
-            <h4 className="text-sm font-medium mb-2 text-gray-700">
-              {"Cartes de réduction"}
-            </h4>
-            <div className="flex flex-wrap gap-1">
-              {availableOptions.discountCards.map((discountCard: string) => {
-                const isSelected =
-                  filters.selectedDiscountCards.includes(discountCard);
-                const isExcluded =
-                  filters.excludedDiscountCards.includes(discountCard);
-
-                return (
-                  <Badge
-                    key={discountCard}
-                    variant="secondary"
-                    className={`cursor-pointer text-xs px-2 py-1 ${
-                      isSelected
-                        ? "bg-purple-500 hover:bg-purple-600 text-white"
-                        : isExcluded
-                        ? "bg-gray-100 text-gray-400 line-through"
-                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                    }`}
-                    onClick={() =>
-                      handleFilterClick(
-                        discountCard,
-                        isSelected,
-                        isExcluded,
-                        onDiscountCardFilter
-                      )
-                    }
-                  >
-                    {translateDiscountCard(discountCard)}
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
