@@ -1,7 +1,13 @@
-import { AggregatedPricingResult, GroupedJourney, JourneyFilters } from "@/types/journey";
-import { logMissingTranslations } from "@/utils/generateMissingTranslations";
+import {
+  AggregatedPricingResult,
+  GroupedJourney,
+  JourneyFilters,
+} from "../types/journey";
+import { logMissingTranslations } from "./generateMissingTranslations";
 
-export const processPricingData = (data: AggregatedPricingResult[]): GroupedJourney[] => {
+export const processPricingData = (
+  data: AggregatedPricingResult[]
+): GroupedJourney[] => {
   // Grouper les données par trajet (departure + arrival)
   const journeyMap = new Map<string, AggregatedPricingResult[]>();
 
@@ -16,19 +22,25 @@ export const processPricingData = (data: AggregatedPricingResult[]): GroupedJour
   // Créer les objets GroupedJourney
   const groupedJourneys: GroupedJourney[] = Array.from(
     journeyMap.entries()
-  ).map(([key, offers]) => {
+  ).map(([key, offers]: [string, AggregatedPricingResult[]]) => {
     const departure = offers[0].departureStation;
     const departureId = offers[0].departureStationId;
     const arrival = offers[0].arrivalStation;
     const arrivalId = offers[0].arrivalStationId;
-    const carriers = [...new Set(offers.map((o) => o.carrier))];
-    const classes = [...new Set(offers.map((o) => o.travelClass))];
-    const discountCards = [...new Set(offers.map((o) => o.discountCard))];
+    const carriers = [
+      ...new Set(offers.map((o: AggregatedPricingResult) => o.carrier)),
+    ];
+    const classes = [
+      ...new Set(offers.map((o: AggregatedPricingResult) => o.travelClass)),
+    ];
+    const discountCards = [
+      ...new Set(offers.map((o: AggregatedPricingResult) => o.discountCard)),
+    ];
 
     const allPrices = [
-      ...offers.map((o) => o.minPrice),
-      ...offers.map((o) => o.avgPrice),
-      ...offers.map((o) => o.maxPrice),
+      ...offers.map((o: AggregatedPricingResult) => o.minPrice),
+      ...offers.map((o: AggregatedPricingResult) => o.avgPrice),
+      ...offers.map((o: AggregatedPricingResult) => o.maxPrice),
     ];
 
     const minPrice = Math.min(...allPrices);
@@ -56,19 +68,24 @@ export const processPricingData = (data: AggregatedPricingResult[]): GroupedJour
   return groupedJourneys;
 };
 
-export const createDefaultFilters = (groupedJourneys: GroupedJourney[]): JourneyFilters => {
+export const createDefaultFilters = (
+  groupedJourneys: GroupedJourney[]
+): JourneyFilters => {
   const defaultFilters: JourneyFilters = {};
   groupedJourneys.forEach((journey) => {
     if (journey.discountCards.includes("MAX")) {
       defaultFilters[journey.id] = {
-        excludedDiscountCards: ["MAX"]
+        excludedDiscountCards: ["MAX"],
       };
     }
   });
   return defaultFilters;
 };
 
-export const processJourneyDetails = (data: AggregatedPricingResult[], journeyId: string): GroupedJourney | null => {
+export const processJourneyDetails = (
+  data: AggregatedPricingResult[],
+  journeyId: string
+): GroupedJourney | null => {
   // Trouver le trajet spécifique par son ID
   const journeyMap = new Map<string, AggregatedPricingResult[]>();
 
@@ -81,7 +98,7 @@ export const processJourneyDetails = (data: AggregatedPricingResult[], journeyId
   });
 
   const journeyData = journeyMap.get(journeyId);
-  
+
   if (!journeyData) {
     return null;
   }
@@ -90,14 +107,20 @@ export const processJourneyDetails = (data: AggregatedPricingResult[], journeyId
   const departureId = journeyData[0].departureStationId;
   const arrival = journeyData[0].arrivalStation;
   const arrivalId = journeyData[0].arrivalStationId;
-  const carriers = [...new Set(journeyData.map((o) => o.carrier))];
-  const classes = [...new Set(journeyData.map((o) => o.travelClass))];
-  const discountCards = [...new Set(journeyData.map((o) => o.discountCard))];
+  const carriers = [
+    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.carrier)),
+  ];
+  const classes = [
+    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.travelClass)),
+  ];
+  const discountCards = [
+    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.discountCard)),
+  ];
 
   const allPrices = [
-    ...journeyData.map((o) => o.minPrice),
-    ...journeyData.map((o) => o.avgPrice),
-    ...journeyData.map((o) => o.maxPrice),
+    ...journeyData.map((o: AggregatedPricingResult) => o.minPrice),
+    ...journeyData.map((o: AggregatedPricingResult) => o.avgPrice),
+    ...journeyData.map((o: AggregatedPricingResult) => o.maxPrice),
   ];
 
   const minPrice = Math.min(...allPrices);
@@ -122,8 +145,10 @@ export const processJourneyDetails = (data: AggregatedPricingResult[], journeyId
   };
 };
 
-export const analyzeMissingTranslations = (groupedJourneys: GroupedJourney[]) => {
-  if (process.env.NODE_ENV === 'development') {
+export const analyzeMissingTranslations = (
+  groupedJourneys: GroupedJourney[]
+) => {
+  if (process.env.NODE_ENV === "development") {
     logMissingTranslations(groupedJourneys);
   }
-}; 
+};

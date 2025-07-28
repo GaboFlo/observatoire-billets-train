@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { JourneyFilters } from "@/types/journey";
+import { useState } from "react";
 
 export const useJourneyFilters = () => {
   const [journeyFilters, setJourneyFilters] = useState<JourneyFilters>({});
@@ -24,9 +24,9 @@ export const useJourneyFilters = () => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentSelected = currentFilters.selectedClasses || [];
-      
+
       const newSelected = currentSelected.includes(travelClass)
-        ? currentSelected.filter(cls => cls !== travelClass)
+        ? currentSelected.filter((cls) => cls !== travelClass)
         : [...currentSelected, travelClass];
 
       return {
@@ -43,9 +43,9 @@ export const useJourneyFilters = () => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentExcluded = currentFilters.excludedClasses || [];
-      
+
       const newExcluded = currentExcluded.includes(travelClass)
-        ? currentExcluded.filter(cls => cls !== travelClass)
+        ? currentExcluded.filter((cls) => cls !== travelClass)
         : [...currentExcluded, travelClass];
 
       return {
@@ -78,9 +78,9 @@ export const useJourneyFilters = () => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentSelected = currentFilters.selectedCarriers || [];
-      
+
       const newSelected = currentSelected.includes(carrier)
-        ? currentSelected.filter(car => car !== carrier)
+        ? currentSelected.filter((car) => car !== carrier)
         : [...currentSelected, carrier];
 
       return {
@@ -97,9 +97,9 @@ export const useJourneyFilters = () => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentExcluded = currentFilters.excludedCarriers || [];
-      
+
       const newExcluded = currentExcluded.includes(carrier)
-        ? currentExcluded.filter(car => car !== carrier)
+        ? currentExcluded.filter((car) => car !== carrier)
         : [...currentExcluded, carrier];
 
       return {
@@ -112,11 +112,16 @@ export const useJourneyFilters = () => {
     });
   };
 
-  const handleDiscountCardFilter = (journeyId: string, discountCard: string) => {
+  const handleDiscountCardFilter = (
+    journeyId: string,
+    discountCard: string
+  ) => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const newSelectedCard =
-        currentFilters.selectedDiscountCard === discountCard ? undefined : discountCard;
+        currentFilters.selectedDiscountCard === discountCard
+          ? undefined
+          : discountCard;
 
       return {
         ...prev,
@@ -128,39 +133,47 @@ export const useJourneyFilters = () => {
     });
   };
 
-  const handleSelectedDiscountCards = (journeyId: string, discountCard: string) => {
+  const handleSelectedDiscountCards = (
+    journeyId: string,
+    discountCard: string
+  ) => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentSelected = currentFilters.selectedDiscountCards || [];
-      
+
       const newSelected = currentSelected.includes(discountCard)
-        ? currentSelected.filter(card => card !== discountCard)
+        ? currentSelected.filter((card) => card !== discountCard)
         : [...currentSelected, discountCard];
 
       return {
         ...prev,
         [journeyId]: {
           ...currentFilters,
-          selectedDiscountCards: newSelected.length > 0 ? newSelected : undefined,
+          selectedDiscountCards:
+            newSelected.length > 0 ? newSelected : undefined,
         },
       };
     });
   };
 
-  const handleExcludedDiscountCards = (journeyId: string, discountCard: string) => {
+  const handleExcludedDiscountCards = (
+    journeyId: string,
+    discountCard: string
+  ) => {
     setJourneyFilters((prev) => {
       const currentFilters = prev[journeyId] || {};
       const currentExcluded = currentFilters.excludedDiscountCards || [];
-      
+
       const newExcluded = currentExcluded.includes(discountCard)
-        ? currentExcluded.filter(card => card !== discountCard)
+        ? currentExcluded.filter((card) => card !== discountCard)
         : [...currentExcluded, discountCard];
 
       return {
         ...prev,
         [journeyId]: {
           ...currentFilters,
-          excludedDiscountCards: newExcluded.length > 0 ? newExcluded : undefined,
+          excludedDiscountCards:
+            newExcluded.length > 0 ? newExcluded : undefined,
         },
       };
     });
@@ -179,4 +192,4 @@ export const useJourneyFilters = () => {
     handleSelectedDiscountCards,
     handleExcludedDiscountCards,
   };
-}; 
+};

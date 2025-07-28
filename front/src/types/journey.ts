@@ -40,4 +40,4 @@ export interface JourneyFilters {
     selectedCarriers?: string[];
     excludedCarriers?: string[];
   };
-} 
+}

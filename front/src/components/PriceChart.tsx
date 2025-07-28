@@ -1,16 +1,21 @@
-import { TicketPrice } from "@/data/mockData";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
 import { useState } from "react";
 import {
-  ResponsiveContainer,
+  Area,
   AreaChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Area,
-  Tooltip,
-  CartesianGrid,
 } from "recharts";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { TicketPrice } from "../data/mockData";
+import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
 
 interface PriceChartProps {
   data: TicketPrice[];
@@ -21,16 +26,60 @@ interface PriceChartProps {
   onFiltersChange?: (filteredData: TicketPrice[]) => void;
 }
 
-const PriceChart = ({ data, title, description, className, showFilters = false, onFiltersChange }: PriceChartProps) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      formattedDate: string;
+      price: number;
+      lowestPrice: number;
+      highestPrice: number;
+    };
+  }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (active && payload?.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white p-4 border rounded shadow-md">
+        <p className="text-sm font-semibold">{data.formattedDate}</p>
+        <p className="text-sm text-gray-600">
+          <span className="font-medium">Prix:</span> {data.price}€
+        </p>
+        <p className="text-sm text-gray-600">
+          <span className="font-medium">Min:</span> {data.lowestPrice}€
+        </p>
+        <p className="text-sm text-gray-600">
+          <span className="font-medium">Max:</span> {data.highestPrice}€
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const PriceChart = ({
+  data,
+  title,
+  description,
+  className,
+  showFilters = false,
+  onFiltersChange,
+}: PriceChartProps) => {
   const [filteredData, setFilteredData] = useState(data);
 
-  const handleFiltersChange = (newFilteredData: TicketPrice[], filters: PriceFilters) => {
+  const handleFiltersChange = (
+    newFilteredData: TicketPrice[],
+    filters: PriceFilters
+  ) => {
     setFilteredData(newFilteredData);
     onFiltersChange?.(newFilteredData);
   };
 
   // Format data for chart display
-  const formattedData = filteredData.map((item) => ({
+  const formattedData = filteredData.map((item: TicketPrice) => ({
     ...item,
     formattedDate: new Date(item.date).toLocaleDateString("fr-FR", {
       day: "2-digit",
@@ -38,33 +87,11 @@ const PriceChart = ({ data, title, description, className, showFilters = false, 
     }),
   }));
 
-  // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white p-4 border rounded shadow-md">
-          <p className="text-sm font-semibold">{data.formattedDate}</p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Prix:</span> {data.price}€
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Min:</span> {data.lowestPrice}€
-          </p>
-          <p className="text-sm text-gray-600">
-            <span className="font-medium">Max:</span> {data.highestPrice}€
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div>
       {showFilters && (
-        <PriceFiltersComponent 
-          data={data} 
+        <PriceFiltersComponent
+          data={data}
           onFiltersChange={handleFiltersChange}
         />
       )}
@@ -95,8 +122,8 @@ const PriceChart = ({ data, title, description, className, showFilters = false, 
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis 
-                  dataKey="formattedDate" 
+                <XAxis
+                  dataKey="formattedDate"
                   tick={{ fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}
@@ -108,7 +135,7 @@ const PriceChart = ({ data, title, description, className, showFilters = false, 
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => `${value}€`}
-                  domain={['auto', 'auto']}
+                  domain={["auto", "auto"]}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Area

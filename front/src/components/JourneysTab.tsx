@@ -1,17 +1,19 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useGlobalFilters } from "../hooks/useGlobalFilters";
+import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
+import GlobalFilters from "./GlobalFilters";
 import JourneyCard from "./JourneyCard";
 import TrainMap from "./TrainMap";
-import GlobalFilters from "./GlobalFilters";
-import { GroupedJourney } from "@/types/journey";
-import { useGlobalFilters } from "@/hooks/useGlobalFilters";
 
 interface JourneysTabProps {
   journeys: GroupedJourney[];
 }
 
 const JourneysTab = ({ journeys }: JourneysTabProps) => {
-  const [selectedRouteJourneyIds, setSelectedRouteJourneyIds] = useState<string[]>([]);
-  
+  const [selectedRouteJourneyIds, setSelectedRouteJourneyIds] = useState<
+    string[]
+  >([]);
+
   const {
     filters,
     availableOptions,
@@ -27,7 +29,9 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
     if (selectedRouteJourneyIds.length === 0) {
       return filteredJourneys;
     }
-    return filteredJourneys.filter(journey => selectedRouteJourneyIds.includes(journey.id));
+    return filteredJourneys.filter((journey) =>
+      selectedRouteJourneyIds.includes(journey.id)
+    );
   }, [filteredJourneys, selectedRouteJourneyIds]);
 
   const calculateFilteredPrices = (journey: GroupedJourney) => {
@@ -36,9 +40,9 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
     }
 
     const allPrices = [
-      ...journey.offers.map((o) => o.minPrice),
-      ...journey.offers.map((o) => o.avgPrice),
-      ...journey.offers.map((o) => o.maxPrice),
+      ...journey.offers.map((o: AggregatedPricingResult) => o.minPrice),
+      ...journey.offers.map((o: AggregatedPricingResult) => o.avgPrice),
+      ...journey.offers.map((o: AggregatedPricingResult) => o.maxPrice),
     ];
 
     const minPrice = Math.min(...allPrices);
@@ -70,7 +74,8 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="text-sm text-blue-800">
-              <span className="font-medium">Route sélectionnée :</span> {displayJourneys.length} trajet(s) affiché(s)
+              <span className="font-medium">Route sélectionnée :</span>{" "}
+              {displayJourneys.length} trajet(s) affiché(s)
             </div>
             <button
               onClick={() => setSelectedRouteJourneyIds([])}
@@ -84,15 +89,15 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
 
       {/* Carte */}
       <div className="h-96">
-        <TrainMap 
-          journeys={filteredJourneys} 
+        <TrainMap
+          journeys={filteredJourneys}
           onRouteSelect={setSelectedRouteJourneyIds}
         />
       </div>
 
       {/* Cartes des trajets */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {displayJourneys.map((journey) => {
+        {displayJourneys.map((journey: GroupedJourney) => {
           const filteredPrices = calculateFilteredPrices(journey);
 
           return (
@@ -108,4 +113,4 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
   );
 };
 
-export default JourneysTab; 
+export default JourneysTab;

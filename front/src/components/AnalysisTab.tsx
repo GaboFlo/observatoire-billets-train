@@ -1,13 +1,13 @@
-import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { GroupedJourney } from "@/types/journey";
+} from "../components/ui/card";
+import { GroupedJourney } from "../types/journey";
 
 interface AnalysisTabProps {
   journeys: GroupedJourney[];
@@ -27,7 +27,7 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
           Sélectionnez un trajet pour voir l'évolution des prix selon J-X
         </p>
         <div className="space-y-4">
-          {journeys.map((journey) => (
+          {journeys.map((journey: GroupedJourney) => (
             <Button
               key={journey.id}
               variant="outline"
@@ -50,4 +50,4 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
   );
 };
 
-export default AnalysisTab; 
+export default AnalysisTab;

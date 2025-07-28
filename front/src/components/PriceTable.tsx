@@ -1,60 +1,82 @@
-import { TicketPrice } from "@/data/mockData";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { TrendingUp, TrendingDown } from "lucide-react";
-import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { TicketPrice } from "../data/mockData";
+import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
+
+interface FormattedTicketPrice extends TicketPrice {
+  formattedDate: string;
+  priceChange: number;
+}
 
 interface PriceTableProps {
   data: TicketPrice[];
-  title: string;
+  title?: string;
   description?: string;
-  className?: string;
-  limit?: number;
   showFilters?: boolean;
   onFiltersChange?: (filteredData: TicketPrice[]) => void;
 }
 
-const PriceTable = ({ data, title, description, className, limit, showFilters = false, onFiltersChange }: PriceTableProps) => {
+const PriceTable = ({
+  data,
+  title = "Évolution des Prix",
+  description = "Tableau détaillé des prix des billets de train",
+  showFilters = false,
+  onFiltersChange,
+}: PriceTableProps) => {
   const [filteredData, setFilteredData] = useState(data);
 
-  const handleFiltersChange = (newFilteredData: TicketPrice[], filters: PriceFilters) => {
+  const handleFiltersChange = (
+    newFilteredData: TicketPrice[],
+    newFilters: PriceFilters
+  ) => {
     setFilteredData(newFilteredData);
-    onFiltersChange?.(newFilteredData);
+    if (onFiltersChange) {
+      onFiltersChange(newFilteredData);
+    }
   };
 
   // Process and format the data
-  const formattedData = filteredData.map((item, index) => {
-    const previousPrice = index > 0 ? filteredData[index - 1]?.price : item.price;
+  const formattedData = filteredData.map((item: TicketPrice, index: number) => {
+    const previousPrice =
+      index > 0 ? filteredData[index - 1]?.price : item.price;
     const priceChange = item.price - previousPrice;
-    const priceChangePercent = previousPrice > 0 ? (priceChange / previousPrice) * 100 : 0;
-    
+
     return {
       ...item,
-      formattedDate: new Date(item.date).toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }),
+      formattedDate: new Date(item.date).toLocaleDateString("fr-FR"),
       priceChange,
-      priceChangePercent,
     };
   });
 
-  // Sort by date (most recent first) and apply limit
-  const sortedData = [...formattedData]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, limit);
+  // Sort data by date (newest first)
+  const sortedData = [...formattedData].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
   return (
     <div>
       {showFilters && (
-        <PriceFiltersComponent 
-          data={data} 
+        <PriceFiltersComponent
+          data={data}
           onFiltersChange={handleFiltersChange}
         />
       )}
-      <Card className={className}>
+      <Card>
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
@@ -67,46 +89,40 @@ const PriceTable = ({ data, title, description, className, limit, showFilters = 
                   <TableHead>Date</TableHead>
                   <TableHead>Prix</TableHead>
                   <TableHead>Variation</TableHead>
-                  <TableHead>J-X</TableHead>
                   <TableHead>Classe</TableHead>
-                  <TableHead>Réduction</TableHead>
-                  <TableHead>Horaire</TableHead>
-                  <TableHead>Transporteur</TableHead>
+                  <TableHead>Carte de réduction</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedData.map((item, index) => (
+                {sortedData.map((item: FormattedTicketPrice, index: number) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.formattedDate}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.formattedDate}
+                    </TableCell>
                     <TableCell>{item.price}€</TableCell>
-                    <TableCell>
-                      {Math.abs(item.priceChange) > 0.1 ? (
-                        <div className="flex items-center">
+                    <TableCell className="flex items-center gap-1">
+                      {item.priceChange !== 0 && (
+                        <>
                           {item.priceChange > 0 ? (
-                            <TrendingUp className="mr-1 h-4 w-4 text-red-500" />
+                            <TrendingUp className="h-4 w-4 text-red-500" />
                           ) : (
-                            <TrendingDown className="mr-1 h-4 w-4 text-emerald-500" />
+                            <TrendingDown className="h-4 w-4 text-green-500" />
                           )}
                           <span
                             className={
-                              item.priceChange > 0 ? "text-red-500" : "text-emerald-500"
+                              item.priceChange > 0
+                                ? "text-red-500"
+                                : "text-green-500"
                             }
                           >
                             {item.priceChange > 0 ? "+" : ""}
-                            {item.priceChange.toFixed(2)}€
+                            {item.priceChange}€
                           </span>
-                        </div>
-                      ) : (
-                        <span className="text-gray-500">-</span>
+                        </>
                       )}
                     </TableCell>
-                    <TableCell>J-{item.daysBeforeDeparture}</TableCell>
-                    <TableCell className="capitalize">{item.class}</TableCell>
-                    <TableCell className="capitalize">
-                      {item.discount === "aucune" ? "Aucune" : item.discount}
-                    </TableCell>
-                    <TableCell>{item.departureTime}</TableCell>
-                    <TableCell>{item.carrier}</TableCell>
+                    <TableCell>{item.class}</TableCell>
+                    <TableCell>{item.discount}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

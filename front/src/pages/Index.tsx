@@ -1,22 +1,22 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AnalysisTab from "@/components/AnalysisTab";
-import ErrorDisplay from "@/components/ErrorDisplay";
-import JourneysTab from "@/components/JourneysTab";
-import LoadingAnimation from "@/components/LoadingAnimation";
-import PageHeader from "@/components/PageHeader";
-import TranslationStats from "@/components/TranslationStats";
-import { useJourneyData } from "@/hooks/useJourneyData";
+import AnalysisTab from "../components/AnalysisTab";
+import ErrorDisplay from "../components/ErrorDisplay";
+import JourneysTab from "../components/JourneysTab";
+import LoadingAnimation from "../components/LoadingAnimation";
+import PageHeader from "../components/PageHeader";
+import TranslationStats from "../components/TranslationStats";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import { useJourneyData } from "../hooks/useJourneyData";
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = process.env.NODE_ENV === "development";
 
 const Index = () => {
-  const {
-    activeTab,
-    setActiveTab,
-    journeys,
-    loading,
-    error,
-  } = useJourneyData();
+  const { activeTab, setActiveTab, journeys, loading, error } =
+    useJourneyData();
 
   if (loading) {
     return <LoadingAnimation />;

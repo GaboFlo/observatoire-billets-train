@@ -1,11 +1,22 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { TicketPrice } from "@/data/mockData";
+import { useState } from "react";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { TicketPrice } from "../data/mockData";
 
 export interface PriceFilters {
   class?: "première" | "seconde";
@@ -19,36 +30,48 @@ interface PriceFiltersProps {
   onFiltersChange: (filteredData: TicketPrice[], filters: PriceFilters) => void;
 }
 
-const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => {
+const PriceFiltersComponent = ({
+  data,
+  onFiltersChange,
+}: PriceFiltersProps) => {
   const [filters, setFilters] = useState<PriceFilters>({});
 
-  // Get unique departure dates from data
-  const uniqueDepartureDates = [...new Set(data.map(item => item.date))].sort().reverse();
-
   const applyFilters = (newFilters: PriceFilters) => {
-    let filteredData = [...data];
+    let filteredData = data;
 
     if (newFilters.class) {
-      filteredData = filteredData.filter(item => item.class === newFilters.class);
+      filteredData = filteredData.filter(
+        (item: TicketPrice) => item.class === newFilters.class
+      );
     }
 
     if (newFilters.discount) {
-      filteredData = filteredData.filter(item => item.discount === newFilters.discount);
+      filteredData = filteredData.filter(
+        (item: TicketPrice) => item.discount === newFilters.discount
+      );
     }
 
     if (newFilters.departureDate) {
-      filteredData = filteredData.filter(item => item.date === newFilters.departureDate);
+      filteredData = filteredData.filter(
+        (item: TicketPrice) => item.date === newFilters.departureDate
+      );
     }
 
     if (newFilters.daysBeforeDeparture !== undefined) {
-      filteredData = filteredData.filter(item => item.daysBeforeDeparture === newFilters.daysBeforeDeparture);
+      filteredData = filteredData.filter(
+        (item: TicketPrice) =>
+          item.daysBeforeDeparture === newFilters.daysBeforeDeparture
+      );
     }
 
     setFilters(newFilters);
     onFiltersChange(filteredData, newFilters);
   };
 
-  const updateFilter = (key: keyof PriceFilters, value: any) => {
+  const updateFilter = (
+    key: keyof PriceFilters,
+    value: PriceFilters[keyof PriceFilters]
+  ) => {
     const newFilters = { ...filters, [key]: value };
     applyFilters(newFilters);
   };
@@ -62,6 +85,13 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
   const clearAllFilters = () => {
     applyFilters({});
   };
+
+  // Get unique departure dates from data
+  const uniqueDepartureDates = [
+    ...new Set(data.map((item: TicketPrice) => item.date)),
+  ]
+    .sort()
+    .reverse();
 
   return (
     <Card className="mb-4">
@@ -82,7 +112,9 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
             <div className="flex items-center space-x-2">
               <Select
                 value={filters.class || ""}
-                onValueChange={(value) => updateFilter("class", value as "première" | "seconde")}
+                onValueChange={(value: string) =>
+                  updateFilter("class", value as "première" | "seconde")
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Toutes les classes" />
@@ -109,7 +141,9 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
             <div className="flex items-center space-x-2">
               <Select
                 value={filters.discount || ""}
-                onValueChange={(value) => updateFilter("discount", value as typeof filters.discount)}
+                onValueChange={(value: string) =>
+                  updateFilter("discount", value as typeof filters.discount)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Toutes les cartes" />
@@ -117,7 +151,9 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
                 <SelectContent>
                   <SelectItem value="aucune">Aucune</SelectItem>
                   <SelectItem value="avantage jeune">Avantage Jeune</SelectItem>
-                  <SelectItem value="avantage senior">Avantage Senior</SelectItem>
+                  <SelectItem value="avantage senior">
+                    Avantage Senior
+                  </SelectItem>
                   <SelectItem value="carte liberté">Carte Liberté</SelectItem>
                 </SelectContent>
               </Select>
@@ -138,13 +174,15 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
             <div className="flex items-center space-x-2">
               <Select
                 value={filters.departureDate || ""}
-                onValueChange={(value) => updateFilter("departureDate", value)}
+                onValueChange={(value: string) =>
+                  updateFilter("departureDate", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Toutes les dates" />
                 </SelectTrigger>
                 <SelectContent>
-                  {uniqueDepartureDates.slice(0, 20).map((date) => (
+                  {uniqueDepartureDates.slice(0, 20).map((date: string) => (
                     <SelectItem key={date} value={date}>
                       {new Date(date).toLocaleDateString("fr-FR")}
                     </SelectItem>
@@ -168,14 +206,15 @@ const PriceFiltersComponent = ({ data, onFiltersChange }: PriceFiltersProps) => 
             <div className="flex items-center space-x-2">
               <Input
                 type="number"
-                placeholder="ex: 15"
+                placeholder="Tous"
                 value={filters.daysBeforeDeparture || ""}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const value = e.target.value;
-                  updateFilter("daysBeforeDeparture", value ? parseInt(value) : undefined);
+                  updateFilter(
+                    "daysBeforeDeparture",
+                    value ? parseInt(value) : undefined
+                  );
                 }}
-                min="0"
-                max="90"
               />
               {filters.daysBeforeDeparture !== undefined && (
                 <Button

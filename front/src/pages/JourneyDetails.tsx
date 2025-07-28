@@ -1,20 +1,3 @@
-import { useParams } from "react-router-dom";
-import { useJourneyDetails } from "@/hooks/useJourneyDetails";
-import LoadingAnimation from "@/components/LoadingAnimation";
-import ErrorDisplay from "@/components/ErrorDisplay";
-import PageHeader from "@/components/PageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PriceChart from "@/components/PriceChart";
-import PriceTable from "@/components/PriceTable";
-import StatCard from "@/components/StatCard";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   ArrowLeft,
   ChartBar,
@@ -23,7 +6,24 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
+import LoadingAnimation from "../components/LoadingAnimation";
+import StatCard from "../components/StatCard";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import { useJourneyDetails } from "../hooks/useJourneyDetails";
 
 const JourneyDetails = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
@@ -118,7 +118,9 @@ const JourneyDetails = () => {
               <CardHeader>
                 <CardTitle>Offres Disponibles</CardTitle>
                 <CardDescription>
-                  {journey.offers.length} offre{journey.offers.length > 1 ? "s" : ""} disponible{journey.offers.length > 1 ? "s" : ""}
+                  {journey.offers.length} offre
+                  {journey.offers.length > 1 ? "s" : ""} disponible
+                  {journey.offers.length > 1 ? "s" : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -126,8 +128,11 @@ const JourneyDetails = () => {
                   <div>
                     <h4 className="font-medium mb-2">Compagnies</h4>
                     <div className="flex flex-wrap gap-2">
-                      {journey.carriers.map((carrier) => (
-                        <span key={carrier} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                      {journey.carriers.map((carrier: string) => (
+                        <span
+                          key={carrier}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
+                        >
                           {carrier}
                         </span>
                       ))}
@@ -136,8 +141,11 @@ const JourneyDetails = () => {
                   <div>
                     <h4 className="font-medium mb-2">Classes de voyage</h4>
                     <div className="flex flex-wrap gap-2">
-                      {journey.classes.map((travelClass) => (
-                        <span key={travelClass} className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                      {journey.classes.map((travelClass: string) => (
+                        <span
+                          key={travelClass}
+                          className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm"
+                        >
                           {travelClass}
                         </span>
                       ))}
@@ -146,8 +154,11 @@ const JourneyDetails = () => {
                   <div>
                     <h4 className="font-medium mb-2">Cartes de réduction</h4>
                     <div className="flex flex-wrap gap-2">
-                      {journey.discountCards.map((card) => (
-                        <span key={card} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                      {journey.discountCards.map((card: string) => (
+                        <span
+                          key={card}
+                          className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm"
+                        >
                           {card}
                         </span>
                       ))}
@@ -163,27 +174,39 @@ const JourneyDetails = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Informations du Trajet</CardTitle>
-                  <CardDescription>
-                    Détails sur ce trajet
-                  </CardDescription>
+                  <CardDescription>Détails sur ce trajet</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Station de départ</span>
-                      <span className="font-medium">{journey.departureStation}</span>
+                      <span className="text-muted-foreground">
+                        Station de départ
+                      </span>
+                      <span className="font-medium">
+                        {journey.departureStation}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Station d'arrivée</span>
-                      <span className="font-medium">{journey.arrivalStation}</span>
+                      <span className="text-muted-foreground">
+                        Station d'arrivée
+                      </span>
+                      <span className="font-medium">
+                        {journey.arrivalStation}
+                      </span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">ID du trajet</span>
+                      <span className="text-muted-foreground">
+                        ID du trajet
+                      </span>
                       <span className="font-medium">{journey.id}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Nombre d'offres</span>
-                      <span className="font-medium">{journey.offers.length}</span>
+                      <span className="text-muted-foreground">
+                        Nombre d'offres
+                      </span>
+                      <span className="font-medium">
+                        {journey.offers.length}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -199,7 +222,9 @@ const JourneyDetails = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Prix minimum</span>
+                      <span className="text-muted-foreground">
+                        Prix minimum
+                      </span>
                       <span className="font-medium">{journey.minPrice}€</span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
@@ -207,12 +232,18 @@ const JourneyDetails = () => {
                       <span className="font-medium">{journey.avgPrice}€</span>
                     </div>
                     <div className="flex justify-between border-b pb-3">
-                      <span className="text-muted-foreground">Prix maximum</span>
+                      <span className="text-muted-foreground">
+                        Prix maximum
+                      </span>
                       <span className="font-medium">{journey.maxPrice}€</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Écart de prix</span>
-                      <span className="font-medium">{journey.maxPrice - journey.minPrice}€</span>
+                      <span className="text-muted-foreground">
+                        Écart de prix
+                      </span>
+                      <span className="font-medium">
+                        {journey.maxPrice - journey.minPrice}€
+                      </span>
                     </div>
                   </div>
                 </CardContent>

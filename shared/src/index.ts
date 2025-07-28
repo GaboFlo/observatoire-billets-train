@@ -62,49 +62,40 @@ export interface PricingStats {
 export interface ApiError {
   message: string;
   code: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 // Constantes partagées
 export const TRAVEL_CLASSES = [
-  'economy',
-  'first',
-  'business',
-  'standard',
-  'premium',
-  'comfort',
-  'basic',
+  "economy",
+  "first",
+  "business",
+  "standard",
+  "premium",
+  "comfort",
+  "basic",
 ] as const;
 
-export const DISCOUNT_CARDS = [
-  'AVANTAGE_JEUNE',
-  'NONE',
-  'MAX',
-] as const;
+export const DISCOUNT_CARDS = ["AVANTAGE_JEUNE", "NONE", "MAX"] as const;
 
-export const CARRIERS = [
-  'sncf',
-  'db',
-  'ouigo',
-  'eurostar',
-] as const;
+export const CARRIERS = ["sncf", "db", "ouigo", "eurostar"] as const;
 
 export const TRAIN_NAMES = [
-  'TGV',
-  'OUIGO',
-  'TRAIN TER',
-  'TRAIN TER HDF',
-  'INOUI',
-  'IC',
-  'ES',
-  'ICE',
+  "TGV",
+  "OUIGO",
+  "TRAIN TER",
+  "TRAIN TER HDF",
+  "INOUI",
+  "IC",
+  "ES",
+  "ICE",
 ] as const;
 
 // Types basés sur les constantes
-export type TravelClass = typeof TRAVEL_CLASSES[number];
-export type DiscountCard = typeof DISCOUNT_CARDS[number];
-export type Carrier = typeof CARRIERS[number];
-export type TrainName = typeof TRAIN_NAMES[number];
+export type TravelClass = (typeof TRAVEL_CLASSES)[number];
+export type DiscountCard = (typeof DISCOUNT_CARDS)[number];
+export type Carrier = (typeof CARRIERS)[number];
+export type TrainName = (typeof TRAIN_NAMES)[number];
 
 // Traductions
 export const travelClassTranslations: TranslationMap = {
@@ -120,7 +111,7 @@ export const travelClassTranslations: TranslationMap = {
 export const discountCardTranslations: TranslationMap = {
   AVANTAGE_JEUNE: "Avantage Jeune",
   NONE: "Aucune",
-  MAX: "TGV Max"
+  MAX: "TGV Max",
 };
 
 export const carrierTranslations: TranslationMap = {
@@ -138,5 +129,5 @@ export const trainNameTranslations: TranslationMap = {
   INOUI: "TGV InOui",
   IC: "Intercités",
   ES: "Eurostar",
-  ICE: "Trains Ice"
-}; 
+  ICE: "Trains Ice",
+};
