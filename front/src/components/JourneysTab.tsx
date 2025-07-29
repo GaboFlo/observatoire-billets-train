@@ -126,30 +126,26 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
 
   return (
     <div className="space-y-2">
-      {/* Carte et filtres côte à côte */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        {/* Carte - occupe 3/4 de l'espace */}
-        <div className="xl:col-span-3">
-          <div className="h-96 w-full flex">
-            <TrainMap
-              journeys={filteredJourneys}
-              onRouteSelect={setSelectedRouteJourneyIds}
-            />
-          </div>
+      {/* Carte et filtres */}
+      <div className="space-y-4">
+        {/* Carte */}
+        <div className="h-96 w-full flex">
+          <TrainMap
+            journeys={filteredJourneys}
+            onRouteSelect={setSelectedRouteJourneyIds}
+          />
         </div>
 
-        {/* Filtres - occupe 1/4 de l'espace */}
-        <div className="xl:col-span-1">
-          <div className="w-full">
-            <GlobalFilters
-              filters={filters}
-              availableOptions={availableOptions}
-              onCarrierFilter={handleCarrierFilter}
-              onClassFilter={handleClassFilter}
-              onDiscountCardFilter={handleDiscountCardFilter}
-              onClearFilters={clearFilters}
-            />
-          </div>
+        {/* Filtres */}
+        <div className="w-full">
+          <GlobalFilters
+            filters={filters}
+            availableOptions={availableOptions}
+            onCarrierFilter={handleCarrierFilter}
+            onClassFilter={handleClassFilter}
+            onDiscountCardFilter={handleDiscountCardFilter}
+            onClearFilters={clearFilters}
+          />
         </div>
       </div>
 

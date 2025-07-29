@@ -38,7 +38,9 @@ interface RouteLine {
   price: number;
   avgPrice: number;
   departureStationId: number;
+  departureStation: string;
   arrivalStationId: number;
+  arrivalStation: string;
   properties?: Record<string, unknown>;
 }
 
@@ -181,7 +183,9 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                 price: journey.avgPrice,
                 avgPrice: journey.avgPrice,
                 departureStationId: journey.departureStationId,
+                departureStation: journey.departureStation,
                 arrivalStationId: journey.arrivalStationId,
+                arrivalStation: journey.arrivalStation,
                 properties: feature.properties,
               });
             }
@@ -296,9 +300,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                   >
                     <Popup>
                       <div className="p-2">
-                        <div className="font-medium text-sm">Gare</div>
                         <div className="text-xs text-gray-600">
-                          {line.departureStationId}
+                          {line.departureStation}
                         </div>
                       </div>
                     </Popup>
@@ -312,9 +315,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                   >
                     <Popup>
                       <div className="p-2">
-                        <div className="font-medium text-sm">Gare</div>
                         <div className="text-xs text-gray-600">
-                          {line.arrivalStationId}
+                          {line.arrivalStation}
                         </div>
                       </div>
                     </Popup>
