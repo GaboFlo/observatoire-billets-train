@@ -1,10 +1,10 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import mongoose, { Document, Schema } from "mongoose";
-import { env } from "./env-loader";
 import fs from "fs";
+import mongoose, { Document, Schema } from "mongoose";
 import path from "path";
+import { env } from "./env-loader";
 
 dotenv.config({ path: `.env.local`, override: true });
 
@@ -48,10 +48,6 @@ interface AggregatedPricingResult {
   avgPrice: number;
   maxPrice: number;
 }
-
-
-
-
 
 const stationSchema = new Schema({
   id: { type: Number, required: true },
@@ -115,8 +111,23 @@ app.get("/api/trains", async (req: Request, res: Response) => {
         $lt: new Date(new Date(date as string).getTime() + 24 * 60 * 60 * 1000),
       },
     });
-    
-    res.json(data);
+
+    // Appliquer le mapping des stations aux résultats
+    const mappedData = data.map((train) => {
+      const trainObj = train.toObject();
+
+      // Mapper les IDs de stations si nécessaire
+      if (trainObj.departure_station.id === 5085) {
+        trainObj.departure_station.id = 4687;
+      }
+      if (trainObj.arrival_station.id === 5085) {
+        trainObj.arrival_station.id = 4687;
+      }
+
+      return trainObj;
+    });
+
+    res.json(mappedData);
   } catch (error) {
     console.error("Erreur lors de la récupération des données:", error);
     res
@@ -125,21 +136,49 @@ app.get("/api/trains", async (req: Request, res: Response) => {
   }
 });
 
+// Fonction pour mapper les IDs de stations
+const mapStationId = (stationId: number): number => {
+  // Station 5085 doit être traitée comme station 4687
+  if (stationId === 5085) {
+    return 4687;
+  }
+  return stationId;
+};
+
 app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
     const data = await Train.aggregate<AggregatedPricingResult>([
       {
         $match: {
           "pricing.flexibility": "semiflexi",
+          "pricing.unsellable_reason": null,
+        },
+      },
+      {
+        $addFields: {
+          mappedDepartureStationId: {
+            $cond: {
+              if: { $eq: ["$departure_station.id", 5085] },
+              then: 4687,
+              else: "$departure_station.id",
+            },
+          },
+          mappedArrivalStationId: {
+            $cond: {
+              if: { $eq: ["$arrival_station.id", 5085] },
+              then: 4687,
+              else: "$arrival_station.id",
+            },
+          },
         },
       },
       {
         $group: {
           _id: {
             departureStation: "$departure_station.name",
-            departureStationId: "$departure_station.id",
+            departureStationId: "$mappedDepartureStationId",
             arrivalStation: "$arrival_station.name",
-            arrivalStationId: "$arrival_station.id",
+            arrivalStationId: "$mappedArrivalStationId",
             travelClass: "$pricing.travel_class",
             discountCard: "$pricing.discount_card",
             trainName: "$train_name",
@@ -175,79 +214,80 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   }
 });
 
-
-
 app.get("/api/trains/routes", async (req: Request, res: Response) => {
   const { dep, arr } = req.query;
-  
+
   if (!dep || !arr) {
-    return res.status(400).json({ error: "Les paramètres dep et arr sont requis" });
+    return res
+      .status(400)
+      .json({ error: "Les paramètres dep et arr sont requis" });
   }
 
   try {
     const depStr = dep as string;
     const arrStr = arr as string;
-    
+
     // Chercher la route dans les fichiers individuels (aller ou retour)
     const routeKey = `${depStr}-${arrStr}`;
     const routeKeyReverse = `${arrStr}-${depStr}`;
-    
+
     let routeData = null;
     let isReversed = false;
-    
+
     // Essayer d'abord le trajet direct
-    const routeFilePath = path.join(__dirname, 'routes', `${routeKey}.json`);
+    const routeFilePath = path.join(__dirname, "routes", `${routeKey}.json`);
     if (fs.existsSync(routeFilePath)) {
-      routeData = JSON.parse(fs.readFileSync(routeFilePath, 'utf8'));
+      routeData = JSON.parse(fs.readFileSync(routeFilePath, "utf8"));
     }
-    
+
     // Si pas trouvé, essayer le trajet inverse
     if (!routeData) {
-      const reverseRouteFilePath = path.join(__dirname, 'routes', `${routeKeyReverse}.json`);
+      const reverseRouteFilePath = path.join(
+        __dirname,
+        "routes",
+        `${routeKeyReverse}.json`
+      );
       if (fs.existsSync(reverseRouteFilePath)) {
-        routeData = JSON.parse(fs.readFileSync(reverseRouteFilePath, 'utf8'));
+        routeData = JSON.parse(fs.readFileSync(reverseRouteFilePath, "utf8"));
         isReversed = true;
       }
     }
-    
-    if (routeData) {    
+
+    if (routeData) {
       // Si c'est un trajet retour, inverser les coordonnées
       if (isReversed) {
         const reversedRouteData = {
           ...routeData,
           geometry: {
             ...routeData.geometry,
-            coordinates: routeData.geometry.coordinates.map((ring: number[][]) =>
-              ring.slice().reverse()
-            )
-          }
+            coordinates: routeData.geometry.coordinates.map(
+              (ring: number[][]) => ring.slice().reverse()
+            ),
+          },
         };
         res.json(reversedRouteData);
         return;
       }
-      
+
       res.json(routeData);
       return;
     }
-    
+
     console.log(`Route non trouvée: ${routeKey} ou ${routeKeyReverse}`);
-    return res.status(404).json({ 
+    return res.status(404).json({
       error: "Route non trouvée",
       message: `Route non disponible pour dep=${depStr}, arr=${arrStr}`,
-      request: { dep: depStr, arr: arrStr }
+      request: { dep: depStr, arr: arrStr },
     });
-    
   } catch (error) {
     console.error("Erreur lors de la récupération de la route:", error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Erreur interne",
       message: "Erreur lors de la récupération de la route",
-      details: error instanceof Error ? error.message : "Erreur inconnue"
+      details: error instanceof Error ? error.message : "Erreur inconnue",
     });
   }
 });
-
-
 
 app.listen(port, () => {
   console.log(`Serveur écoutant sur http://localhost:${port}`);

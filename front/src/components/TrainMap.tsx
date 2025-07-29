@@ -8,7 +8,7 @@ import {
   Popup,
   TileLayer,
 } from "react-leaflet";
-import { GroupedJourney } from "../types/journey";
+import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
 
 interface TrainMapProps {
   journeys: GroupedJourney[];
@@ -93,15 +93,51 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
 
     const loadRoutes = async () => {
       setLoading(true);
-      const promises = filteredJourneys.map((journey: GroupedJourney) =>
-        fetchRouteData(journey)
-      );
+
+      // Créer un Set des routes uniques à charger (éviter les doublons aller/retour)
+      const routesToLoad = new Set<string>();
+
+      filteredJourneys.forEach((journey) => {
+        const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
+        const reverseKey = `${journey.arrivalStationId}-${journey.departureStationId}`;
+
+        // Si ni la route directe ni la route inverse ne sont chargées, ajouter la route directe
+        if (!routeData[key] && !routeData[reverseKey]) {
+          routesToLoad.add(key);
+        }
+      });
+
+      const promises = Array.from(routesToLoad).map(async (routeKey) => {
+        const [depId, arrId] = routeKey.split("-").map(Number);
+
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/trains/routes?dep=${depId}&arr=${arrId}`
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            setRouteData((prev) => ({ ...prev, [routeKey]: data }));
+          } else {
+            console.error(
+              `Erreur HTTP ${response.status} pour la route ${routeKey}`
+            );
+          }
+        } catch (error) {
+          console.error(
+            `Erreur lors de la récupération de la route ${routeKey}:`,
+            error
+          );
+        }
+      });
+
       await Promise.all(promises);
       setLoading(false);
     };
 
     loadRoutes();
-  }, [filteredJourneys, routeData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredJourneys]);
 
   // Calcul sécurisé des prix min/max
   const priceStats = useMemo(() => {
@@ -141,7 +177,16 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
 
     filteredJourneys.forEach((journey) => {
       const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
-      const route = routeData[key];
+      const reverseKey = `${journey.arrivalStationId}-${journey.departureStationId}`;
+
+      // Chercher la route dans les deux sens
+      let route = routeData[key];
+      let isReversed = false;
+
+      if (!route && routeData[reverseKey]) {
+        route = routeData[reverseKey];
+        isReversed = true;
+      }
 
       if (route) {
         let features: GeoJSONFeature[] = [];
@@ -171,6 +216,11 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                 (feature.geometry.coordinates as number[][][])[0]?.map(
                   (coord: number[]) => [coord[1], coord[0]]
                 ) || [];
+            }
+
+            // Inverser les coordonnées si c'est un trajet retour
+            if (isReversed) {
+              coordinates = coordinates.reverse();
             }
 
             if (coordinates.length > 0) {
@@ -255,17 +305,111 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                 >
                   <Popup>
                     <div className="p-2">
-                      <div className="font-medium text-sm">{line.name}</div>
-                      <div className="text-sm font-semibold text-blue-600">
-                        Prix moyen: {Math.round(line.avgPrice)}€
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Prix min: {Math.round(priceStats.minPrice)}€ | Prix max:{" "}
-                        {Math.round(priceStats.maxPrice)}€
-                      </div>
+                      {/* Statistiques par sens */}
+                      {(() => {
+                        // Fonction pour calculer les prix filtrés (même logique que JourneysTab)
+                        const calculateFilteredPrices = (
+                          journey: GroupedJourney
+                        ) => {
+                          if (journey.offers.length === 0) {
+                            return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
+                          }
+
+                          const allPrices = [
+                            ...journey.offers.map(
+                              (o: AggregatedPricingResult) => o.minPrice
+                            ),
+                            ...journey.offers.map(
+                              (o: AggregatedPricingResult) => o.avgPrice
+                            ),
+                            ...journey.offers.map(
+                              (o: AggregatedPricingResult) => o.maxPrice
+                            ),
+                          ];
+
+                          const minPrice = Math.min(...allPrices);
+                          const maxPrice = Math.max(...allPrices);
+                          const avgPrice =
+                            allPrices.reduce((sum, price) => sum + price, 0) /
+                            allPrices.length;
+
+                          return {
+                            minPrice,
+                            maxPrice,
+                            avgPrice: Math.round(avgPrice),
+                          };
+                        };
+
+                        // Trouver les journeys correspondant à chaque sens
+                        const forwardJourneys = filteredJourneys.filter(
+                          (j) =>
+                            j.departureStationId === line.departureStationId &&
+                            j.arrivalStationId === line.arrivalStationId
+                        );
+                        const reverseJourneys = filteredJourneys.filter(
+                          (j) =>
+                            j.departureStationId === line.arrivalStationId &&
+                            j.arrivalStationId === line.departureStationId
+                        );
+
+                        return (
+                          <>
+                            {forwardJourneys.length > 0 && (
+                              <div className="mb-3">
+                                <div className="text-xs text-gray-600 mb-1">
+                                  {line.departureStation} →{" "}
+                                  {line.arrivalStation}
+                                </div>
+                                {(() => {
+                                  const prices = calculateFilteredPrices(
+                                    forwardJourneys[0]
+                                  );
+                                  return (
+                                    <>
+                                      <div className="text-sm font-semibold text-blue-600">
+                                        Prix moyen : {prices.avgPrice}€
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        Prix min : {prices.minPrice}€ | Prix max
+                                        : {prices.maxPrice}€
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            )}
+
+                            {reverseJourneys.length > 0 && (
+                              <div>
+                                <div className="text-xs text-gray-600 mb-1">
+                                  {line.arrivalStation} →{" "}
+                                  {line.departureStation}
+                                </div>
+                                {(() => {
+                                  const prices = calculateFilteredPrices(
+                                    reverseJourneys[0]
+                                  );
+                                  return (
+                                    <>
+                                      <div className="text-sm font-semibold text-blue-600">
+                                        Prix moyen : {prices.avgPrice}€
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        Prix min : {prices.minPrice}€ | Prix max
+                                        : {prices.maxPrice}€
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+
                       {line.properties &&
                         typeof line.properties === "object" && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
                             {"name" in line.properties &&
                               typeof (line.properties as { name?: unknown })
                                 .name === "string" && (
