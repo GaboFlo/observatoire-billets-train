@@ -91,11 +91,22 @@ export const TRAIN_NAMES = [
   "ICE",
 ] as const;
 
+export const STATIONS = [
+  "Barcelona",
+  "Bordeaux-st-jean",
+  "La-rochelle-ville",
+  "London-st-pancras",
+  "Marseille-st-charles",
+  "Chambery-challes-les-eaux",
+  "Besancon-franche-comte-tgv",
+] as const;
+
 // Types basés sur les constantes
 export type TravelClass = (typeof TRAVEL_CLASSES)[number];
 export type DiscountCard = (typeof DISCOUNT_CARDS)[number];
 export type Carrier = (typeof CARRIERS)[number];
 export type TrainName = (typeof TRAIN_NAMES)[number];
+export type Station = (typeof STATIONS)[number];
 
 // Traductions
 export const travelClassTranslations: TranslationMap = {
@@ -130,4 +141,14 @@ export const trainNameTranslations: TranslationMap = {
   IC: "Intercités",
   ES: "Eurostar",
   ICE: "Trains Ice",
+};
+
+export const stationTranslations: TranslationMap = {
+  Barcelona: "Barcelone",
+  "Bordeaux-st-jean": "Bordeaux",
+  "La-rochelle-ville": "La Rochelle",
+  "London-st-pancras": "Londres",
+  "Marseille-st-charles": "Marseille",
+  "Chambery-challes-les-eaux": "Chambéry",
+  "Besancon-franche-comte-tgv": "Besançon Franche-Comté TGV",
 };

@@ -1,20 +1,22 @@
 // Import des traductions depuis le package partagé
-import type { TranslationMap } from '@observatoire-billets-train/shared';
+import type { TranslationMap } from "@observatoire-billets-train/shared";
 import {
-  travelClassTranslations,
-  discountCardTranslations,
   carrierTranslations,
+  discountCardTranslations,
+  stationTranslations,
   trainNameTranslations,
-} from '@observatoire-billets-train/shared';
+  travelClassTranslations,
+} from "@observatoire-billets-train/shared";
 
 // Ré-export des traductions
-export type { TranslationMap };
 export {
-  travelClassTranslations,
-  discountCardTranslations,
   carrierTranslations,
+  discountCardTranslations,
+  stationTranslations,
   trainNameTranslations,
+  travelClassTranslations,
 };
+export type { TranslationMap };
 
 export const translate = (
   value: string,
@@ -25,7 +27,7 @@ export const translate = (
   if (translation) {
     return translation;
   }
-  
+
   return fallback || value;
 };
 
@@ -45,11 +47,15 @@ export const translateTrainName = (trainName: string): string => {
   return translate(trainName, trainNameTranslations, trainName);
 };
 
+export const translateStation = (stationName: string): string => {
+  return translate(stationName, stationTranslations, stationName);
+};
+
 export const formatTranslationKey = (key: string): string => {
   return key
     .toLowerCase()
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
 export const useTranslations = () => {
@@ -58,7 +64,8 @@ export const useTranslations = () => {
     translateDiscountCard,
     translateCarrier,
     translateTrainName,
+    translateStation,
     translate,
     formatTranslationKey,
   };
-}; 
+};

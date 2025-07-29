@@ -13,6 +13,7 @@ import {
 } from "../components/ui/table";
 import { useGlobalFilters } from "../hooks/useGlobalFilters";
 import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
+import { translateStation } from "../utils/translations";
 import GlobalFilters from "./GlobalFilters";
 import TrainMap from "./TrainMap";
 
@@ -245,8 +246,12 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
 
                   return (
                     <TableRow key={journey.id}>
-                      <TableCell className="font-medium">{departure}</TableCell>
-                      <TableCell className="font-medium">{arrival}</TableCell>
+                      <TableCell className="font-medium">
+                        {translateStation(departure)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {translateStation(arrival)}
+                      </TableCell>
                       <TableCell className="text-green-600 font-semibold">
                         {filteredPrices.minPrice}€
                       </TableCell>

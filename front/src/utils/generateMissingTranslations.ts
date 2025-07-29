@@ -3,6 +3,7 @@ import { generateTranslationTemplate } from "./translationConfig";
 import {
   carrierTranslations,
   discountCardTranslations,
+  stationTranslations,
   trainNameTranslations,
   travelClassTranslations,
 } from "./translations";
@@ -16,6 +17,7 @@ export const analyzeAndGenerateMissingTranslations = (
   const allClasses = new Set<string>();
   const allDiscountCards = new Set<string>();
   const allTrainNames = new Set<string>();
+  const allStations = new Set<string>();
 
   journeys.forEach((journey) => {
     journey.carriers?.forEach((carrier: string) => allCarriers.add(carrier));
@@ -39,6 +41,11 @@ export const analyzeAndGenerateMissingTranslations = (
     travelClassTranslations
   );
 
+  const stationTemplate = generateTranslationTemplate(
+    Array.from(allStations),
+    stationTranslations
+  );
+
   const discountCardTemplate = generateTranslationTemplate(
     Array.from(allDiscountCards),
     discountCardTranslations
@@ -54,6 +61,7 @@ export const analyzeAndGenerateMissingTranslations = (
     classes: classTemplate,
     discountCards: discountCardTemplate,
     trainNames: trainNameTemplate,
+    stations: stationTemplate,
   };
 };
 
