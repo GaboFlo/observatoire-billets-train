@@ -40,6 +40,11 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
     clearFilters,
   } = useGlobalFilters(journeys);
 
+  const hasActiveFilters =
+    filters.excludedCarriers.length > 0 ||
+    filters.excludedClasses.length > 0 ||
+    filters.excludedDiscountCards.length > 1; // Plus de 1 car MAX est toujours exclu par défaut
+
   const calculateFilteredPrices = (journey: GroupedJourney) => {
     if (journey.offers.length === 0) {
       return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
@@ -84,8 +89,8 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
       } else {
         const aPrices = calculateFilteredPrices(a);
         const bPrices = calculateFilteredPrices(b);
-        aValue = aPrices[sortField as keyof typeof aPrices] as number;
-        bValue = bPrices[sortField as keyof typeof bPrices] as number;
+        aValue = aPrices[sortField];
+        bValue = bPrices[sortField];
       }
 
       if (sortDirection === "asc") {
@@ -144,21 +149,32 @@ const JourneysTab = ({ journeys }: JourneysTabProps) => {
             onCarrierFilter={handleCarrierFilter}
             onClassFilter={handleClassFilter}
             onDiscountCardFilter={handleDiscountCardFilter}
-            onClearFilters={clearFilters}
           />
         </div>
       </div>
 
-      {/* Indicateur de sélection de route */}
-      {selectedRouteJourneyIds.length > 0 && (
+      {/* Indicateur de sélection de route et filtres actifs */}
+      {(selectedRouteJourneyIds.length > 0 || hasActiveFilters) && (
         <div className="bg-blue-50 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="text-sm text-blue-800">
-              <span className="font-medium">Route sélectionnée :</span>{" "}
-              {displayJourneys.length} trajet(s) affiché(s)
+              {selectedRouteJourneyIds.length > 0 ? (
+                <>
+                  <span className="font-medium">Route sélectionnée :</span>{" "}
+                  {displayJourneys.length} trajet(s) affiché(s)
+                </>
+              ) : (
+                <>
+                  <span className="font-medium">Filtres actifs :</span>{" "}
+                  {displayJourneys.length} trajet(s) affiché(s)
+                </>
+              )}
             </div>
             <button
-              onClick={() => setSelectedRouteJourneyIds([])}
+              onClick={() => {
+                setSelectedRouteJourneyIds([]);
+                clearFilters();
+              }}
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
               Voir tous les trajets

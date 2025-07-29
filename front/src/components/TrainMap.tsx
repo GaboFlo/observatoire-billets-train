@@ -66,31 +66,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const filteredJourneys = journeys;
 
   useEffect(() => {
-    const fetchRouteData = async (journey: GroupedJourney) => {
-      const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
-
-      if (routeData[key]) return;
-
-      try {
-        const response = await fetch(
-          `http://localhost:3000/api/trains/routes?dep=${journey.departureStationId}&arr=${journey.arrivalStationId}`
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-
-          setRouteData((prev) => ({ ...prev, [key]: data }));
-        } else {
-          console.error(`Erreur HTTP ${response.status} pour la route ${key}`);
-        }
-      } catch (error) {
-        console.error(
-          `Erreur lors de la récupération de la route pour ${journey.name}:`,
-          error
-        );
-      }
-    };
-
     const loadRoutes = async () => {
       setLoading(true);
 
@@ -268,6 +243,12 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   return (
     <div className="w-full h-full rounded-lg overflow-hidden">
       <div className="relative h-full w-full">
+        {/* Barre de chargement */}
+        {loading && (
+          <div className="absolute top-0 left-0 right-0 z-50">
+            <div className="h-1 bg-blue-500 animate-pulse"></div>
+          </div>
+        )}
         <MapContainer
           center={mapCenter as [number, number]}
           zoom={5}
