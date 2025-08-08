@@ -61,13 +61,12 @@ export const useJourneyData = () => {
       selectedDate?: string | null;
     }) => {
       try {
-        // Utiliser la barre de chargement discrète pour les filtres
-        if (journeys.length > 0) {
+        // Utiliser la barre de chargement discrète pour tous les chargements sauf le premier
+        if (journeys.length > 0 || allJourneys.length > 0) {
           setFilterLoading(true);
         } else {
           setLoading(true);
         }
-        console.log("Appel à l'API pricing avec filtres:", filters);
 
         const requestBody = {
           excludedCarriers: filters?.excludedCarriers || [],
@@ -75,8 +74,6 @@ export const useJourneyData = () => {
           excludedDiscountCards: filters?.excludedDiscountCards || [],
           selectedDate: filters?.selectedDate || null,
         };
-
-        console.log("Body de la requête:", requestBody);
 
         const response = await fetch("/api/trains/pricing", {
           method: "POST",
@@ -90,7 +87,6 @@ export const useJourneyData = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Données reçues: ", data);
 
         // Traitement des données agrégées du backend
         const journeyMap = new Map<string, Journey>();
@@ -149,15 +145,20 @@ export const useJourneyData = () => {
         );
 
         const processedJourneys = Array.from(journeyMap.values());
-        console.log(
-          "Journeys traités:",
-          processedJourneys.length,
-          processedJourneys
-        );
         setJourneys(processedJourneys);
 
-        // Stocker toutes les données non filtrées lors du premier chargement
-        if (allJourneys.length === 0) {
+        // Stocker toutes les données non filtrées UNIQUEMENT lors du premier chargement
+        // Vérifier si c'est le premier appel sans filtres (seulement MAX par défaut)
+        const isFirstLoad =
+          allJourneys.length === 0 &&
+          processedJourneys.length > 0 &&
+          (!filters ||
+            (filters.excludedCarriers?.length === 0 &&
+              filters.excludedClasses?.length === 0 &&
+              filters.excludedDiscountCards?.length === 1 &&
+              filters.excludedDiscountCards[0] === "MAX"));
+
+        if (isFirstLoad) {
           setAllJourneys(processedJourneys);
         }
 
@@ -246,8 +247,6 @@ export const useJourneyData = () => {
       excludedClasses?: string[];
       excludedDiscountCards?: string[];
     }) => {
-      console.log("applyFilters appelé avec:", newFilters);
-
       // Annuler le timeout précédent
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -274,9 +273,7 @@ export const useJourneyData = () => {
   );
 
   // Forcer le rechargement quand les filtres changent
-  useEffect(() => {
-    console.log("currentFilters changé:", currentFilters);
-  }, [currentFilters]);
+  useEffect(() => {}, [currentFilters]);
 
   // Nettoyer le timeout au démontage
   useEffect(() => {

@@ -51,9 +51,6 @@ const JourneysTab = ({
   applyFilters: propApplyFilters,
   currentFilters,
 }: JourneysTabProps) => {
-  console.log("JourneysTab reçoit:", journeys.length, "journeys");
-  console.log("JourneysTab - currentFilters:", currentFilters);
-
   const [selectedRouteJourneyIds, setSelectedRouteJourneyIds] = useState<
     string[]
   >([]);

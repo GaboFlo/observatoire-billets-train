@@ -36,7 +36,7 @@ const Index = () => {
     }
   }, []); // Dépendances vides pour éviter les re-renders
 
-  if (loading) {
+  if (loading && journeys.length === 0) {
     return <LoadingAnimation />;
   }
 
@@ -46,8 +46,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      {/* Barre de chargement discrète pour les filtres */}
-      {filterLoading && <LoadingAnimation isFilterLoading={true} />}
+      {/* Barre de chargement discrète pour tous les chargements */}
+      {(loading || filterLoading) && (
+        <LoadingAnimation isFilterLoading={true} />
+      )}
 
       <div className="container px-4 py-8 mx-auto max-w-7xl">
         <PageHeader />

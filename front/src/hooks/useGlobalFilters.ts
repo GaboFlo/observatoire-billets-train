@@ -21,7 +21,6 @@ export const useGlobalFilters = (
 
   // Synchroniser les filtres quand currentFilters change
   useEffect(() => {
-    console.log("useGlobalFilters - currentFilters changé:", currentFilters);
     if (currentFilters) {
       setFilters(currentFilters);
     }
@@ -33,8 +32,8 @@ export const useGlobalFilters = (
     const classes = new Set<string>();
     const discountCards = new Set<string>();
 
-    // Utiliser allJourneys si disponible, sinon utiliser journeys
-    const dataToUse = allJourneys || journeys;
+    // Toujours utiliser allJourneys si disponible, même s'il est vide
+    const dataToUse = allJourneys !== undefined ? allJourneys : journeys;
 
     dataToUse.forEach((journey) => {
       journey.offers.forEach((offer) => {
@@ -59,7 +58,6 @@ export const useGlobalFilters = (
   const filteredJourneys = journeys;
 
   const handleCarrierFilter = (carrier: string) => {
-    console.log("handleCarrierFilter appelé avec:", carrier);
     const newFilters = {
       ...filters,
       excludedCarriers: filters.excludedCarriers.includes(carrier)
@@ -71,7 +69,6 @@ export const useGlobalFilters = (
   };
 
   const handleClassFilter = (travelClass: string) => {
-    console.log("handleClassFilter appelé avec:", travelClass);
     const newFilters = {
       ...filters,
       excludedClasses: filters.excludedClasses.includes(travelClass)
@@ -83,7 +80,6 @@ export const useGlobalFilters = (
   };
 
   const handleDiscountCardFilter = (discountCard: string) => {
-    console.log("handleDiscountCardFilter appelé avec:", discountCard);
     const newFilters = {
       ...filters,
       excludedDiscountCards: filters.excludedDiscountCards.includes(
@@ -97,7 +93,6 @@ export const useGlobalFilters = (
   };
 
   const clearFilters = () => {
-    console.log("clearFilters appelé");
     const newFilters = {
       excludedCarriers: [],
       excludedClasses: [],

@@ -38,7 +38,7 @@ const GlobalFilters = ({
   onDateSelect,
   onReload,
 }: GlobalFiltersProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true); // Déplié par défaut
 
   const hasActiveFilters =
     filters.excludedCarriers.length > 0 ||

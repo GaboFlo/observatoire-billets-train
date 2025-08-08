@@ -11,7 +11,9 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
     // Barre de chargement discrète pour les filtres
     return (
       <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse"></div>
+        <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+        </div>
       </div>
     );
   }

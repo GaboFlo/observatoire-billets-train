@@ -77,12 +77,25 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .animate-train-move {
   animation: train-move 5s ease-in-out infinite;
 }
 
 .animate-train-progress {
   animation: train-progress 5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
 }
 
 /* Effets de glassmorphism */

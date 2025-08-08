@@ -1,4 +1,3 @@
-import { MapPin } from "lucide-react";
 import { useMemo } from "react";
 import { useJourneyData } from "../hooks/useJourneyData";
 
@@ -20,8 +19,8 @@ const PageHeader = () => {
   return (
     <div className="mb-12">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl mb-6">
-          <MapPin className="w-8 h-8 text-white" />
+        <div className="inline-flex items-center justify-center w-16 h-16 mb-6">
+          <img src="/train-logo.svg" alt="Logo TGV" className="w-16 h-16" />
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
           Observatoire des billets de train
