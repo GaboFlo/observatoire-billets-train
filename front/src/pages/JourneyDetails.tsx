@@ -89,28 +89,31 @@ const JourneyDetails = () => {
                 title="Prix Moyen"
                 value={`${journey.avgPrice}€`}
                 description="Prix moyen des offres disponibles"
-                icon={<ChartLine className="h-4 w-4" />}
+                icon={ChartLine}
+                color="blue"
               />
               <StatCard
                 title="Prix Minimum"
                 value={`${journey.minPrice}€`}
                 description="Le tarif le plus bas observé"
-                icon={<TrendingDown className="h-4 w-4" />}
+                icon={TrendingDown}
+                color="green"
               />
               <StatCard
                 title="Prix Maximum"
                 value={`${journey.maxPrice}€`}
                 description="Le tarif le plus élevé observé"
-                icon={<TrendingUp className="h-4 w-4" />}
+                icon={TrendingUp}
+                color="orange"
               />
               <StatCard
                 title="Variation Mensuelle"
                 value={`${monthlyChange > 0 ? "+" : ""}${monthlyChange.toFixed(
                   1
                 )}%`}
-                trend={monthlyChange > 0 ? "up" : "down"}
-                trendValue="Par rapport au mois précédent"
-                icon={<ChartBar className="h-4 w-4" />}
+                description="Par rapport au mois précédent"
+                icon={ChartBar}
+                color="purple"
               />
             </div>
 

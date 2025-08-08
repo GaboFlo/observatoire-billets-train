@@ -1,14 +1,38 @@
+import { MapPin } from "lucide-react";
+import { useMemo } from "react";
+import { useJourneyData } from "../hooks/useJourneyData";
+
 const PageHeader = () => {
+  const { journeys } = useJourneyData();
+
+  const stats = useMemo(() => {
+    if (!journeys || journeys.length === 0) {
+      return {
+        totalJourneys: 0,
+      };
+    }
+
+    return {
+      totalJourneys: journeys.length,
+    };
+  }, [journeys]);
+
   return (
-    <div className="mb-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">
-        Observatoire des billets de train
-      </h1>
-      <p className="text-gray-500">
-        Analyse des prix des billets de train grandes distances sur certaines dates et lignes
-      </p>
+    <div className="mb-12">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl mb-6">
+          <MapPin className="w-8 h-8 text-white" />
+        </div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          Observatoire des billets de train
+        </h1>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed mb-6">
+          Analyse des prix des billets de train grandes distances sur certaines
+          dates et lignes
+        </p>
+      </div>
     </div>
   );
 };
 
-export default PageHeader; 
+export default PageHeader;

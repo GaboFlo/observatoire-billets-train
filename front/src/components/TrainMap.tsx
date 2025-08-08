@@ -8,6 +8,7 @@ import {
   Popup,
   TileLayer,
 } from "react-leaflet";
+import { getRouteData, RouteData } from "../services/routeService";
 import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
 
 interface TrainMapProps {
@@ -22,11 +23,6 @@ interface GeoJSONFeature {
     coordinates: number[][][] | number[][];
   };
   properties: Record<string, unknown>;
-}
-
-interface RouteData {
-  type: string;
-  features?: GeoJSONFeature[];
 }
 
 interface RouteLine {
@@ -59,7 +55,6 @@ const createCustomIcon = (color: string) =>
 
 const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const [routeData, setRouteData] = useState<{ [key: string]: RouteData }>({});
-  const [loading, setLoading] = useState(false);
   const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
 
   // Utiliser directement les journeys passées en props (déjà filtrées)
@@ -67,8 +62,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
 
   useEffect(() => {
     const loadRoutes = async () => {
-      setLoading(true);
-
       // Créer un Set des routes uniques à charger (éviter les doublons aller/retour)
       const routesToLoad = new Set<string>();
 
@@ -86,18 +79,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
         const [depId, arrId] = routeKey.split("-").map(Number);
 
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/trains/routes?dep=${depId}&arr=${arrId}`
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            setRouteData((prev) => ({ ...prev, [routeKey]: data }));
-          } else {
-            console.error(
-              `Erreur HTTP ${response.status} pour la route ${routeKey}`
-            );
-          }
+          const data = await getRouteData(depId, arrId);
+          setRouteData((prev) => ({ ...prev, [routeKey]: data }));
         } catch (error) {
           console.error(
             `Erreur lors de la récupération de la route ${routeKey}:`,
@@ -107,7 +90,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
       });
 
       await Promise.all(promises);
-      setLoading(false);
     };
 
     loadRoutes();
@@ -243,12 +225,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   return (
     <div className="w-full h-full rounded-lg overflow-hidden">
       <div className="relative h-full w-full">
-        {/* Barre de chargement */}
-        {loading && (
-          <div className="absolute top-0 left-0 right-0 z-50">
-            <div className="h-1 bg-blue-500 animate-pulse"></div>
-          </div>
-        )}
         <MapContainer
           center={mapCenter as [number, number]}
           zoom={5}

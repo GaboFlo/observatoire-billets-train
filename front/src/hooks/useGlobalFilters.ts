@@ -11,7 +11,7 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
   const [filters, setFilters] = useState<GlobalFilters>({
     excludedCarriers: [],
     excludedClasses: [],
-    excludedDiscountCards: ["MAX"], // Exclure MAX des cartes de réduction par défaut
+    excludedDiscountCards: ["MAX"], // Ne plus exclure MAX par défaut
   });
 
   // Extraire toutes les options disponibles

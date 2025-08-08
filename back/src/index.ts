@@ -1,9 +1,7 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express, { Request, Response } from "express";
-import fs from "fs";
 import mongoose, { Document, Schema } from "mongoose";
-import path from "path";
 import { env } from "./env-loader";
 
 dotenv.config({ path: `.env.local`, override: true });
@@ -47,6 +45,7 @@ interface AggregatedPricingResult {
   minPrice: number;
   avgPrice: number;
   maxPrice: number;
+  departureDate: string; // Ajouter la date de départ
 }
 
 const stationSchema = new Schema({
@@ -147,12 +146,15 @@ const mapStationId = (stationId: number): number => {
 
 app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
+    // Construire le match de base - ne plus filtrer par date par défaut
+    const baseMatch: any = {
+      "pricing.flexibility": "semiflexi",
+      "pricing.unsellable_reason": null,
+    };
+
     const data = await Train.aggregate<AggregatedPricingResult>([
       {
-        $match: {
-          "pricing.flexibility": "semiflexi",
-          "pricing.unsellable_reason": null,
-        },
+        $match: baseMatch,
       },
       {
         $addFields: {
@@ -183,6 +185,7 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
             discountCard: "$pricing.discount_card",
             trainName: "$train_name",
             carrier: "$carrier",
+            departureDate: "$departure_date", // Ajouter la date de départ au groupe
           },
           minPrice: { $min: "$pricing.price" },
           avgPrice: { $avg: "$pricing.price" },
@@ -203,6 +206,7 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
           minPrice: 1,
           avgPrice: 1,
           maxPrice: 1,
+          departureDate: "$_id.departureDate", // Inclure la date de départ dans le projet
         },
       },
     ]);
@@ -214,78 +218,48 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/trains/routes", async (req: Request, res: Response) => {
-  const { dep, arr } = req.query;
-
-  if (!dep || !arr) {
-    return res
-      .status(400)
-      .json({ error: "Les paramètres dep et arr sont requis" });
-  }
-
+app.get("/api/trains/dates", async (req: Request, res: Response) => {
   try {
-    const depStr = dep as string;
-    const arrStr = arr as string;
-
-    // Chercher la route dans les fichiers individuels (aller ou retour)
-    const routeKey = `${depStr}-${arrStr}`;
-    const routeKeyReverse = `${arrStr}-${depStr}`;
-
-    let routeData = null;
-    let isReversed = false;
-
-    // Essayer d'abord le trajet direct
-    const routeFilePath = path.join(__dirname, "routes", `${routeKey}.json`);
-    if (fs.existsSync(routeFilePath)) {
-      routeData = JSON.parse(fs.readFileSync(routeFilePath, "utf8"));
-    }
-
-    // Si pas trouvé, essayer le trajet inverse
-    if (!routeData) {
-      const reverseRouteFilePath = path.join(
-        __dirname,
-        "routes",
-        `${routeKeyReverse}.json`
-      );
-      if (fs.existsSync(reverseRouteFilePath)) {
-        routeData = JSON.parse(fs.readFileSync(reverseRouteFilePath, "utf8"));
-        isReversed = true;
-      }
-    }
-
-    if (routeData) {
-      // Si c'est un trajet retour, inverser les coordonnées
-      if (isReversed) {
-        const reversedRouteData = {
-          ...routeData,
-          geometry: {
-            ...routeData.geometry,
-            coordinates: routeData.geometry.coordinates.map(
-              (ring: number[][]) => ring.slice().reverse()
-            ),
+    // Récupérer les dates distinctes de départ (sans les heures)
+    const dates = await Train.aggregate([
+      {
+        $addFields: {
+          // Extraire seulement la date (sans l'heure) en format YYYY-MM-DD
+          dateOnly: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$departure_date",
+            },
           },
-        };
-        res.json(reversedRouteData);
-        return;
-      }
+        },
+      },
+      {
+        $group: {
+          _id: "$dateOnly",
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+        },
+      },
+      {
+        $sort: {
+          date: -1, // Trier par date décroissante (plus récent en premier)
+        },
+      },
+    ]);
 
-      res.json(routeData);
-      return;
-    }
+    // Extraire les dates du résultat
+    const formattedDates = dates.map((item) => item.date);
 
-    console.log(`Route non trouvée: ${routeKey} ou ${routeKeyReverse}`);
-    return res.status(404).json({
-      error: "Route non trouvée",
-      message: `Route non disponible pour dep=${depStr}, arr=${arrStr}`,
-      request: { dep: depStr, arr: arrStr },
-    });
+    res.json(formattedDates);
   } catch (error) {
-    console.error("Erreur lors de la récupération de la route:", error);
-    return res.status(500).json({
-      error: "Erreur interne",
-      message: "Erreur lors de la récupération de la route",
-      details: error instanceof Error ? error.message : "Erreur inconnue",
-    });
+    console.error("Erreur lors de la récupération des dates:", error);
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des dates." });
   }
 });
 
