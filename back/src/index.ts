@@ -38,14 +38,12 @@ interface AggregatedPricingResult {
   departureStationId: number;
   arrivalStation: string;
   arrivalStationId: number;
-  travelClass: string;
-  discountCard: string;
-  trainName: string;
-  carrier: string;
   minPrice: number;
   avgPrice: number;
   maxPrice: number;
-  departureDate: string; // Ajouter la date de départ
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
 }
 
 const stationSchema = new Schema({
@@ -179,64 +177,168 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
       }
     }
 
-    const data = await Train.aggregate<AggregatedPricingResult>([
-      {
-        $match: baseMatch,
-      },
-      {
-        $addFields: {
-          mappedDepartureStationId: {
-            $cond: {
-              if: { $eq: ["$departure_station.id", 5085] },
-              then: 4687,
-              else: "$departure_station.id",
+    const data = await Train.aggregate<AggregatedPricingResult>(
+      [
+        {
+          $match: baseMatch,
+        },
+        {
+          $addFields: {
+            mappedDepartureStationId: {
+              $cond: {
+                if: { $eq: ["$departure_station.id", 5085] },
+                then: 4687,
+                else: "$departure_station.id",
+              },
+            },
+            mappedArrivalStationId: {
+              $cond: {
+                if: { $eq: ["$arrival_station.id", 5085] },
+                then: 4687,
+                else: "$arrival_station.id",
+              },
             },
           },
-          mappedArrivalStationId: {
-            $cond: {
-              if: { $eq: ["$arrival_station.id", 5085] },
-              then: 4687,
-              else: "$arrival_station.id",
+        },
+        {
+          $group: {
+            _id: {
+              departureStation: "$departure_station.name",
+              departureStationId: "$mappedDepartureStationId",
+              arrivalStation: "$arrival_station.name",
+              arrivalStationId: "$mappedArrivalStationId",
+            },
+            minPrice: { $min: "$pricing.price" },
+            avgPrice: { $avg: "$pricing.price" },
+            maxPrice: { $max: "$pricing.price" },
+            // Collecter seulement les listes uniques
+            carriers: { $addToSet: "$carrier" },
+            classes: { $addToSet: "$pricing.travel_class" },
+            discountCards: { $addToSet: "$pricing.discount_card" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            departureStation: "$_id.departureStation",
+            departureStationId: "$_id.departureStationId",
+            arrivalStation: "$_id.arrivalStation",
+            arrivalStationId: "$_id.arrivalStationId",
+            minPrice: 1,
+            avgPrice: 1,
+            maxPrice: 1,
+            carriers: 1,
+            classes: 1,
+            discountCards: 1,
+          },
+        },
+      ],
+      { allowDiskUse: true }
+    );
+
+    res.json(data);
+  } catch (error) {
+    console.error("Erreur lors de l'agrégation des données:", error);
+    res.status(500).json({ error: "Erreur lors de l'agrégation des données." });
+  }
+});
+
+app.post("/api/trains/pricing", async (req: Request, res: Response) => {
+  try {
+    const {
+      excludedCarriers = [],
+      excludedClasses = [],
+      excludedDiscountCards = [],
+      selectedDate = null,
+    } = req.body;
+
+    // Construire le match de base
+    const baseMatch: any = {
+      "pricing.flexibility": "semiflexi",
+      "pricing.unsellable_reason": null,
+    };
+
+    // Ajouter les filtres par compagnies exclues
+    if (excludedCarriers.length > 0) {
+      baseMatch.carrier = { $nin: excludedCarriers };
+    }
+
+    // Ajouter les filtres par classes exclues
+    if (excludedClasses.length > 0) {
+      baseMatch["pricing.travel_class"] = { $nin: excludedClasses };
+    }
+
+    // Ajouter les filtres par cartes de réduction exclues
+    if (excludedDiscountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $nin: excludedDiscountCards };
+    }
+
+    // Ajouter le filtre par date si spécifié
+    if (selectedDate) {
+      baseMatch.departure_date = {
+        $gte: new Date(selectedDate),
+        $lt: new Date(new Date(selectedDate).getTime() + 24 * 60 * 60 * 1000),
+      };
+    }
+
+    const data = await Train.aggregate<AggregatedPricingResult>(
+      [
+        {
+          $match: baseMatch,
+        },
+        {
+          $addFields: {
+            mappedDepartureStationId: {
+              $cond: {
+                if: { $eq: ["$departure_station.id", 5085] },
+                then: 4687,
+                else: "$departure_station.id",
+              },
+            },
+            mappedArrivalStationId: {
+              $cond: {
+                if: { $eq: ["$arrival_station.id", 5085] },
+                then: 4687,
+                else: "$arrival_station.id",
+              },
             },
           },
         },
-      },
-      {
-        $group: {
-          _id: {
-            departureStation: "$departure_station.name",
-            departureStationId: "$mappedDepartureStationId",
-            arrivalStation: "$arrival_station.name",
-            arrivalStationId: "$mappedArrivalStationId",
-            travelClass: "$pricing.travel_class",
-            discountCard: "$pricing.discount_card",
-            trainName: "$train_name",
-            carrier: "$carrier",
-            departureDate: "$departure_date", // Ajouter la date de départ au groupe
+        {
+          $group: {
+            _id: {
+              departureStation: "$departure_station.name",
+              departureStationId: "$mappedDepartureStationId",
+              arrivalStation: "$arrival_station.name",
+              arrivalStationId: "$mappedArrivalStationId",
+            },
+            minPrice: { $min: "$pricing.price" },
+            avgPrice: { $avg: "$pricing.price" },
+            maxPrice: { $max: "$pricing.price" },
+            // Collecter seulement les listes uniques
+            carriers: { $addToSet: "$carrier" },
+            classes: { $addToSet: "$pricing.travel_class" },
+            discountCards: { $addToSet: "$pricing.discount_card" },
           },
-          minPrice: { $min: "$pricing.price" },
-          avgPrice: { $avg: "$pricing.price" },
-          maxPrice: { $max: "$pricing.price" },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          departureStation: "$_id.departureStation",
-          departureStationId: "$_id.departureStationId",
-          arrivalStation: "$_id.arrivalStation",
-          arrivalStationId: "$_id.arrivalStationId",
-          travelClass: "$_id.travelClass",
-          discountCard: "$_id.discountCard",
-          trainName: "$_id.trainName",
-          carrier: "$_id.carrier",
-          minPrice: 1,
-          avgPrice: 1,
-          maxPrice: 1,
-          departureDate: "$_id.departureDate", // Inclure la date de départ dans le projet
+        {
+          $project: {
+            _id: 0,
+            departureStation: "$_id.departureStation",
+            departureStationId: "$_id.departureStationId",
+            arrivalStation: "$_id.arrivalStation",
+            arrivalStationId: "$_id.arrivalStationId",
+            minPrice: 1,
+            avgPrice: 1,
+            maxPrice: 1,
+            carriers: 1,
+            classes: 1,
+            discountCards: 1,
+          },
         },
-      },
-    ]);
+      ],
+      { allowDiskUse: true }
+    );
 
     res.json(data);
   } catch (error) {

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
+import { useEffect, useMemo, useState } from "react";
+import { GroupedJourney } from "../types/journey";
 
 export interface GlobalFilters {
   excludedCarriers: string[];
@@ -7,20 +7,36 @@ export interface GlobalFilters {
   excludedDiscountCards: string[];
 }
 
-export const useGlobalFilters = (journeys: GroupedJourney[]) => {
+export const useGlobalFilters = (
+  journeys: GroupedJourney[],
+  onFiltersChange?: (filters: GlobalFilters) => void,
+  currentFilters?: GlobalFilters, // Nouveau paramètre pour synchroniser avec les filtres actuels
+  allJourneys?: GroupedJourney[] // Nouvelles données non filtrées pour les options
+) => {
   const [filters, setFilters] = useState<GlobalFilters>({
-    excludedCarriers: [],
-    excludedClasses: [],
-    excludedDiscountCards: [], // Pas d'exclusion par défaut
+    excludedCarriers: currentFilters?.excludedCarriers || [],
+    excludedClasses: currentFilters?.excludedClasses || [],
+    excludedDiscountCards: currentFilters?.excludedDiscountCards || [],
   });
 
-  // Extraire toutes les options disponibles
+  // Synchroniser les filtres quand currentFilters change
+  useEffect(() => {
+    console.log("useGlobalFilters - currentFilters changé:", currentFilters);
+    if (currentFilters) {
+      setFilters(currentFilters);
+    }
+  }, [currentFilters]);
+
+  // Extraire toutes les options disponibles à partir de TOUTES les données (non filtrées)
   const availableOptions = useMemo(() => {
     const carriers = new Set<string>();
     const classes = new Set<string>();
     const discountCards = new Set<string>();
 
-    journeys.forEach((journey) => {
+    // Utiliser allJourneys si disponible, sinon utiliser journeys
+    const dataToUse = allJourneys || journeys;
+
+    dataToUse.forEach((journey) => {
       journey.offers.forEach((offer) => {
         carriers.add(offer.carrier);
         classes.add(offer.travelClass);
@@ -28,90 +44,67 @@ export const useGlobalFilters = (journeys: GroupedJourney[]) => {
       });
     });
 
+    // S'assurer que MAX et NONE sont toujours inclus dans les cartes de réduction
+    discountCards.add("MAX");
+    discountCards.add("NONE");
+
     return {
       carriers: Array.from(carriers).sort(),
       classes: Array.from(classes).sort(),
       discountCards: Array.from(discountCards).sort(),
     };
-  }, [journeys]);
+  }, [allJourneys, journeys]);
 
-  // Filtrer les trajets selon les filtres globaux
-  const filteredJourneys = useMemo(() => {
-    return journeys
-      .map((journey) => {
-        const filteredOffers = journey.offers.filter((offer) => {
-          // Filtre par compagnies
-          if (filters.excludedCarriers.includes(offer.carrier)) {
-            return false;
-          }
-
-          // Filtre par classes
-          if (filters.excludedClasses.includes(offer.travelClass)) {
-            return false;
-          }
-
-          // Filtre par cartes de réduction
-          if (filters.excludedDiscountCards.includes(offer.discountCard)) {
-            return false;
-          }
-
-          return true;
-        });
-
-        // Recalculer le prix moyen basé sur les offres filtrées
-        let avgPrice = journey.avgPrice;
-        if (filteredOffers.length > 0) {
-          const allPrices = [
-            ...filteredOffers.map((o: AggregatedPricingResult) => o.minPrice),
-            ...filteredOffers.map((o: AggregatedPricingResult) => o.avgPrice),
-            ...filteredOffers.map((o: AggregatedPricingResult) => o.maxPrice),
-          ];
-          avgPrice =
-            allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
-        }
-
-        return {
-          ...journey,
-          offers: filteredOffers,
-          avgPrice: Math.round(avgPrice),
-        };
-      })
-      .filter((journey) => journey.offers.length > 0);
-  }, [journeys, filters]);
+  // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
+  const filteredJourneys = journeys;
 
   const handleCarrierFilter = (carrier: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      excludedCarriers: prev.excludedCarriers.includes(carrier)
-        ? prev.excludedCarriers.filter((c) => c !== carrier)
-        : [...prev.excludedCarriers, carrier],
-    }));
+    console.log("handleCarrierFilter appelé avec:", carrier);
+    const newFilters = {
+      ...filters,
+      excludedCarriers: filters.excludedCarriers.includes(carrier)
+        ? filters.excludedCarriers.filter((c) => c !== carrier)
+        : [...filters.excludedCarriers, carrier],
+    };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
   };
 
   const handleClassFilter = (travelClass: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      excludedClasses: prev.excludedClasses.includes(travelClass)
-        ? prev.excludedClasses.filter((c) => c !== travelClass)
-        : [...prev.excludedClasses, travelClass],
-    }));
+    console.log("handleClassFilter appelé avec:", travelClass);
+    const newFilters = {
+      ...filters,
+      excludedClasses: filters.excludedClasses.includes(travelClass)
+        ? filters.excludedClasses.filter((c) => c !== travelClass)
+        : [...filters.excludedClasses, travelClass],
+    };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
   };
 
   const handleDiscountCardFilter = (discountCard: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      excludedDiscountCards: prev.excludedDiscountCards.includes(discountCard)
-        ? prev.excludedDiscountCards.filter((c) => c !== discountCard)
-        : [...prev.excludedDiscountCards, discountCard],
-    }));
+    console.log("handleDiscountCardFilter appelé avec:", discountCard);
+    const newFilters = {
+      ...filters,
+      excludedDiscountCards: filters.excludedDiscountCards.includes(
+        discountCard
+      )
+        ? filters.excludedDiscountCards.filter((c) => c !== discountCard)
+        : [...filters.excludedDiscountCards, discountCard],
+    };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
   };
 
   const clearFilters = () => {
-    setFilters({
+    console.log("clearFilters appelé");
+    const newFilters = {
       excludedCarriers: [],
       excludedClasses: [],
       excludedDiscountCards: [],
-    });
+    };
+    setFilters(newFilters);
+    onFiltersChange?.(newFilters);
   };
 
   return {

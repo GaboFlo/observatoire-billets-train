@@ -25,20 +25,56 @@ import TrainMap from "./TrainMap";
 
 interface JourneysTabProps {
   journeys: Journey[];
+  allJourneys?: Journey[]; // Nouvelles données non filtrées
   analysisDates?: string[];
   selectedDate?: string | null;
   onDateSelect?: (date: string | null) => void;
+  applyFilters?: (filters: {
+    excludedCarriers?: string[];
+    excludedClasses?: string[];
+    excludedDiscountCards?: string[];
+  }) => void;
+  currentFilters?: {
+    excludedCarriers: string[];
+    excludedClasses: string[];
+    excludedDiscountCards: string[];
+    selectedDate: string | null;
+  };
 }
 
 const JourneysTab = ({
   journeys,
+  allJourneys,
   analysisDates = [],
   selectedDate,
   onDateSelect,
+  applyFilters: propApplyFilters,
+  currentFilters,
 }: JourneysTabProps) => {
+  console.log("JourneysTab reçoit:", journeys.length, "journeys");
+  console.log("JourneysTab - currentFilters:", currentFilters);
+
   const [selectedRouteJourneyIds, setSelectedRouteJourneyIds] = useState<
     string[]
   >([]);
+
+  // Utiliser le hook useJourneyData pour appliquer les filtres côté serveur
+  const { applyFilters: hookApplyFilters } = useJourneyData();
+
+  // Utiliser la prop si disponible, sinon utiliser celle du hook
+  const applyFilters = propApplyFilters || hookApplyFilters;
+
+  // Callback pour appliquer les filtres quand ils changent
+  const handleFiltersChange = useCallback(
+    (filters: {
+      excludedCarriers: string[];
+      excludedClasses: string[];
+      excludedDiscountCards: string[];
+    }) => {
+      applyFilters(filters);
+    },
+    [applyFilters]
+  );
 
   const {
     availableOptions,
@@ -47,26 +83,14 @@ const JourneysTab = ({
     handleClassFilter,
     handleDiscountCardFilter,
     clearFilters,
-  } = useGlobalFilters([]); // Utiliser un tableau vide pour éviter les re-renders
+  } = useGlobalFilters(
+    journeys,
+    handleFiltersChange,
+    currentFilters,
+    allJourneys
+  ); // Passer allJourneys
 
-  // Passer les filtres au hook useJourneyData
-  const { fetchJourneys } = useJourneyData();
-
-  // Fonction pour recharger les données avec les filtres actuels
-  const reloadData = useCallback(() => {
-    fetchJourneys({
-      excludedCarriers: filters.excludedCarriers,
-      excludedClasses: filters.excludedClasses,
-      excludedDiscountCards: filters.excludedDiscountCards,
-      selectedDate,
-    });
-  }, [
-    filters.excludedCarriers,
-    filters.excludedClasses,
-    filters.excludedDiscountCards,
-    selectedDate,
-  ]);
-
+  // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
   const filteredJourneys = journeys;
 
   const hasActiveFilters =
@@ -82,44 +106,12 @@ const JourneysTab = ({
         )
       : filteredJourneys;
 
-  const calculateFilteredPrices = (journey: Journey) => {
-    const filteredOffers = journey.offers.filter((offer) => {
-      // Filtrage par compagnie
-      if (filters.excludedCarriers.length > 0) {
-        if (filters.excludedCarriers.includes(offer.carrier)) {
-          return false;
-        }
-      }
-
-      // Filtrage par classe
-      if (filters.excludedClasses.length > 0) {
-        if (filters.excludedClasses.includes(offer.travelClass)) {
-          return false;
-        }
-      }
-
-      // Filtrage par carte de réduction
-      if (filters.excludedDiscountCards.length > 0) {
-        if (filters.excludedDiscountCards.includes(offer.discountCard)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    if (filteredOffers.length === 0) {
-      return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
-    }
-
-    const prices = filteredOffers.map((offer) => offer.minPrice);
+  // Les prix sont déjà calculés côté serveur, utiliser directement les valeurs des journeys
+  const getJourneyPrices = (journey: Journey) => {
     return {
-      minPrice: Math.min(...prices),
-      avgPrice: Math.round(
-        prices.reduce((sum: number, price: number) => sum + price, 0) /
-          prices.length
-      ),
-      maxPrice: Math.max(...prices),
+      minPrice: journey.minPrice,
+      avgPrice: journey.avgPrice,
+      maxPrice: journey.maxPrice,
     };
   };
 
@@ -161,17 +153,25 @@ const JourneysTab = ({
         aValue = a.name;
         bValue = b.name;
         break;
+      case "departure":
+        aValue = parseJourneyName(a.name).departure;
+        bValue = parseJourneyName(b.name).departure;
+        break;
+      case "arrival":
+        aValue = parseJourneyName(a.name).arrival;
+        bValue = parseJourneyName(b.name).arrival;
+        break;
       case "minPrice":
-        aValue = calculateFilteredPrices(a).minPrice;
-        bValue = calculateFilteredPrices(b).minPrice;
+        aValue = getJourneyPrices(a).minPrice;
+        bValue = getJourneyPrices(b).minPrice;
         break;
       case "avgPrice":
-        aValue = calculateFilteredPrices(a).avgPrice;
-        bValue = calculateFilteredPrices(b).avgPrice;
+        aValue = getJourneyPrices(a).avgPrice;
+        bValue = getJourneyPrices(b).avgPrice;
         break;
       case "maxPrice":
-        aValue = calculateFilteredPrices(a).maxPrice;
-        bValue = calculateFilteredPrices(b).maxPrice;
+        aValue = getJourneyPrices(a).maxPrice;
+        bValue = getJourneyPrices(b).maxPrice;
         break;
       default:
         return 0;
@@ -210,7 +210,6 @@ const JourneysTab = ({
           analysisDates={analysisDates}
           selectedDate={selectedDate}
           onDateSelect={onDateSelect}
-          onReload={reloadData}
         />
       </div>
 
@@ -267,18 +266,22 @@ const JourneysTab = ({
                 <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <TableHead
                     className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"
-                    onClick={() => handleSort("name")}
+                    onClick={() => handleSort("departure")}
                   >
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
                       Départ
-                      {getSortIcon("name")}
+                      {getSortIcon("departure")}
                     </div>
                   </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
+                  <TableHead
+                    className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"
+                    onClick={() => handleSort("arrival")}
+                  >
                     <div className="flex items-center gap-2">
                       <ArrowRight className="w-4 h-4" />
                       Arrivée
+                      {getSortIcon("arrival")}
                     </div>
                   </TableHead>
                   <TableHead
@@ -318,7 +321,7 @@ const JourneysTab = ({
               </TableHeader>
               <TableBody>
                 {sortedJourneys.map((journey: Journey) => {
-                  const filteredPrices = calculateFilteredPrices(journey);
+                  const journeyPrices = getJourneyPrices(journey);
                   const { departure, arrival } = parseJourneyName(journey.name);
 
                   return (
@@ -334,17 +337,17 @@ const JourneysTab = ({
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                          {filteredPrices.minPrice}€
+                          {journeyPrices.minPrice}€
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-800">
-                          {filteredPrices.avgPrice}€
+                          {journeyPrices.avgPrice}€
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-                          {filteredPrices.maxPrice}€
+                          {journeyPrices.maxPrice}€
                         </span>
                       </TableCell>
                       <TableCell>

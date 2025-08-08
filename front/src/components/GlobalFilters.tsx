@@ -1,16 +1,14 @@
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronUp,
-  Filter,
-  RefreshCw,
-  X,
-} from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { GlobalFilters as GlobalFiltersType } from "../hooks/useGlobalFilters";
+import {
+  translateCarrier,
+  translateDiscountCard,
+  translateTravelClass,
+} from "../utils/translations";
 
 interface GlobalFiltersProps {
   filters: GlobalFiltersType;
@@ -138,16 +136,6 @@ const GlobalFilters = ({
                 <X className="w-4 h-4 mr-1" /> Effacer tout
               </Button>
             )}
-            {onReload && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onReload}
-                className="text-blue-600 hover:text-blue-700"
-              >
-                <RefreshCw className="w-4 h-4 mr-1" /> Appliquer
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"
@@ -241,7 +229,7 @@ const GlobalFilters = ({
                       }`}
                       onClick={() => onCarrierFilter(carrier)}
                     >
-                      {carrier}
+                      {translateCarrier(carrier)}
                     </Badge>
                   );
                 })}
@@ -270,7 +258,7 @@ const GlobalFilters = ({
                       }`}
                       onClick={() => onClassFilter(travelClass)}
                     >
-                      {travelClass}
+                      {translateTravelClass(travelClass)}
                     </Badge>
                   );
                 })}
@@ -299,7 +287,7 @@ const GlobalFilters = ({
                       }`}
                       onClick={() => onDiscountCardFilter(discountCard)}
                     >
-                      {discountCard}
+                      {translateDiscountCard(discountCard)}
                     </Badge>
                   );
                 })}

@@ -9,7 +9,7 @@ import {
   TileLayer,
 } from "react-leaflet";
 import { getRouteData, RouteData } from "../services/routeService";
-import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
+import { GroupedJourney } from "../types/journey";
 
 interface TrainMapProps {
   journeys: GroupedJourney[];
@@ -57,7 +57,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const [routeData, setRouteData] = useState<{ [key: string]: RouteData }>({});
   const [selectedRouteKey, setSelectedRouteKey] = useState<string | null>(null);
 
-  // Utiliser directement les journeys passées en props (déjà filtrées)
+  // Utiliser directement les journeys passées en props (déjà filtrées par l'API)
   const filteredJourneys = journeys;
 
   useEffect(() => {
@@ -96,7 +96,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredJourneys]);
 
-  // Calcul sécurisé des prix min/max
+  // Calcul sécurisé des prix min/max basé sur les données filtrées
   const priceStats = useMemo(() => {
     const validJourneys = filteredJourneys.filter(
       (j) => typeof j.avgPrice === "number" && !isNaN(j.avgPrice)
@@ -111,7 +111,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
     };
-  }, [filteredJourneys]); // Dépendance simplifiée
+  }, [filteredJourneys]);
 
   const getColor = React.useCallback(
     (price: number) => {
@@ -264,39 +264,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                     <div className="p-2">
                       {/* Statistiques par sens */}
                       {(() => {
-                        // Fonction pour calculer les prix filtrés (même logique que JourneysTab)
-                        const calculateFilteredPrices = (
-                          journey: GroupedJourney
-                        ) => {
-                          if (journey.offers.length === 0) {
-                            return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
-                          }
-
-                          const allPrices = [
-                            ...journey.offers.map(
-                              (o: AggregatedPricingResult) => o.minPrice
-                            ),
-                            ...journey.offers.map(
-                              (o: AggregatedPricingResult) => o.avgPrice
-                            ),
-                            ...journey.offers.map(
-                              (o: AggregatedPricingResult) => o.maxPrice
-                            ),
-                          ];
-
-                          const minPrice = Math.min(...allPrices);
-                          const maxPrice = Math.max(...allPrices);
-                          const avgPrice =
-                            allPrices.reduce((sum, price) => sum + price, 0) /
-                            allPrices.length;
-
-                          return {
-                            minPrice,
-                            maxPrice,
-                            avgPrice: Math.round(avgPrice),
-                          };
-                        };
-
                         // Trouver les journeys correspondant à chaque sens
                         const forwardJourneys = filteredJourneys.filter(
                           (j) =>
@@ -317,22 +284,13 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                                   {line.departureStation} →{" "}
                                   {line.arrivalStation}
                                 </div>
-                                {(() => {
-                                  const prices = calculateFilteredPrices(
-                                    forwardJourneys[0]
-                                  );
-                                  return (
-                                    <>
-                                      <div className="text-sm font-semibold text-blue-600">
-                                        Prix moyen : {prices.avgPrice}€
-                                      </div>
-                                      <div className="text-xs text-gray-500">
-                                        Prix min : {prices.minPrice}€ | Prix max
-                                        : {prices.maxPrice}€
-                                      </div>
-                                    </>
-                                  );
-                                })()}
+                                <div className="text-sm font-semibold text-blue-600">
+                                  Prix moyen : {forwardJourneys[0].avgPrice}€
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Prix min : {forwardJourneys[0].minPrice}€ |
+                                  Prix max : {forwardJourneys[0].maxPrice}€
+                                </div>
                               </div>
                             )}
 
@@ -342,22 +300,13 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                                   {line.arrivalStation} →{" "}
                                   {line.departureStation}
                                 </div>
-                                {(() => {
-                                  const prices = calculateFilteredPrices(
-                                    reverseJourneys[0]
-                                  );
-                                  return (
-                                    <>
-                                      <div className="text-sm font-semibold text-blue-600">
-                                        Prix moyen : {prices.avgPrice}€
-                                      </div>
-                                      <div className="text-xs text-gray-500">
-                                        Prix min : {prices.minPrice}€ | Prix max
-                                        : {prices.maxPrice}€
-                                      </div>
-                                    </>
-                                  );
-                                })()}
+                                <div className="text-sm font-semibold text-blue-600">
+                                  Prix moyen : {reverseJourneys[0].avgPrice}€
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Prix min : {reverseJourneys[0].minPrice}€ |
+                                  Prix max : {reverseJourneys[0].maxPrice}€
+                                </div>
                               </div>
                             )}
                           </>
