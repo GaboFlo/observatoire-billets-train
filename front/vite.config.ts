@@ -7,12 +7,22 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@observatoire-billets-train/shared": path.resolve(__dirname, "../shared/dist/index.js"),
+      "@observatoire-billets-train/shared": path.resolve(
+        __dirname,
+        "../shared/dist/index.js"
+      ),
     },
   },
   optimizeDeps: {

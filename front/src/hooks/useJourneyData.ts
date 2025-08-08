@@ -42,9 +42,7 @@ export const useJourneyData = () => {
         }
 
         console.log("Appel à l'API pricing");
-        const response = await fetch(
-          "http://localhost:3000/api/trains/pricing"
-        );
+        const response = await fetch("/api/trains/pricing");
         if (!response.ok) {
           throw new Error("Erreur lors du chargement des données");
         }

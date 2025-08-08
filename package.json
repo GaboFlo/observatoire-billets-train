@@ -17,6 +17,6 @@
     "dev": "concurrently \"npm run dev:shared\" \"npm run dev:front\" \"npm run dev:back\""
   },
   "devDependencies": {
-    "concurrently": "^8.0.0"
+    "concurrently": "^8.2.2"
   }
-} 
+}
