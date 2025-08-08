@@ -5,7 +5,7 @@ import {
   MapPin,
   TrendingUp,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { useGlobalFilters } from "../hooks/useGlobalFilters";
-import { Journey } from "../hooks/useJourneyData";
+import { Journey, useJourneyData } from "../hooks/useJourneyData";
 import { translateStation } from "../utils/translations";
 import GlobalFilters from "./GlobalFilters";
 import TrainMap from "./TrainMap";
@@ -47,43 +47,27 @@ const JourneysTab = ({
     handleClassFilter,
     handleDiscountCardFilter,
     clearFilters,
-  } = useGlobalFilters(journeys);
+  } = useGlobalFilters([]); // Utiliser un tableau vide pour éviter les re-renders
 
-  const filteredJourneys = useMemo(() => {
-    return journeys.filter((journey: Journey) => {
-      // Filtrage par route sélectionnée
-      if (selectedRouteJourneyIds.length > 0) {
-        return selectedRouteJourneyIds.includes(journey.id);
-      }
+  // Passer les filtres au hook useJourneyData
+  const { fetchJourneys } = useJourneyData();
 
-      // Filtrage par compagnie
-      if (filters.excludedCarriers.length > 0) {
-        const hasExcludedCarrier = journey.carriers.some((carrier: string) =>
-          filters.excludedCarriers.includes(carrier)
-        );
-        if (hasExcludedCarrier) return false;
-      }
-
-      // Filtrage par classe
-      if (filters.excludedClasses.length > 0) {
-        const hasExcludedClass = journey.classes.some((travelClass: string) =>
-          filters.excludedClasses.includes(travelClass)
-        );
-        if (hasExcludedClass) return false;
-      }
-
-      // Filtrage par carte de réduction
-      if (filters.excludedDiscountCards.length > 0) {
-        const hasExcludedDiscountCard = journey.discountCards.some(
-          (discountCard: string) =>
-            filters.excludedDiscountCards.includes(discountCard)
-        );
-        if (hasExcludedDiscountCard) return false;
-      }
-
-      return true;
+  // Fonction pour recharger les données avec les filtres actuels
+  const reloadData = useCallback(() => {
+    fetchJourneys({
+      excludedCarriers: filters.excludedCarriers,
+      excludedClasses: filters.excludedClasses,
+      excludedDiscountCards: filters.excludedDiscountCards,
+      selectedDate,
     });
-  }, [journeys, selectedRouteJourneyIds, filters]);
+  }, [
+    filters.excludedCarriers,
+    filters.excludedClasses,
+    filters.excludedDiscountCards,
+    selectedDate,
+  ]);
+
+  const filteredJourneys = journeys;
 
   const hasActiveFilters =
     filters.excludedCarriers.length > 0 ||
@@ -226,6 +210,7 @@ const JourneysTab = ({
           analysisDates={analysisDates}
           selectedDate={selectedDate}
           onDateSelect={onDateSelect}
+          onReload={reloadData}
         />
       </div>
 

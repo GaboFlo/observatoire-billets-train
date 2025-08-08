@@ -146,11 +146,38 @@ const mapStationId = (stationId: number): number => {
 
 app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
-    // Construire le match de base - ne plus filtrer par date par défaut
+    const { excludedCarriers, excludedClasses, excludedDiscountCards } =
+      req.query;
+
+    // Construire le match de base
     const baseMatch: any = {
       "pricing.flexibility": "semiflexi",
       "pricing.unsellable_reason": null,
     };
+
+    // Ajouter les filtres par compagnies exclues
+    if (excludedCarriers && typeof excludedCarriers === "string") {
+      const carriers = excludedCarriers.split(",");
+      if (carriers.length > 0) {
+        baseMatch.carrier = { $nin: carriers };
+      }
+    }
+
+    // Ajouter les filtres par classes exclues
+    if (excludedClasses && typeof excludedClasses === "string") {
+      const classes = excludedClasses.split(",");
+      if (classes.length > 0) {
+        baseMatch["pricing.travel_class"] = { $nin: classes };
+      }
+    }
+
+    // Ajouter les filtres par cartes de réduction exclues
+    if (excludedDiscountCards && typeof excludedDiscountCards === "string") {
+      const discountCards = excludedDiscountCards.split(",");
+      if (discountCards.length > 0) {
+        baseMatch["pricing.discount_card"] = { $nin: discountCards };
+      }
+    }
 
     const data = await Train.aggregate<AggregatedPricingResult>([
       {

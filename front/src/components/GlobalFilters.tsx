@@ -1,4 +1,11 @@
-import { CalendarDays, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -19,6 +26,7 @@ interface GlobalFiltersProps {
   analysisDates?: string[];
   selectedDate?: string | null;
   onDateSelect?: (date: string | null) => void;
+  onReload?: () => void; // Nouveau prop pour le rechargement
 }
 
 const GlobalFilters = ({
@@ -30,6 +38,7 @@ const GlobalFilters = ({
   analysisDates = [],
   selectedDate,
   onDateSelect,
+  onReload,
 }: GlobalFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -126,15 +135,24 @@ const GlobalFilters = ({
                 onClick={clearAllFilters}
                 className="text-gray-500 hover:text-gray-700"
               >
-                <X className="w-4 h-4 mr-1" />
-                Effacer tout
+                <X className="w-4 h-4 mr-1" /> Effacer tout
+              </Button>
+            )}
+            {onReload && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onReload}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <RefreshCw className="w-4 h-4 mr-1" /> Appliquer
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-500 hover:text-gray-700"
             >
               {isExpanded ? (
                 <>

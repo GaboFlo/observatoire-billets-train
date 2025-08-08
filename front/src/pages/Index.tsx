@@ -1,8 +1,12 @@
+import { useEffect } from "react";
 import ErrorDisplay from "../components/ErrorDisplay";
 import JourneysTab from "../components/JourneysTab";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PageHeader from "../components/PageHeader";
 import { useJourneyData } from "../hooks/useJourneyData";
+
+// Flag global pour éviter les appels multiples au pricing
+let pricingLoaded = false;
 
 const Index = () => {
   const {
@@ -12,7 +16,21 @@ const Index = () => {
     analysisDates,
     selectedDate,
     handleDateSelect,
+    fetchJourneys,
   } = useJourneyData();
+
+  // Charger les données initiales au démarrage (une seule fois)
+  useEffect(() => {
+    if (!pricingLoaded) {
+      fetchJourneys({
+        excludedCarriers: [],
+        excludedClasses: [],
+        excludedDiscountCards: ["MAX"],
+        selectedDate: null,
+      });
+      pricingLoaded = true;
+    }
+  }, []); // Dépendances vides pour éviter les re-renders
 
   if (loading) {
     return <LoadingAnimation />;
