@@ -10,6 +10,7 @@ const routeFiles = {
   "4916-4791": () => import("../data/routes/4916-4791.json"),
   "4916-5085": () => import("../data/routes/4916-5085.json"),
   "4916-5097": () => import("../data/routes/4916-5097.json"),
+  "4916-5306": () => import("../data/routes/4916-5306.json"),
   "4916-5892": () => import("../data/routes/4916-5892.json"),
   "4916-6617": () => import("../data/routes/4916-6617.json"),
   "4916-828": () => import("../data/routes/4916-828.json"),
@@ -28,7 +29,10 @@ export interface RouteData {
   };
 }
 
-export const getRouteData = async (dep: string, arr: string): Promise<RouteData | null> => {
+export const getRouteData = async (
+  dep: string,
+  arr: string
+): Promise<RouteData | null> => {
   try {
     // Essayer d'abord le trajet direct
     const routeKey = `${dep}-${arr}`;
@@ -40,7 +44,9 @@ export const getRouteData = async (dep: string, arr: string): Promise<RouteData 
     // Si pas trouvé, essayer le trajet inverse
     const routeKeyReverse = `${arr}-${dep}`;
     if (routeFiles[routeKeyReverse as keyof typeof routeFiles]) {
-      const routeData = await routeFiles[routeKeyReverse as keyof typeof routeFiles]();
+      const routeData = await routeFiles[
+        routeKeyReverse as keyof typeof routeFiles
+      ]();
       // Inverser les coordonnées pour le trajet retour
       const reversedRouteData = {
         ...routeData.default,
@@ -60,4 +66,4 @@ export const getRouteData = async (dep: string, arr: string): Promise<RouteData 
     console.error("Erreur lors de la récupération de la route:", error);
     return null;
   }
-}; 
+};
