@@ -19,13 +19,6 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@observatoire-billets-train/shared": path.resolve(
-        __dirname,
-        "../shared/dist/index.js"
-      ),
     },
-  },
-  optimizeDeps: {
-    include: ["@observatoire-billets-train/shared"],
   },
 }));

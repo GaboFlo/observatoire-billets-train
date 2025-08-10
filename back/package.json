@@ -22,7 +22,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@observatoire-billets-train/shared": "file:../shared",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
