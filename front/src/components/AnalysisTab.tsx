@@ -34,7 +34,9 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
               asChild
               className="w-full justify-start"
             >
-              <Link to={`/journey/${journey.id}`}>
+              <Link
+                to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+              >
                 <div className="text-left">
                   <p className="font-medium">{journey.name}</p>
                   <p className="text-sm text-muted-foreground">

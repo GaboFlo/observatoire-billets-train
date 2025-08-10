@@ -21,7 +21,7 @@ const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
         {/* Error message */}
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-gray-900">
-            Oups ! Une erreur est survenue
+            Oups ! Ton train est resté à quai pour une raison inconnue
           </h2>
           <p className="text-gray-600 leading-relaxed">{error}</p>
         </div>

@@ -6,9 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GroupedJourney } from "@/types/journey";
 import { Train } from "lucide-react";
 import { Link } from "react-router-dom";
-import { GroupedJourney } from "@/types/journey";
 import { PriceDisplay } from "./PriceDisplay";
 
 interface JourneyCardProps {
@@ -20,10 +20,7 @@ interface JourneyCardProps {
   };
 }
 
-const JourneyCard = ({
-  journey,
-  filteredPrices,
-}: JourneyCardProps) => {
+const JourneyCard = ({ journey, filteredPrices }: JourneyCardProps) => {
   return (
     <Card>
       <CardHeader>
@@ -34,7 +31,7 @@ const JourneyCard = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <PriceDisplay 
+          <PriceDisplay
             minPrice={filteredPrices.minPrice}
             avgPrice={filteredPrices.avgPrice}
             maxPrice={filteredPrices.maxPrice}
@@ -51,11 +48,15 @@ const JourneyCard = ({
       </CardContent>
       <CardFooter>
         <Button variant="outline" asChild className="w-full">
-          <Link to={`/journey/${journey.id}`}>Analyse détaillée</Link>
+          <Link
+            to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+          >
+            Analyse détaillée
+          </Link>
         </Button>
       </CardFooter>
     </Card>
   );
 };
 
-export default JourneyCard; 
+export default JourneyCard;

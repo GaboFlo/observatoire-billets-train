@@ -1,7 +1,4 @@
 // Types communs
-export interface TranslationMap {
-  [key: string]: string;
-}
 
 export interface AggregatedPricingResult {
   journeys: GroupedJourney[];
@@ -78,7 +75,13 @@ export const TRAVEL_CLASSES = [
 
 export const DISCOUNT_CARDS = ["AVANTAGE_JEUNE", "NONE", "MAX"] as const;
 
-export const CARRIERS = ["sncf", "db", "ouigo", "eurostar"] as const;
+export const CARRIERS = [
+  "sncf",
+  "db",
+  "ouigo",
+  "eurostar",
+  "trenitalia_france",
+] as const;
 
 export const TRAIN_NAMES = [
   "TGV",
@@ -107,48 +110,3 @@ export type DiscountCard = (typeof DISCOUNT_CARDS)[number];
 export type Carrier = (typeof CARRIERS)[number];
 export type TrainName = (typeof TRAIN_NAMES)[number];
 export type Station = (typeof STATIONS)[number];
-
-// Traductions
-export const travelClassTranslations: TranslationMap = {
-  economy: "Seconde",
-  first: "Première",
-  business: "Affaires",
-  standard: "Standard",
-  premium: "Premium",
-  comfort: "Confort",
-  basic: "Basique",
-};
-
-export const discountCardTranslations: TranslationMap = {
-  AVANTAGE_JEUNE: "Avantage Jeune",
-  NONE: "Aucune",
-  MAX: "TGV Max",
-};
-
-export const carrierTranslations: TranslationMap = {
-  sncf: "SNCF",
-  db: "Deutsche Bahn",
-  ouigo: "OUIGO",
-  eurostar: "Eurostar",
-};
-
-export const trainNameTranslations: TranslationMap = {
-  TGV: "TGV",
-  OUIGO: "Ouigo",
-  "TRAIN TER": "TER",
-  "TRAIN TER HDF": "TER",
-  INOUI: "TGV InOui",
-  IC: "Intercités",
-  ES: "Eurostar",
-  ICE: "Trains Ice",
-};
-
-export const stationTranslations: TranslationMap = {
-  Barcelona: "Barcelone",
-  "Bordeaux-st-jean": "Bordeaux",
-  "La-rochelle-ville": "La Rochelle",
-  "London-st-pancras": "Londres",
-  "Marseille-st-charles": "Marseille",
-  "Chambery-challes-les-eaux": "Chambéry",
-  "Besancon-franche-comte-tgv": "Besançon Franche-Comté TGV",
-};

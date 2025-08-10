@@ -354,7 +354,9 @@ const JourneysTab = ({
                           asChild
                           className="bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400"
                         >
-                          <Link to={`/journey/${journey.id}`}>
+                          <Link
+                            to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+                          >
                             Analyse détaillée
                           </Link>
                         </Button>

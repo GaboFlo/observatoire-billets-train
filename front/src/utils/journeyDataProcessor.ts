@@ -82,69 +82,6 @@ export const createDefaultFilters = (
   return defaultFilters;
 };
 
-export const processJourneyDetails = (
-  data: AggregatedPricingResult[],
-  journeyId: string
-): GroupedJourney | null => {
-  // Trouver le trajet spécifique par son ID
-  const journeyMap = new Map<string, AggregatedPricingResult[]>();
-
-  data.forEach((item) => {
-    const key = `${item.departureStationId}-${item.arrivalStationId}`;
-    if (!journeyMap.has(key)) {
-      journeyMap.set(key, []);
-    }
-    journeyMap.get(key)!.push(item);
-  });
-
-  const journeyData = journeyMap.get(journeyId);
-
-  if (!journeyData) {
-    return null;
-  }
-
-  const departure = journeyData[0].departureStation;
-  const departureId = journeyData[0].departureStationId;
-  const arrival = journeyData[0].arrivalStation;
-  const arrivalId = journeyData[0].arrivalStationId;
-  const carriers = [
-    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.carrier)),
-  ];
-  const classes = [
-    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.travelClass)),
-  ];
-  const discountCards = [
-    ...new Set(journeyData.map((o: AggregatedPricingResult) => o.discountCard)),
-  ];
-
-  const allPrices = [
-    ...journeyData.map((o: AggregatedPricingResult) => o.minPrice),
-    ...journeyData.map((o: AggregatedPricingResult) => o.avgPrice),
-    ...journeyData.map((o: AggregatedPricingResult) => o.maxPrice),
-  ];
-
-  const minPrice = Math.min(...allPrices);
-  const maxPrice = Math.max(...allPrices);
-  const avgPrice =
-    allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length;
-
-  return {
-    id: journeyId,
-    name: `${departure} → ${arrival}`,
-    departureStation: departure,
-    departureStationId: departureId,
-    arrivalStation: arrival,
-    arrivalStationId: arrivalId,
-    carriers,
-    classes,
-    discountCards,
-    offers: journeyData,
-    minPrice,
-    maxPrice,
-    avgPrice: Math.round(avgPrice),
-  };
-};
-
 export const analyzeMissingTranslations = (
   groupedJourneys: GroupedJourney[]
 ) => {

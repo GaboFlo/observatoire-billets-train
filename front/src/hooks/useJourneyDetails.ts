@@ -1,10 +1,14 @@
+import { DetailedPricingResult, GroupedJourney } from "@/types/journey";
 import { useEffect, useState } from "react";
-import { AggregatedPricingResult, GroupedJourney } from "@/types/journey";
-import { getCachedData, setCachedData } from "./usePricingCache";
-import { processJourneyDetails } from "@/utils/journeyDataProcessor";
 
-export const useJourneyDetails = (journeyId: string) => {
+export const useJourneyDetails = (
+  departureStation: string,
+  arrivalStation: string
+) => {
   const [journey, setJourney] = useState<GroupedJourney | null>(null);
+  const [detailedOffers, setDetailedOffers] = useState<DetailedPricingResult[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,47 +16,69 @@ export const useJourneyDetails = (journeyId: string) => {
     const fetchJourneyDetails = async () => {
       try {
         setLoading(true);
-        
-        // Vérifier le cache en premier
-        const cachedData = getCachedData();
-        if (cachedData) {
-          console.log("Utilisation des données en cache pour les détails");
-          const journeyData = processJourneyDetails(cachedData, journeyId);
-          if (journeyData) {
-            setJourney(journeyData);
-          } else {
-            setError("Trajet non trouvé");
-          }
-          return;
-        }
 
-        console.log("Appel à l'API pricing pour les détails");
-        const response = await fetch("http://localhost:3000/api/trains/pricing");
+        console.log("Appel à l'API details pour les détails");
+        const response = await fetch(
+          `http://localhost:3000/api/trains/details/${encodeURIComponent(
+            departureStation
+          )}/${encodeURIComponent(arrivalStation)}`
+        );
         if (!response.ok) {
           throw new Error("Erreur lors du chargement des données");
         }
-        const data: AggregatedPricingResult[] = await response.json();
-        
-        // Mettre en cache les nouvelles données
-        setCachedData(data);
-        
-        const journeyData = processJourneyDetails(data, journeyId);
-        if (journeyData) {
-          setJourney(journeyData);
-        } else {
+        const data: DetailedPricingResult[] = await response.json();
+
+        if (data.length === 0) {
           setError("Trajet non trouvé");
+          return;
         }
+
+        // Créer un objet GroupedJourney à partir des données détaillées
+        const firstOffer = data[0];
+        const carriers = [...new Set(data.map((offer) => offer.carrier))];
+        const classes = [...new Set(data.map((offer) => offer.travelClass))];
+        const discountCards = [
+          ...new Set(data.map((offer) => offer.discountCard)),
+        ];
+
+        const allPrices = data.map((offer) => offer.minPrice);
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const avgPrice = Math.round(
+          allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length
+        );
+
+        const journeyData: GroupedJourney = {
+          id: `${firstOffer.departureStationId}-${firstOffer.arrivalStationId}`,
+          name: `${firstOffer.departureStation} → ${firstOffer.arrivalStation}`,
+          departureStation: firstOffer.departureStation,
+          departureStationId: firstOffer.departureStationId,
+          arrivalStation: firstOffer.arrivalStation,
+          arrivalStationId: firstOffer.arrivalStationId,
+          carriers,
+          classes,
+          discountCards,
+          offers: data as any[], // Conversion temporaire pour compatibilité
+          minPrice,
+          maxPrice,
+          avgPrice,
+        };
+
+        setJourney(journeyData);
+        setDetailedOffers(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Une erreur est survenue");
+        setError(
+          err instanceof Error ? err.message : "Une erreur est survenue"
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    if (journeyId) {
+    if (departureStation && arrivalStation) {
       fetchJourneyDetails();
     }
-  }, [journeyId]);
+  }, [departureStation, arrivalStation]);
 
-  return { journey, loading, error };
-}; 
+  return { journey, detailedOffers, loading, error };
+};

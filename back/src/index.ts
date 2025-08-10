@@ -46,6 +46,26 @@ interface AggregatedPricingResult {
   discountCards: string[];
 }
 
+interface DetailedPricingResult {
+  departureStation: string;
+  departureStationId: number;
+  arrivalStation: string;
+  arrivalStationId: number;
+  travelClass: string;
+  discountCard: string;
+  trainName: string;
+  carrier: string;
+  minPrice: number;
+  avgPrice: number;
+  maxPrice: number;
+  departureDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  is_sellable: boolean;
+  unsellable_reason: string | null;
+  daysBeforeDeparture: number;
+}
+
 const stationSchema = new Schema({
   id: { type: Number, required: true },
   name: { type: String, required: true },
@@ -149,7 +169,6 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
 
     // Construire le match de base
     const baseMatch: any = {
-      "pricing.flexibility": "semiflexi",
       "pricing.unsellable_reason": null,
     };
 
@@ -254,7 +273,6 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
 
     // Construire le match de base
     const baseMatch: any = {
-      "pricing.flexibility": "semiflexi",
       "pricing.unsellable_reason": null,
     };
 
@@ -346,6 +364,85 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erreur lors de l'agrégation des données." });
   }
 });
+
+app.get(
+  "/api/trains/details/:departureStation/:arrivalStation",
+  async (req: Request, res: Response) => {
+    try {
+      const { departureStation, arrivalStation } = req.params;
+
+      const data = await Train.aggregate<DetailedPricingResult>([
+        {
+          $match: {
+            "departure_station.name": departureStation,
+            "arrival_station.name": arrivalStation,
+          },
+        },
+        {
+          $addFields: {
+            mappedDepartureStationId: {
+              $cond: {
+                if: { $eq: ["$departure_station.id", 5085] },
+                then: 4687,
+                else: "$departure_station.id",
+              },
+            },
+            mappedArrivalStationId: {
+              $cond: {
+                if: { $eq: ["$arrival_station.id", 5085] },
+                then: 4687,
+                else: "$arrival_station.id",
+              },
+            },
+            daysBeforeDeparture: {
+              $ceil: {
+                $divide: [
+                  { $subtract: ["$departure_date", new Date()] },
+                  1000 * 60 * 60 * 24,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            departureStation: "$departure_station.name",
+            departureStationId: "$mappedDepartureStationId",
+            arrivalStation: "$arrival_station.name",
+            arrivalStationId: "$mappedArrivalStationId",
+            travelClass: "$pricing.travel_class",
+            discountCard: "$pricing.discount_card",
+            trainName: "$train_name",
+            carrier: "$carrier",
+            minPrice: "$pricing.price",
+            avgPrice: "$pricing.price",
+            maxPrice: "$pricing.price",
+            departureDate: {
+              $dateToString: { format: "%Y-%m-%d", date: "$departure_date" },
+            },
+            departureTime: {
+              $dateToString: { format: "%H:%M", date: "$departure_date" },
+            },
+            arrivalTime: {
+              $dateToString: { format: "%H:%M", date: "$arrival_date" },
+            },
+            is_sellable: "$pricing.is_sellable",
+            unsellable_reason: "$pricing.unsellable_reason",
+            daysBeforeDeparture: 1,
+          },
+        },
+      ]);
+
+      res.json(data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des détails:", error);
+      res
+        .status(500)
+        .json({ error: "Erreur lors de la récupération des détails." });
+    }
+  }
+);
 
 app.get("/api/trains/dates", async (req: Request, res: Response) => {
   try {

@@ -1,22 +1,54 @@
-// Import des traductions depuis le package partagé
-import type { TranslationMap } from "@observatoire-billets-train/shared";
-import {
-  carrierTranslations,
-  discountCardTranslations,
-  stationTranslations,
-  trainNameTranslations,
-  travelClassTranslations,
-} from "@observatoire-billets-train/shared";
+// Types
+export interface TranslationMap {
+  [key: string]: string;
+}
 
-// Ré-export des traductions
-export {
-  carrierTranslations,
-  discountCardTranslations,
-  stationTranslations,
-  trainNameTranslations,
-  travelClassTranslations,
+// Traductions
+export const travelClassTranslations: TranslationMap = {
+  economy: "Seconde",
+  first: "Première",
+  business: "Affaires",
+  standard: "Standard",
+  premium: "Premium",
+  comfort: "Confort",
+  basic: "Basique",
 };
-export type { TranslationMap };
+
+export const discountCardTranslations: TranslationMap = {
+  AVANTAGE_JEUNE: "Avantage Jeune",
+  NONE: "Aucune",
+  MAX: "TGV Max",
+};
+
+export const carrierTranslations: TranslationMap = {
+  sncf: "SNCF",
+  db: "Deutsche Bahn",
+  ouigo: "OUIGO",
+  eurostar: "Eurostar",
+  trenitalia_france: "Trenitalia",
+  Trenitalia: "Trenitalia",
+};
+
+export const trainNameTranslations: TranslationMap = {
+  TGV: "TGV",
+  OUIGO: "Ouigo",
+  "TRAIN TER": "TER",
+  "TRAIN TER HDF": "TER",
+  INOUI: "TGV InOui",
+  IC: "Intercités",
+  ES: "Eurostar",
+  ICE: "Trains Ice",
+};
+
+export const stationTranslations: TranslationMap = {
+  Barcelona: "Barcelone",
+  "Bordeaux-st-jean": "Bordeaux",
+  "La-rochelle-ville": "La Rochelle",
+  "London-st-pancras": "Londres",
+  "Marseille-st-charles": "Marseille",
+  "Chambery-challes-les-eaux": "Chambéry",
+  "Besancon-franche-comte-tgv": "Besançon Franche-Comté TGV",
+};
 
 export const translate = (
   value: string,

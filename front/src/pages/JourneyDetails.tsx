@@ -2,13 +2,19 @@ import {
   ArrowLeft,
   ChartBar,
   ChartLine,
+  Train,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import GlobalFiltersReusable from "../components/GlobalFiltersReusable";
+import JourneyKPIs from "../components/JourneyKPIs";
 import LoadingAnimation from "../components/LoadingAnimation";
+import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
+import TrainDetailsTable from "../components/TrainDetailsTable";
+import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -24,11 +30,29 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
+import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
 
 const JourneyDetails = () => {
-  const { journeyId } = useParams<{ journeyId: string }>();
+  const { departureStation, arrivalStation } = useParams<{
+    departureStation: string;
+    arrivalStation: string;
+  }>();
   const [activeTab, setActiveTab] = useState("overview");
-  const { journey, loading, error } = useJourneyDetails(journeyId || "");
+  const { journey, detailedOffers, loading, error } = useJourneyDetails(
+    departureStation || "",
+    arrivalStation || ""
+  );
+
+  const {
+    filters,
+    filteredOffers,
+    handleCarrierFilter,
+    handleClassFilter,
+    handleDiscountCardFilter,
+    handleTrainSelect,
+    clearFilters,
+    clearTrainFilter,
+  } = useJourneyDetailsFilters(detailedOffers);
 
   if (loading) {
     return <LoadingAnimation />;
@@ -80,10 +104,14 @@ const JourneyDetails = () => {
         >
           <TabsList>
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
+            <TabsTrigger value="trains">Trains</TabsTrigger>
+            <TabsTrigger value="evolution">Évolution des prix</TabsTrigger>
             <TabsTrigger value="details">Détails</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            <JourneyKPIs offers={filteredOffers} />
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 title="Prix Moyen"
@@ -117,7 +145,7 @@ const JourneyDetails = () => {
               />
             </div>
 
-            <Card>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
               <CardHeader>
                 <CardTitle>Offres Disponibles</CardTitle>
                 <CardDescription>
@@ -132,12 +160,9 @@ const JourneyDetails = () => {
                     <h4 className="font-medium mb-2">Compagnies</h4>
                     <div className="flex flex-wrap gap-2">
                       {journey.carriers.map((carrier: string) => (
-                        <span
-                          key={carrier}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
-                        >
+                        <Badge key={carrier} variant="outline">
                           {carrier}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -145,12 +170,9 @@ const JourneyDetails = () => {
                     <h4 className="font-medium mb-2">Classes de voyage</h4>
                     <div className="flex flex-wrap gap-2">
                       {journey.classes.map((travelClass: string) => (
-                        <span
-                          key={travelClass}
-                          className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm"
-                        >
+                        <Badge key={travelClass} variant="outline">
                           {travelClass}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -158,12 +180,9 @@ const JourneyDetails = () => {
                     <h4 className="font-medium mb-2">Cartes de réduction</h4>
                     <div className="flex flex-wrap gap-2">
                       {journey.discountCards.map((card: string) => (
-                        <span
-                          key={card}
-                          className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm"
-                        >
+                        <Badge key={card} variant="outline">
                           {card}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -172,9 +191,77 @@ const JourneyDetails = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="trains" className="space-y-6">
+            <GlobalFiltersReusable
+              offers={detailedOffers}
+              filters={filters}
+              onCarrierFilter={handleCarrierFilter}
+              onClassFilter={handleClassFilter}
+              onDiscountCardFilter={handleDiscountCardFilter}
+              clearFilters={clearFilters}
+            />
+
+            {(filters.selectedTrainName || filters.selectedDepartureDate) && (
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Train className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div className="text-sm text-blue-800">
+                        <span className="font-semibold">
+                          Train sélectionné :
+                        </span>{" "}
+                        {filters.selectedTrainName && (
+                          <span>{filters.selectedTrainName}</span>
+                        )}
+                        {filters.selectedDepartureDate && (
+                          <span>
+                            {" "}
+                            -{" "}
+                            {new Date(
+                              filters.selectedDepartureDate
+                            ).toLocaleDateString("fr-FR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearTrainFilter}
+                      className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+                    >
+                      Voir tous les trains
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <TrainDetailsTable
+              offers={filteredOffers}
+              onTrainSelect={handleTrainSelect}
+            />
+          </TabsContent>
+
+          <TabsContent value="evolution" className="space-y-6">
+            <GlobalFiltersReusable
+              offers={detailedOffers}
+              filters={filters}
+              onCarrierFilter={handleCarrierFilter}
+              onClassFilter={handleClassFilter}
+              onDiscountCardFilter={handleDiscountCardFilter}
+              clearFilters={clearFilters}
+            />
+
+            <PriceEvolutionChart offers={filteredOffers} />
+          </TabsContent>
+
           <TabsContent value="details" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <Card>
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
                 <CardHeader>
                   <CardTitle>Informations du Trajet</CardTitle>
                   <CardDescription>Détails sur ce trajet</CardDescription>
@@ -215,7 +302,7 @@ const JourneyDetails = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
                 <CardHeader>
                   <CardTitle>Statistiques de Prix</CardTitle>
                   <CardDescription>

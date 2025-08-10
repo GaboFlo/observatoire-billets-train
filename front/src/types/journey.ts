@@ -3,6 +3,19 @@ export interface AggregatedPricingResult {
   departureStationId: number;
   arrivalStation: string;
   arrivalStationId: number;
+  minPrice: number;
+  avgPrice: number;
+  maxPrice: number;
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
+}
+
+export interface DetailedPricingResult {
+  departureStation: string;
+  departureStationId: number;
+  arrivalStation: string;
+  arrivalStationId: number;
   travelClass: string;
   discountCard: string;
   trainName: string;
@@ -10,6 +23,12 @@ export interface AggregatedPricingResult {
   minPrice: number;
   avgPrice: number;
   maxPrice: number;
+  departureDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  is_sellable: boolean;
+  unsellable_reason: string | null;
+  daysBeforeDeparture: number;
 }
 
 export interface GroupedJourney {
