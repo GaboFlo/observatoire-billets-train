@@ -444,51 +444,6 @@ app.get(
   }
 );
 
-app.get("/api/trains/dates", async (req: Request, res: Response) => {
-  try {
-    // Récupérer les dates distinctes de départ (sans les heures)
-    const dates = await Train.aggregate([
-      {
-        $addFields: {
-          // Extraire seulement la date (sans l'heure) en format YYYY-MM-DD
-          dateOnly: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: "$departure_date",
-            },
-          },
-        },
-      },
-      {
-        $group: {
-          _id: "$dateOnly",
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          date: "$_id",
-        },
-      },
-      {
-        $sort: {
-          date: -1, // Trier par date décroissante (plus récent en premier)
-        },
-      },
-    ]);
-
-    // Extraire les dates du résultat
-    const formattedDates = dates.map((item) => item.date);
-
-    res.json(formattedDates);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des dates:", error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des dates." });
-  }
-});
-
 app.listen(port, () => {
   console.log(`Serveur écoutant sur http://localhost:${port}`);
 });

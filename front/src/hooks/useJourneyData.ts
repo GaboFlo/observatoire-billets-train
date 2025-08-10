@@ -180,56 +180,33 @@ export const useJourneyData = () => {
     []
   );
 
-  // Récupérer les dates d'analyse depuis l'API backend (une seule fois)
+  // Dates d'analyse fixes
   useEffect(() => {
     if (!datesLoaded) {
-      const fetchAnalysisDates = async () => {
-        try {
-          const response = await fetch("/api/trains/dates");
-          if (response.ok) {
-            const dates = await response.json();
-            setAnalysisDates(dates);
-          } else {
-            console.warn(
-              "Impossible de récupérer les dates d'analyse depuis l'API"
-            );
-            // Fallback avec des dates par défaut si l'API n'est pas disponible
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const twoDaysAgo = new Date(today);
-            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-            setAnalysisDates([
-              today.toISOString().split("T")[0],
-              yesterday.toISOString().split("T")[0],
-              twoDaysAgo.toISOString().split("T")[0],
-            ]);
-          }
-        } catch (err) {
-          console.warn(
-            "Erreur lors de la récupération des dates d'analyse:",
-            err
-          );
-          // Fallback avec des dates par défaut
-          const today = new Date();
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          const twoDaysAgo = new Date(today);
-          twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-          setAnalysisDates([
-            today.toISOString().split("T")[0],
-            yesterday.toISOString().split("T")[0],
-            twoDaysAgo.toISOString().split("T")[0],
-          ]);
-        }
-      };
-
-      fetchAnalysisDates();
+      const fixedDates = [
+        "2025-12-07",
+        "2025-11-30",
+        "2025-11-28",
+        "2025-09-07",
+        "2025-09-06",
+        "2025-07-14",
+        "2025-07-11",
+        "2025-06-08",
+        "2025-06-06",
+        "2025-04-30",
+        "2025-02-07",
+        "2025-01-31",
+        "2024-12-31",
+        "2024-12-30",
+        "2024-12-20",
+        "2024-12-19",
+        "2024-11-24",
+        "2024-11-22",
+      ];
+      setAnalysisDates(fixedDates);
       setDatesLoaded(true);
     }
-  }, [datesLoaded]); // Dépendances vides pour éviter les re-renders
+  }, [datesLoaded]);
 
   const handleDateSelect = (date: string | null) => {
     setSelectedDate(date);
