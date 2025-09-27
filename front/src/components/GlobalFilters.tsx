@@ -59,11 +59,15 @@ const GlobalFilters = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", {
+    const dayOfWeek = date.toLocaleDateString("fr-FR", {
+      weekday: "short",
+    });
+    const dateOnly = date.toLocaleDateString("fr-FR", {
       day: "2-digit",
       month: "2-digit",
       year: "2-digit",
     });
+    return `${dayOfWeek} ${dateOnly}`;
   };
 
   const formatDateShort = (dateString: string) => {
@@ -193,9 +197,7 @@ const GlobalFilters = ({
                       title={formatDate(date)}
                     >
                       <div className="text-center">
-                        <div className="font-semibold">
-                          {formatDate(date)} {formatDateShort(date)}
-                        </div>
+                        <div className="font-semibold">{formatDate(date)}</div>
                         {status === "today" && (
                           <div className="text-xs bg-green-200 text-green-800 px-1 py-0.5 rounded mt-1">
                             Aujourd'hui

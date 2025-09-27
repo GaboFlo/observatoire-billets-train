@@ -46,7 +46,7 @@ export const stationTranslations: TranslationMap = {
   "La-rochelle-ville": "La Rochelle",
   "London-st-pancras": "Londres",
   "Marseille-st-charles": "Marseille",
-  "Chambery-challes-les-eaux": "Chambéry",
+  "Chambery-challes-les-eaux": "Chambéry - Challes-les-Eaux",
   "Besancon-franche-comte-tgv": "Besançon Franche-Comté TGV",
 };
 

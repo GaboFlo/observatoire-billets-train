@@ -99,13 +99,40 @@ const Train = mongoose.model<TrainDocument>(
   env.MONGO.COLLECTION_NAME
 );
 
+// Cache pour l'endpoint pricing
+interface CacheEntry {
+  data: AggregatedPricingResult[];
+  timestamp: number;
+}
+
+const pricingCache = new Map<string, CacheEntry>();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+const generateCacheKey = (filters: {
+  excludedCarriers: string[];
+  excludedClasses: string[];
+  excludedDiscountCards: string[];
+  selectedDate: string | null;
+}): string => {
+  return JSON.stringify({
+    excludedCarriers: filters.excludedCarriers.toSorted(),
+    excludedClasses: filters.excludedClasses.toSorted(),
+    excludedDiscountCards: filters.excludedDiscountCards.toSorted(),
+    selectedDate: filters.selectedDate,
+  });
+};
+
+const isCacheValid = (entry: CacheEntry): boolean => {
+  return Date.now() - entry.timestamp < CACHE_TTL;
+};
+
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
 
-mongoose.set("debug", true);
+mongoose.set("debug", false);
 
 mongoose
   .connect(env.MONGO.URL, {
@@ -271,6 +298,20 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       selectedDate = null,
     } = req.body;
 
+    // Vérifier le cache
+    const cacheKey = generateCacheKey({
+      excludedCarriers,
+      excludedClasses,
+      excludedDiscountCards,
+      selectedDate,
+    });
+
+    const cachedEntry = pricingCache.get(cacheKey);
+    if (cachedEntry && isCacheValid(cachedEntry)) {
+      console.log("Cache hit pour /api/trains/pricing");
+      return res.json(cachedEntry.data);
+    }
+
     // Construire le match de base
     const baseMatch: any = {
       "pricing.unsellable_reason": null,
@@ -357,6 +398,12 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       ],
       { allowDiskUse: true }
     );
+
+    // Mettre en cache les résultats
+    pricingCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
 
     res.json(data);
   } catch (error) {
