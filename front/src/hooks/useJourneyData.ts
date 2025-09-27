@@ -112,21 +112,19 @@ export const useJourneyData = () => {
                   departureStationId: item.departureStationId,
                   arrivalStation: item.arrivalStation,
                   arrivalStationId: item.arrivalStationId,
-                  trainName: `${carrier} ${travelClass}`,
-                  carrier,
-                  travelClass,
-                  discountCard,
                   minPrice: item.minPrice,
                   avgPrice: item.avgPrice,
                   maxPrice: item.maxPrice,
-                  departureDate: new Date().toISOString().split("T")[0], // Date par défaut
+                  carriers: [carrier],
+                  classes: [travelClass],
+                  discountCards: [discountCard],
                 }))
               )
             );
 
             journeyMap.set(journeyId, {
               id: journeyId,
-              name: `${item.departureStation} → ${item.arrivalStation}`,
+              name: `${item.departureStation} ⟷ ${item.arrivalStation}`,
               departureStation: item.departureStation,
               arrivalStation: item.arrivalStation,
               departureStationId: item.departureStationId,
@@ -148,13 +146,7 @@ export const useJourneyData = () => {
         // Stocker toutes les données non filtrées UNIQUEMENT lors du premier chargement
         // Vérifier si c'est le premier appel sans filtres (seulement MAX par défaut)
         const isFirstLoad =
-          allJourneys.length === 0 &&
-          processedJourneys.length > 0 &&
-          (!filters ||
-            (filters.excludedCarriers?.length === 0 &&
-              filters.excludedClasses?.length === 0 &&
-              filters.excludedDiscountCards?.length === 1 &&
-              filters.excludedDiscountCards[0] === "MAX"));
+          allJourneys.length === 0 && processedJourneys.length > 0;
 
         if (isFirstLoad) {
           setAllJourneys(processedJourneys);
@@ -175,7 +167,7 @@ export const useJourneyData = () => {
         setFilterLoading(false);
       }
     },
-    []
+    [journeys.length, allJourneys.length]
   );
 
   // Dates d'analyse fixes

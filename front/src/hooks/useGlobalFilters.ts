@@ -33,14 +33,15 @@ export const useGlobalFilters = (
     const discountCards = new Set<string>();
 
     // Toujours utiliser allJourneys si disponible, même s'il est vide
-    const dataToUse = allJourneys !== undefined ? allJourneys : journeys;
+    const dataToUse = allJourneys ?? journeys;
 
     dataToUse.forEach((journey) => {
-      journey.offers.forEach((offer) => {
-        carriers.add(offer.carrier);
-        classes.add(offer.travelClass);
-        discountCards.add(offer.discountCard);
-      });
+      // Utiliser directement les propriétés du voyage
+      journey.carriers.forEach((carrier) => carriers.add(carrier));
+      journey.classes.forEach((travelClass) => classes.add(travelClass));
+      journey.discountCards.forEach((discountCard) =>
+        discountCards.add(discountCard)
+      );
     });
 
     // S'assurer que MAX et NONE sont toujours inclus dans les cartes de réduction

@@ -70,13 +70,6 @@ const GlobalFilters = ({
     return `${dayOfWeek} ${dateOnly}`;
   };
 
-  const formatDateShort = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("fr-FR", {
-      weekday: "short",
-    });
-  };
-
   const getDateStatus = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -173,7 +166,7 @@ const GlobalFilters = ({
                 Dates d'analyse
               </h4>
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {analysisDates.map((date) => {
+                {analysisDates.map((date, index) => {
                   const status = getDateStatus(date);
                   const isSelected = selectedDate === date;
 
@@ -189,7 +182,7 @@ const GlobalFilters = ({
 
                   return (
                     <button
-                      key={date}
+                      key={`date-${date}-${index}`}
                       onClick={() => handleDateClick(date)}
                       className={`p-2 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${selectedColors} ${
                         isSelected ? "ring-2 ring-blue-300" : ""
@@ -217,24 +210,27 @@ const GlobalFilters = ({
                 Compagnies ferroviaires
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.carriers.map((carrier: string) => {
-                  const isExcluded = filters.excludedCarriers.includes(carrier);
+                {availableOptions.carriers.map(
+                  (carrier: string, index: number) => {
+                    const isExcluded =
+                      filters.excludedCarriers.includes(carrier);
 
-                  return (
-                    <Badge
-                      key={carrier}
-                      variant="secondary"
-                      className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                        isExcluded
-                          ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                          : "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-gray-700 border border-blue-200 hover:border-blue-300 hover:shadow-md"
-                      }`}
-                      onClick={() => onCarrierFilter(carrier)}
-                    >
-                      {translateCarrier(carrier)}
-                    </Badge>
-                  );
-                })}
+                    return (
+                      <Badge
+                        key={`carrier-${carrier}-${index}`}
+                        variant="secondary"
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                          isExcluded
+                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
+                            : "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-gray-700 border border-blue-200 hover:border-blue-300 hover:shadow-md"
+                        }`}
+                        onClick={() => onCarrierFilter(carrier)}
+                      >
+                        {translateCarrier(carrier)}
+                      </Badge>
+                    );
+                  }
+                )}
               </div>
             </div>
 
@@ -245,25 +241,27 @@ const GlobalFilters = ({
                 Classes de voyage
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.classes.map((travelClass: string) => {
-                  const isExcluded =
-                    filters.excludedClasses.includes(travelClass);
+                {availableOptions.classes.map(
+                  (travelClass: string, index: number) => {
+                    const isExcluded =
+                      filters.excludedClasses.includes(travelClass);
 
-                  return (
-                    <Badge
-                      key={travelClass}
-                      variant="secondary"
-                      className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                        isExcluded
-                          ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                          : "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-gray-700 border border-green-200 hover:border-green-300 hover:shadow-md"
-                      }`}
-                      onClick={() => onClassFilter(travelClass)}
-                    >
-                      {translateTravelClass(travelClass)}
-                    </Badge>
-                  );
-                })}
+                    return (
+                      <Badge
+                        key={`class-${travelClass}-${index}`}
+                        variant="secondary"
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                          isExcluded
+                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
+                            : "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-gray-700 border border-green-200 hover:border-green-300 hover:shadow-md"
+                        }`}
+                        onClick={() => onClassFilter(travelClass)}
+                      >
+                        {translateTravelClass(travelClass)}
+                      </Badge>
+                    );
+                  }
+                )}
               </div>
             </div>
 
@@ -274,25 +272,27 @@ const GlobalFilters = ({
                 Cartes de réduction
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.discountCards.map((discountCard: string) => {
-                  const isExcluded =
-                    filters.excludedDiscountCards.includes(discountCard);
+                {availableOptions.discountCards.map(
+                  (discountCard: string, index: number) => {
+                    const isExcluded =
+                      filters.excludedDiscountCards.includes(discountCard);
 
-                  return (
-                    <Badge
-                      key={discountCard}
-                      variant="secondary"
-                      className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                        isExcluded
-                          ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                          : "bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 text-gray-700 border border-purple-200 hover:border-purple-300 hover:shadow-md"
-                      }`}
-                      onClick={() => onDiscountCardFilter(discountCard)}
-                    >
-                      {translateDiscountCard(discountCard)}
-                    </Badge>
-                  );
-                })}
+                    return (
+                      <Badge
+                        key={`discount-${discountCard}-${index}`}
+                        variant="secondary"
+                        className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                          isExcluded
+                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
+                            : "bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 text-gray-700 border border-purple-200 hover:border-purple-300 hover:shadow-md"
+                        }`}
+                        onClick={() => onDiscountCardFilter(discountCard)}
+                      >
+                        {translateDiscountCard(discountCard)}
+                      </Badge>
+                    );
+                  }
+                )}
               </div>
             </div>
           </div>

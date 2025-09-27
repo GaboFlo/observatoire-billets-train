@@ -17,7 +17,6 @@ export const useJourneyDetails = (
       try {
         setLoading(true);
 
-        console.log("Appel à l'API details pour les détails");
         const response = await fetch(
           `http://localhost:3000/api/trains/details/${encodeURIComponent(
             departureStation
@@ -58,7 +57,18 @@ export const useJourneyDetails = (
           carriers,
           classes,
           discountCards,
-          offers: data as any[], // Conversion temporaire pour compatibilité
+          offers: data.map((offer) => ({
+            departureStation: offer.departureStation,
+            departureStationId: offer.departureStationId,
+            arrivalStation: offer.arrivalStation,
+            arrivalStationId: offer.arrivalStationId,
+            minPrice: offer.minPrice,
+            avgPrice: offer.avgPrice,
+            maxPrice: offer.maxPrice,
+            carriers: [offer.carrier],
+            classes: [offer.travelClass],
+            discountCards: [offer.discountCard],
+          })),
           minPrice,
           maxPrice,
           avgPrice,

@@ -28,13 +28,15 @@ export const processPricingData = (
     const arrival = offers[0].arrivalStation;
     const arrivalId = offers[0].arrivalStationId;
     const carriers = [
-      ...new Set(offers.map((o: AggregatedPricingResult) => o.carrier)),
+      ...new Set(offers.flatMap((o: AggregatedPricingResult) => o.carriers)),
     ];
     const classes = [
-      ...new Set(offers.map((o: AggregatedPricingResult) => o.travelClass)),
+      ...new Set(offers.flatMap((o: AggregatedPricingResult) => o.classes)),
     ];
     const discountCards = [
-      ...new Set(offers.map((o: AggregatedPricingResult) => o.discountCard)),
+      ...new Set(
+        offers.flatMap((o: AggregatedPricingResult) => o.discountCards)
+      ),
     ];
 
     const allPrices = [

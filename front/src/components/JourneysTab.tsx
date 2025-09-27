@@ -107,7 +107,7 @@ const JourneysTab = ({
   };
 
   const parseJourneyName = (name: string) => {
-    const parts = name.split(" → ");
+    const parts = name.split(" ⟷ ");
     return {
       departure: parts[0] || "",
       arrival: parts[1] || "",

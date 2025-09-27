@@ -14,6 +14,7 @@ const routeFiles = {
   "4916-5892": () => import("../data/routes/4916-5892.json"),
   "4916-6617": () => import("../data/routes/4916-6617.json"),
   "4916-828": () => import("../data/routes/4916-828.json"),
+  "4916-8490": () => import("../data/routes/4916-8490.json"),
 };
 
 export interface RouteData {
@@ -38,7 +39,16 @@ export const getRouteData = async (
     const routeKey = `${dep}-${arr}`;
     if (routeFiles[routeKey as keyof typeof routeFiles]) {
       const routeData = await routeFiles[routeKey as keyof typeof routeFiles]();
-      return routeData.default;
+      const data = routeData.default;
+      return {
+        type: data.type,
+        geometry: data.geometry,
+        properties: {
+          dep: dep,
+          arr: arr,
+          distance: 0,
+        },
+      };
     }
 
     // Si pas trouvé, essayer le trajet inverse
@@ -48,12 +58,18 @@ export const getRouteData = async (
         routeKeyReverse as keyof typeof routeFiles
       ]();
       // Inverser les coordonnées pour le trajet retour
+      const data = routeData.default;
       const reversedRouteData = {
-        ...routeData.default,
+        type: data.type,
+        properties: {
+          dep: arr,
+          arr: dep,
+          distance: 0,
+        },
         geometry: {
-          ...routeData.default.geometry,
-          coordinates: routeData.default.geometry.coordinates.map(
-            (ring: number[][]) => ring.slice().reverse()
+          ...data.geometry,
+          coordinates: data.geometry.coordinates.map((ring: number[][]) =>
+            ring.slice().reverse()
           ),
         },
       };
