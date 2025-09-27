@@ -160,14 +160,6 @@ app.get("/api/trains", async (req: Request, res: Response) => {
     const mappedData = data.map((train) => {
       const trainObj = train.toObject();
 
-      // Mapper les IDs de stations si nécessaire
-      if (trainObj.departure_station.id === 5085) {
-        trainObj.departure_station.id = 4687;
-      }
-      if (trainObj.arrival_station.id === 5085) {
-        trainObj.arrival_station.id = 4687;
-      }
-
       return trainObj;
     });
 
@@ -181,13 +173,6 @@ app.get("/api/trains", async (req: Request, res: Response) => {
 });
 
 // Fonction pour mapper les IDs de stations
-const mapStationId = (stationId: number): number => {
-  // Station 5085 doit être traitée comme station 4687
-  if (stationId === 5085) {
-    return 4687;
-  }
-  return stationId;
-};
 
 app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
@@ -230,41 +215,23 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
         },
         {
           $addFields: {
-            mappedDepartureStationId: {
-              $cond: {
-                if: { $eq: ["$departure_station.id", 5085] },
-                then: 4687,
-                else: "$departure_station.id",
-              },
-            },
-            mappedArrivalStationId: {
-              $cond: {
-                if: { $eq: ["$arrival_station.id", 5085] },
-                then: 4687,
-                else: "$arrival_station.id",
-              },
-            },
-          },
-        },
-        {
-          $addFields: {
             // Créer une clé de route normalisée pour regrouper les trajets aller-retour
             routeKey: {
               $cond: {
                 if: {
-                  $lt: ["$mappedDepartureStationId", "$mappedArrivalStationId"],
+                  $lt: ["$departure_station.id", "$arrival_station.id"],
                 },
                 then: {
                   station1: "$departure_station.name",
-                  station1Id: "$mappedDepartureStationId",
+                  station1Id: "$departure_station.id",
                   station2: "$arrival_station.name",
-                  station2Id: "$mappedArrivalStationId",
+                  station2Id: "$arrival_station.id",
                 },
                 else: {
                   station1: "$arrival_station.name",
-                  station1Id: "$mappedArrivalStationId",
+                  station1Id: "$arrival_station.id",
                   station2: "$departure_station.name",
-                  station2Id: "$mappedDepartureStationId",
+                  station2Id: "$departure_station.id",
                 },
               },
             },
@@ -287,9 +254,9 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
             discountCards: { $addToSet: "$pricing.discount_card" },
             // Garder les informations sur les deux sens
             departureStation: { $first: "$departure_station.name" },
-            departureStationId: { $first: "$mappedDepartureStationId" },
+            departureStationId: { $first: "$departure_station.id" },
             arrivalStation: { $first: "$arrival_station.name" },
-            arrivalStationId: { $first: "$mappedArrivalStationId" },
+            arrivalStationId: { $first: "$arrival_station.id" },
           },
         },
         {
@@ -376,41 +343,23 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
         },
         {
           $addFields: {
-            mappedDepartureStationId: {
-              $cond: {
-                if: { $eq: ["$departure_station.id", 5085] },
-                then: 4687,
-                else: "$departure_station.id",
-              },
-            },
-            mappedArrivalStationId: {
-              $cond: {
-                if: { $eq: ["$arrival_station.id", 5085] },
-                then: 4687,
-                else: "$arrival_station.id",
-              },
-            },
-          },
-        },
-        {
-          $addFields: {
             // Créer une clé de route normalisée pour regrouper les trajets aller-retour
             routeKey: {
               $cond: {
                 if: {
-                  $lt: ["$mappedDepartureStationId", "$mappedArrivalStationId"],
+                  $lt: ["$departure_station.id", "$arrival_station.id"],
                 },
                 then: {
                   station1: "$departure_station.name",
-                  station1Id: "$mappedDepartureStationId",
+                  station1Id: "$departure_station.id",
                   station2: "$arrival_station.name",
-                  station2Id: "$mappedArrivalStationId",
+                  station2Id: "$arrival_station.id",
                 },
                 else: {
                   station1: "$arrival_station.name",
-                  station1Id: "$mappedArrivalStationId",
+                  station1Id: "$arrival_station.id",
                   station2: "$departure_station.name",
-                  station2Id: "$mappedDepartureStationId",
+                  station2Id: "$departure_station.id",
                 },
               },
             },
@@ -433,9 +382,9 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             discountCards: { $addToSet: "$pricing.discount_card" },
             // Garder les informations sur les deux sens
             departureStation: { $first: "$departure_station.name" },
-            departureStationId: { $first: "$mappedDepartureStationId" },
+            departureStationId: { $first: "$departure_station.id" },
             arrivalStation: { $first: "$arrival_station.name" },
-            arrivalStationId: { $first: "$mappedArrivalStationId" },
+            arrivalStationId: { $first: "$arrival_station.id" },
           },
         },
         {
@@ -485,20 +434,6 @@ app.get(
         },
         {
           $addFields: {
-            mappedDepartureStationId: {
-              $cond: {
-                if: { $eq: ["$departure_station.id", 5085] },
-                then: 4687,
-                else: "$departure_station.id",
-              },
-            },
-            mappedArrivalStationId: {
-              $cond: {
-                if: { $eq: ["$arrival_station.id", 5085] },
-                then: 4687,
-                else: "$arrival_station.id",
-              },
-            },
             daysBeforeDeparture: {
               $ceil: {
                 $divide: [
