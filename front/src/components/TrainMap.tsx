@@ -79,8 +79,10 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
         const [depId, arrId] = routeKey.split("-").map(Number);
 
         try {
-          const data = await getRouteData(depId, arrId);
-          setRouteData((prev) => ({ ...prev, [routeKey]: data }));
+          const data = await getRouteData(depId.toString(), arrId.toString());
+          if (data) {
+            setRouteData((prev) => ({ ...prev, [routeKey]: data }));
+          }
         } catch (error) {
           console.error(
             `Erreur lors de la récupération de la route ${routeKey}:`,
@@ -148,8 +150,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
       if (route) {
         let features: GeoJSONFeature[] = [];
 
-        if (route.type === "FeatureCollection" && route.features) {
-          features = route.features;
+        if (route.type === "FeatureCollection" && "features" in route) {
+          features = (route as { features: GeoJSONFeature[] }).features;
         } else if (route.type === "Feature") {
           features = [route as GeoJSONFeature];
         }
@@ -281,7 +283,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                             {forwardJourneys.length > 0 && (
                               <div className="mb-3">
                                 <div className="text-xs text-gray-600 mb-1">
-                                  {line.departureStation} →{" "}
+                                  {line.departureStation} ⟷{" "}
                                   {line.arrivalStation}
                                 </div>
                                 <div className="text-sm font-semibold text-blue-600">
@@ -297,7 +299,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                             {reverseJourneys.length > 0 && (
                               <div>
                                 <div className="text-xs text-gray-600 mb-1">
-                                  {line.arrivalStation} →{" "}
+                                  {line.arrivalStation} ⟷{" "}
                                   {line.departureStation}
                                 </div>
                                 <div className="text-sm font-semibold text-blue-600">

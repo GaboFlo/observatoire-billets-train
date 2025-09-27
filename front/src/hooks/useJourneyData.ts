@@ -18,14 +18,12 @@ export interface Journey {
     departureStationId: number;
     arrivalStation: string;
     arrivalStationId: number;
-    trainName: string;
-    carrier: string;
-    travelClass: string;
-    discountCard: string;
     minPrice: number;
     avgPrice: number;
     maxPrice: number;
-    departureDate: string;
+    carriers: string[];
+    classes: string[];
+    discountCards: string[];
   }>;
 }
 

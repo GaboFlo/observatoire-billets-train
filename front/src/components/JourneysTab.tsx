@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  MapPin,
-  TrendingUp,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
@@ -263,21 +257,10 @@ const JourneysTab = ({
                 <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <TableHead
                     className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"
-                    onClick={() => handleSort("departure")}
-                  >
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      Départ
-                      {getSortIcon("departure")}
-                    </div>
-                  </TableHead>
-                  <TableHead
-                    className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"
                     onClick={() => handleSort("arrival")}
                   >
                     <div className="flex items-center gap-2">
-                      <ArrowRight className="w-4 h-4" />
-                      Arrivée
+                      Origine / Destination depuis Paris
                       {getSortIcon("arrival")}
                     </div>
                   </TableHead>
@@ -311,9 +294,7 @@ const JourneysTab = ({
                       {getSortIcon("maxPrice")}
                     </div>
                   </TableHead>
-                  <TableHead className="font-semibold text-gray-700">
-                    Actions
-                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -326,9 +307,6 @@ const JourneysTab = ({
                       key={journey.id}
                       className="hover:bg-gray-50/50 transition-colors border-b border-gray-100"
                     >
-                      <TableCell className="font-semibold text-gray-900">
-                        {translateStation(departure)}
-                      </TableCell>
                       <TableCell className="font-semibold text-gray-900">
                         {translateStation(arrival)}
                       </TableCell>

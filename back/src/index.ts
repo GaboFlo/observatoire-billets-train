@@ -247,12 +247,36 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
           },
         },
         {
+          $addFields: {
+            // Créer une clé de route normalisée pour regrouper les trajets aller-retour
+            routeKey: {
+              $cond: {
+                if: {
+                  $lt: ["$mappedDepartureStationId", "$mappedArrivalStationId"],
+                },
+                then: {
+                  station1: "$departure_station.name",
+                  station1Id: "$mappedDepartureStationId",
+                  station2: "$arrival_station.name",
+                  station2Id: "$mappedArrivalStationId",
+                },
+                else: {
+                  station1: "$arrival_station.name",
+                  station1Id: "$mappedArrivalStationId",
+                  station2: "$departure_station.name",
+                  station2Id: "$mappedDepartureStationId",
+                },
+              },
+            },
+          },
+        },
+        {
           $group: {
             _id: {
-              departureStation: "$departure_station.name",
-              departureStationId: "$mappedDepartureStationId",
-              arrivalStation: "$arrival_station.name",
-              arrivalStationId: "$mappedArrivalStationId",
+              station1: "$routeKey.station1",
+              station1Id: "$routeKey.station1Id",
+              station2: "$routeKey.station2",
+              station2Id: "$routeKey.station2Id",
             },
             minPrice: { $min: "$pricing.price" },
             avgPrice: { $avg: "$pricing.price" },
@@ -261,15 +285,20 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
             carriers: { $addToSet: "$carrier" },
             classes: { $addToSet: "$pricing.travel_class" },
             discountCards: { $addToSet: "$pricing.discount_card" },
+            // Garder les informations sur les deux sens
+            departureStation: { $first: "$departure_station.name" },
+            departureStationId: { $first: "$mappedDepartureStationId" },
+            arrivalStation: { $first: "$arrival_station.name" },
+            arrivalStationId: { $first: "$mappedArrivalStationId" },
           },
         },
         {
           $project: {
             _id: 0,
-            departureStation: "$_id.departureStation",
-            departureStationId: "$_id.departureStationId",
-            arrivalStation: "$_id.arrivalStation",
-            arrivalStationId: "$_id.arrivalStationId",
+            departureStation: "$departureStation",
+            departureStationId: "$departureStationId",
+            arrivalStation: "$arrivalStation",
+            arrivalStationId: "$arrivalStationId",
             minPrice: 1,
             avgPrice: 1,
             maxPrice: 1,
@@ -364,12 +393,36 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
           },
         },
         {
+          $addFields: {
+            // Créer une clé de route normalisée pour regrouper les trajets aller-retour
+            routeKey: {
+              $cond: {
+                if: {
+                  $lt: ["$mappedDepartureStationId", "$mappedArrivalStationId"],
+                },
+                then: {
+                  station1: "$departure_station.name",
+                  station1Id: "$mappedDepartureStationId",
+                  station2: "$arrival_station.name",
+                  station2Id: "$mappedArrivalStationId",
+                },
+                else: {
+                  station1: "$arrival_station.name",
+                  station1Id: "$mappedArrivalStationId",
+                  station2: "$departure_station.name",
+                  station2Id: "$mappedDepartureStationId",
+                },
+              },
+            },
+          },
+        },
+        {
           $group: {
             _id: {
-              departureStation: "$departure_station.name",
-              departureStationId: "$mappedDepartureStationId",
-              arrivalStation: "$arrival_station.name",
-              arrivalStationId: "$mappedArrivalStationId",
+              station1: "$routeKey.station1",
+              station1Id: "$routeKey.station1Id",
+              station2: "$routeKey.station2",
+              station2Id: "$routeKey.station2Id",
             },
             minPrice: { $min: "$pricing.price" },
             avgPrice: { $avg: "$pricing.price" },
@@ -378,15 +431,20 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             carriers: { $addToSet: "$carrier" },
             classes: { $addToSet: "$pricing.travel_class" },
             discountCards: { $addToSet: "$pricing.discount_card" },
+            // Garder les informations sur les deux sens
+            departureStation: { $first: "$departure_station.name" },
+            departureStationId: { $first: "$mappedDepartureStationId" },
+            arrivalStation: { $first: "$arrival_station.name" },
+            arrivalStationId: { $first: "$mappedArrivalStationId" },
           },
         },
         {
           $project: {
             _id: 0,
-            departureStation: "$_id.departureStation",
-            departureStationId: "$_id.departureStationId",
-            arrivalStation: "$_id.arrivalStation",
-            arrivalStationId: "$_id.arrivalStationId",
+            departureStation: "$departureStation",
+            departureStationId: "$departureStationId",
+            arrivalStation: "$arrivalStation",
+            arrivalStationId: "$arrivalStationId",
             minPrice: 1,
             avgPrice: 1,
             maxPrice: 1,
