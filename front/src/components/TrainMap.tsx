@@ -231,6 +231,8 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
           center={mapCenter as [number, number]}
           zoom={5}
           style={{ height: "100%", width: "100%" }}
+          scrollWheelZoom={false}
+          zoomControl={true}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -264,7 +266,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                 >
                   <Popup>
                     <div className="p-2">
-                      {/* Statistiques par sens */}
                       {(() => {
                         // Trouver les journeys correspondant à chaque sens
                         const forwardJourneys = filteredJourneys.filter(
@@ -314,32 +315,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                           </>
                         );
                       })()}
-
-                      {line.properties &&
-                        typeof line.properties === "object" && (
-                          <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                            {"name" in line.properties &&
-                              typeof (line.properties as { name?: unknown })
-                                .name === "string" && (
-                                <div>
-                                  Route:{" "}
-                                  {(line.properties as { name: string }).name}
-                                </div>
-                              )}
-                            {"distance" in line.properties &&
-                              typeof (line.properties as { distance?: unknown })
-                                .distance === "number" && (
-                                <div>
-                                  Distance:{" "}
-                                  {Math.round(
-                                    (line.properties as { distance: number })
-                                      .distance
-                                  )}
-                                  km
-                                </div>
-                              )}
-                          </div>
-                        )}
                     </div>
                   </Popup>
                 </Polyline>

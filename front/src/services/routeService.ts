@@ -22,7 +22,6 @@ export interface RouteData {
   properties: {
     dep: string;
     arr: string;
-    distance: number;
   };
   geometry: {
     type: string;
@@ -46,7 +45,7 @@ export const getRouteData = async (
         properties: {
           dep: dep,
           arr: arr,
-          distance: 0,
+        
         },
       };
     }
@@ -64,7 +63,7 @@ export const getRouteData = async (
         properties: {
           dep: arr,
           arr: dep,
-          distance: 0,
+       
         },
         geometry: {
           ...data.geometry,
