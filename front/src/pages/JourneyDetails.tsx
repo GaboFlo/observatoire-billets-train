@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ArrowRightLeft,
   Calendar,
   ChartBar,
   ChartLine,
@@ -7,22 +8,15 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import GlobalFiltersReusableWithDates from "../components/GlobalFiltersReusableWithDates";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import JourneyKPIs from "../components/JourneyKPIs";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
 import TrainDetailsTable from "../components/TrainDetailsTable";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { Card, CardContent } from "../components/ui/card";
+import UnifiedFilters from "../components/UnifiedFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
 
@@ -38,7 +32,7 @@ const JourneyDetails = () => {
     departureStationId: string;
     arrivalStationId: string;
   }>();
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const {
     journey,
@@ -47,169 +41,149 @@ const JourneyDetails = () => {
     filterLoading,
     error,
     analysisDates,
-    applyFilters,
-    currentFilters,
+    selectedDate,
+    availableTrains,
+    selectedTrain,
+    selectedCarriers,
+    selectedClasses,
+    selectedDiscountCards,
+    availableCarriers,
+    availableClasses,
+    availableDiscountCards,
+    handleDateSelect,
+    handleTrainSelect,
+    handleCarrierToggle,
+    handleClassToggle,
+    handleDiscountCardToggle,
   } = useJourneyDetails(
     departureStation || "",
     arrivalStation || "",
-    selectedDates,
+    [],
     departureStationId ? parseInt(departureStationId) : undefined,
     arrivalStationId ? parseInt(arrivalStationId) : undefined
   );
 
-  const { filters, filteredOffers, handleTrainSelect, clearTrainFilter } =
+  const { filteredOffers, handleTrainSelect: handleTrainSelectFilter } =
     useJourneyDetailsFilters(detailedOffers);
 
-  // Fonctions de gestion des filtres avec appels API
-  const handleCarrierFilterAPI = (carrier: string) => {
-    const newExcludedCarriers = currentFilters.excludedCarriers.includes(
-      carrier
-    )
-      ? currentFilters.excludedCarriers.filter((c) => c !== carrier)
-      : [...currentFilters.excludedCarriers, carrier];
+  // Logs de débogage
+  console.log("🔍 JourneyDetails - analysisDates:", analysisDates.length);
+  console.log("🔍 JourneyDetails - selectedDate:", selectedDate);
+  console.log("🔍 JourneyDetails - availableTrains:", availableTrains.length);
+  console.log("🔍 JourneyDetails - selectedTrain:", selectedTrain);
+  console.log("🔍 JourneyDetails - error:", error);
+  console.log("🔍 JourneyDetails - loading:", loading);
+  console.log("🔍 JourneyDetails - filterLoading:", filterLoading);
 
-    applyFilters({ excludedCarriers: newExcludedCarriers });
-  };
+  const handleInvertJourney = () => {
+    console.log("🔄 Inversion du trajet");
 
-  const handleClassFilterAPI = (travelClass: string) => {
-    const newExcludedClasses = currentFilters.excludedClasses.includes(
-      travelClass
-    )
-      ? currentFilters.excludedClasses.filter((c) => c !== travelClass)
-      : [...currentFilters.excludedClasses, travelClass];
-
-    applyFilters({ excludedClasses: newExcludedClasses });
-  };
-
-  const handleDiscountCardFilterAPI = (discountCard: string) => {
-    const newExcludedDiscountCards =
-      currentFilters.excludedDiscountCards.includes(discountCard)
-        ? currentFilters.excludedDiscountCards.filter((c) => c !== discountCard)
-        : [...currentFilters.excludedDiscountCards, discountCard];
-
-    applyFilters({ excludedDiscountCards: newExcludedDiscountCards });
-  };
-
-  const handleDateSelectAPI = (dates: string[]) => {
-    setSelectedDates(dates);
-    applyFilters({ selectedDates: dates });
-  };
-
-  const clearAllFiltersAPI = () => {
-    setSelectedDates([]);
-    applyFilters({
-      excludedCarriers: [],
-      excludedClasses: [],
-      excludedDiscountCards: [],
-      selectedDates: [],
-    });
+    // Construire la nouvelle URL avec les stations inversées
+    const newUrl = `/journey/${arrivalStation}/${departureStation}/${arrivalStationId}/${departureStationId}`;
+    console.log("🔄 Navigation vers:", newUrl);
+    navigate(newUrl);
   };
 
   if (loading) {
     return <LoadingAnimation />;
   }
 
-  // Afficher l'indicateur de chargement des filtres
-  if (filterLoading) {
+  // Afficher un message si aucune date n'est disponible
+  if (analysisDates.length === 0 && !loading && !error && !filterLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container px-4 py-8 mx-auto">
-          <div className="flex items-center mb-8">
-            <Button variant="outline" size="sm" asChild className="mr-4">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                {journey?.name || "Chargement..."}
-              </h1>
-            </div>
-          </div>
-          <LoadingAnimation isFilterLoading={true} />
-        </div>
-      </div>
-    );
-  }
-
-  // Afficher un message si aucune date n'est sélectionnée
-  if (
-    selectedDates.length === 0 &&
-    detailedOffers.length === 0 &&
-    !loading &&
-    !error
-  ) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 py-8 mx-auto">
-          <div className="flex items-center mb-8">
-            <Button variant="outline" size="sm" asChild className="mr-4">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                {departureStation} ⟷ {arrivalStation}
-              </h1>
-              <p className="text-gray-500">
-                Sélectionnez une date pour voir les trains disponibles
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            {/* Filtres globaux */}
-            <GlobalFiltersReusableWithDates
-              offers={detailedOffers}
-              filters={currentFilters}
-              onCarrierFilter={handleCarrierFilterAPI}
-              onClassFilter={handleClassFilterAPI}
-              onDiscountCardFilter={handleDiscountCardFilterAPI}
-              clearFilters={clearAllFiltersAPI}
-              analysisDates={analysisDates}
-              selectedDates={selectedDates}
-              onDateSelect={handleDateSelectAPI}
-            />
-
-            {/* Message informatif */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-900">
-                    Sélectionnez une date
-                  </h3>
-                  <p className="text-blue-700">
-                    Choisissez une date dans le calendrier ci-dessus pour voir
-                    les trains disponibles
-                  </p>
-                </div>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <Button variant="outline" size="sm" asChild className="mr-4">
+                <Link to="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                  {departureStation} ⟶ {arrivalStation}
+                </h1>
+                <p className="text-gray-500 text-sm"></p>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInvertJourney}
+              className="flex items-center gap-2"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Inverser le trajet
+            </Button>
+          </div>
+          <div className="text-center py-16">
+            <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+              Aucune date disponible
+            </h2>
+            <p className="text-gray-500 mb-8">
+              Aucune date n'a été trouvée pour ce trajet. Vérifiez les
+              paramètres ou essayez un autre trajet.
+            </p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !journey) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 py-16 mx-auto text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Trajet non trouvé
-          </h1>
-          <p className="text-gray-500 mb-8">
-            Le trajet que vous recherchez n'existe pas ou a été supprimé.
-          </p>
-          <Button asChild>
-            <Link to="/">Retour à l'accueil</Link>
-          </Button>
+        <div className="container px-4 py-8 mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <Button variant="outline" size="sm" asChild className="mr-4">
+                <Link to="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                  {departureStation} ⟶ {arrivalStation}
+                </h1>
+                <p className="text-gray-500 text-sm"></p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInvertJourney}
+              className="flex items-center gap-2"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Inverser le trajet
+            </Button>
+          </div>
+          <div className="text-center py-16">
+            <div className="text-red-500 mb-4">
+              <svg
+                className="mx-auto h-16 w-16"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+              Erreur de chargement
+            </h2>
+            <p className="text-gray-500 mb-8">{error}</p>
+            <Button onClick={() => window.location.reload()}>Réessayer</Button>
+          </div>
         </div>
       </div>
     );
@@ -219,193 +193,170 @@ const JourneyDetails = () => {
   const monthlyChange = 0; // À remplacer par un calcul réel quand l'historique sera disponible
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto">
-        <div className="flex items-center mb-8">
-          <Button variant="outline" size="sm" asChild className="mr-4">
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Retour
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              {journey.name}
-            </h1>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Filtres globaux */}
-          <GlobalFiltersReusableWithDates
-            offers={detailedOffers}
-            filters={currentFilters}
-            onCarrierFilter={handleCarrierFilterAPI}
-            onClassFilter={handleClassFilterAPI}
-            onDiscountCardFilter={handleDiscountCardFilterAPI}
-            clearFilters={clearAllFiltersAPI}
-            analysisDates={analysisDates}
-            selectedDates={selectedDates}
-            onDateSelect={handleDateSelectAPI}
-          />
-
-          {/* Train sélectionné */}
-          {(filters.selectedTrainName || filters.selectedDepartureDate) && (
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Train className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="text-sm text-blue-800">
-                      <span className="font-semibold">Train sélectionné :</span>{" "}
-                      {filters.selectedTrainName && (
-                        <span>{filters.selectedTrainName}</span>
-                      )}
-                      {filters.selectedDepartureDate && (
-                        <span>
-                          {" "}
-                          -{" "}
-                          {new Date(
-                            filters.selectedDepartureDate
-                          ).toLocaleDateString("fr-FR")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearTrainFilter}
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                  >
-                    Voir tous les trains
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* KPIs et statistiques */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Prix Moyen"
-              value={`${journey.avgPrice}€`}
-              description="Prix moyen des offres disponibles"
-              icon={ChartLine}
-              color="blue"
-            />
-            <StatCard
-              title="Prix Minimum"
-              value={`${journey.minPrice}€`}
-              description="Le tarif le plus bas observé"
-              icon={TrendingDown}
-              color="green"
-            />
-            <StatCard
-              title="Prix Maximum"
-              value={`${journey.maxPrice}€`}
-              description="Le tarif le plus élevé observé"
-              icon={TrendingUp}
-              color="orange"
-            />
-            <StatCard
-              title="Variation Mensuelle"
-              value={`${monthlyChange > 0 ? "+" : ""}${monthlyChange.toFixed(
-                1
-              )}%`}
-              description="Par rapport au mois précédent"
-              icon={ChartBar}
-              color="purple"
-            />
+    <>
+      {filterLoading && <LoadingAnimation isFilterLoading={true} />}
+      <div className="min-h-screen bg-gray-50">
+        <div className="container px-4 py-8 mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center">
+              <Button variant="outline" size="sm" asChild className="mr-4">
+                <Link to="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                  {departureStation} ⟶ {arrivalStation}
+                </h1>
+                <p className="text-gray-500 text-sm"></p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInvertJourney}
+              className="flex items-center gap-2"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Inverser le trajet
+            </Button>
           </div>
 
-          {/* KPIs détaillés */}
-          <JourneyKPIs offers={filteredOffers} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+              {/* Filtres unifiés */}
+              <UnifiedFilters
+                availableDates={analysisDates}
+                availableTrains={availableTrains}
+                availableCarriers={availableCarriers}
+                availableClasses={availableClasses}
+                availableDiscountCards={availableDiscountCards}
+                selectedDate={selectedDate}
+                selectedTrain={selectedTrain}
+                selectedCarriers={selectedCarriers}
+                selectedClasses={selectedClasses}
+                selectedDiscountCards={selectedDiscountCards}
+                onDateSelect={(date) => handleDateSelect(date || "")}
+                onTrainSelect={(train) => handleTrainSelect(train || "")}
+                onCarrierToggle={handleCarrierToggle}
+                onClassToggle={handleClassToggle}
+                onDiscountCardToggle={handleDiscountCardToggle}
+                onInvertJourney={handleInvertJourney}
+                loading={loading}
+                filterLoading={filterLoading}
+              />
+            </div>
 
-          {/* Graphique d'évolution des prix */}
-          <PriceEvolutionChart offers={filteredOffers} />
+            <div className="lg:col-span-2 space-y-8">
+              {/* Train sélectionné */}
+              {selectedTrain && (
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 rounded-xl">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-lg">
+                          <Train className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="text-sm text-green-800">
+                          <span className="font-semibold">
+                            Train sélectionné :
+                          </span>{" "}
+                          <span>Train {selectedTrain}</span>
+                          {selectedDate && (
+                            <span>
+                              {" "}
+                              -{" "}
+                              {new Date(selectedDate).toLocaleDateString(
+                                "fr-FR"
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleTrainSelect("")}
+                        className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                      >
+                        Voir tous les trains
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-          {/* Tableau des trains */}
-          <TrainDetailsTable
-            offers={filteredOffers}
-            onTrainSelect={handleTrainSelect}
-          />
+              {/* KPIs et statistiques */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  title="Prix Moyen"
+                  value={`${journey?.avgPrice || 0}€`}
+                  description="Prix moyen des offres disponibles"
+                  icon={ChartLine}
+                  color="blue"
+                />
+                <StatCard
+                  title="Prix Minimum"
+                  value={`${journey?.minPrice || 0}€`}
+                  description="Le tarif le plus bas observé"
+                  icon={TrendingDown}
+                  color="green"
+                />
+                <StatCard
+                  title="Prix Maximum"
+                  value={`${journey?.maxPrice || 0}€`}
+                  description="Le tarif le plus élevé observé"
+                  icon={TrendingUp}
+                  color="orange"
+                />
+                <StatCard
+                  title="Variation Mensuelle"
+                  value={`${
+                    monthlyChange > 0 ? "+" : ""
+                  }${monthlyChange.toFixed(1)}%`}
+                  description="Par rapport au mois précédent"
+                  icon={ChartBar}
+                  color="purple"
+                />
+              </div>
 
-          {/* Informations détaillées */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-              <CardHeader>
-                <CardTitle>Informations du Trajet</CardTitle>
-                <CardDescription>Détails sur ce trajet</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">
-                      Station de départ
-                    </span>
-                    <span className="font-medium">
-                      {journey.departureStation}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">
-                      Station d'arrivée
-                    </span>
-                    <span className="font-medium">
-                      {journey.arrivalStation}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">ID du trajet</span>
-                    <span className="font-medium">{journey.id}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Nombre d'offres
-                    </span>
-                    <span className="font-medium">{journey.offers.length}</span>
-                  </div>
+              {/* Contenu conditionnel selon la sélection */}
+              {selectedDate && !selectedTrain && (
+                <div className="text-center py-16">
+                  <Train className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                  <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+                    Sélectionnez un train
+                  </h2>
+                  <p className="text-gray-500">
+                    Choisissez un train dans la liste à gauche pour voir les
+                    détails
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              )}
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-              <CardHeader>
-                <CardTitle>Statistiques de Prix</CardTitle>
-                <CardDescription>
-                  Analyse des prix pour ce trajet
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">Prix minimum</span>
-                    <span className="font-medium">{journey.minPrice}€</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">Prix moyen</span>
-                    <span className="font-medium">{journey.avgPrice}€</span>
-                  </div>
-                  <div className="flex justify-between border-b pb-3">
-                    <span className="text-muted-foreground">Prix maximum</span>
-                    <span className="font-medium">{journey.maxPrice}€</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Écart de prix</span>
-                    <span className="font-medium">
-                      {journey.maxPrice - journey.minPrice}€
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              {selectedDate && selectedTrain && (
+                <>
+                  <JourneyKPIs offers={filteredOffers} />
+                  <PriceEvolutionChart offers={filteredOffers} />
+                  <TrainDetailsTable
+                    offers={filteredOffers}
+                    onTrainSelect={(trainName, departureDate) => {
+                      console.log(
+                        "🚂 Train sélectionné dans le tableau:",
+                        trainName,
+                        departureDate
+                      );
+                      handleTrainSelectFilter(trainName, departureDate);
+                    }}
+                  />
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
