@@ -34,18 +34,18 @@ export const useJourneyData = () => {
   const [filterLoading, setFilterLoading] = useState(false); // Nouvelle barre de chargement pour les filtres
   const [error, setError] = useState<string | null>(null);
   const [analysisDates, setAnalysisDates] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [datesLoaded, setDatesLoaded] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<{
     excludedCarriers: string[];
     excludedClasses: string[];
     excludedDiscountCards: string[];
-    selectedDate: string | null;
+    selectedDates: string[];
   }>({
     excludedCarriers: [],
     excludedClasses: [],
     excludedDiscountCards: ["MAX"],
-    selectedDate: null,
+    selectedDates: [],
   });
 
   // Ref pour le debounce
@@ -56,7 +56,7 @@ export const useJourneyData = () => {
       excludedCarriers?: string[];
       excludedClasses?: string[];
       excludedDiscountCards?: string[];
-      selectedDate?: string | null;
+      selectedDates?: string[];
     }) => {
       try {
         // Utiliser la barre de chargement discrète pour tous les chargements sauf le premier
@@ -70,7 +70,7 @@ export const useJourneyData = () => {
           excludedCarriers: filters?.excludedCarriers || [],
           excludedClasses: filters?.excludedClasses || [],
           excludedDiscountCards: filters?.excludedDiscountCards || [],
-          selectedDate: filters?.selectedDate || null,
+          selectedDates: filters?.selectedDates || [],
         };
 
         const response = await fetch("/api/trains/pricing", {
@@ -156,7 +156,7 @@ export const useJourneyData = () => {
           excludedCarriers: filters?.excludedCarriers || [],
           excludedClasses: filters?.excludedClasses || [],
           excludedDiscountCards: filters?.excludedDiscountCards || ["MAX"],
-          selectedDate: filters?.selectedDate || null,
+          selectedDates: filters?.selectedDates || [],
         });
         setError(null);
       } catch (err) {
@@ -167,7 +167,7 @@ export const useJourneyData = () => {
         setFilterLoading(false);
       }
     },
-    [journeys.length, allJourneys.length]
+    []
   );
 
   // Dates d'analyse fixes
@@ -210,13 +210,10 @@ export const useJourneyData = () => {
     }
   }, [datesLoaded]);
 
-  const handleDateSelect = (date: string | null) => {
-    setSelectedDate(date);
-    // Recharger les données avec la nouvelle date
-    fetchJourneys({
-      ...currentFilters,
-      selectedDate: date,
-    });
+  const handleDateSelect = (dates: string[]) => {
+    setSelectedDates(dates);
+    // Utiliser applyFilters pour la cohérence avec le debounce
+    applyFilters({ selectedDates: dates });
   };
 
   // Fonction pour appliquer les filtres avec debounce et cumulation
@@ -225,6 +222,7 @@ export const useJourneyData = () => {
       excludedCarriers?: string[];
       excludedClasses?: string[];
       excludedDiscountCards?: string[];
+      selectedDates?: string[];
     }) => {
       // Annuler le timeout précédent
       if (debounceTimeoutRef.current) {
@@ -235,12 +233,21 @@ export const useJourneyData = () => {
       const updatedFilters = {
         ...currentFilters,
         excludedCarriers:
-          newFilters.excludedCarriers || currentFilters.excludedCarriers,
+          newFilters.excludedCarriers !== undefined
+            ? newFilters.excludedCarriers
+            : currentFilters.excludedCarriers,
         excludedClasses:
-          newFilters.excludedClasses || currentFilters.excludedClasses,
+          newFilters.excludedClasses !== undefined
+            ? newFilters.excludedClasses
+            : currentFilters.excludedClasses,
         excludedDiscountCards:
-          newFilters.excludedDiscountCards ||
-          currentFilters.excludedDiscountCards,
+          newFilters.excludedDiscountCards !== undefined
+            ? newFilters.excludedDiscountCards
+            : currentFilters.excludedDiscountCards,
+        selectedDates:
+          newFilters.selectedDates !== undefined
+            ? newFilters.selectedDates
+            : currentFilters.selectedDates,
       };
 
       // Débouncer l'appel à l'API
@@ -250,9 +257,6 @@ export const useJourneyData = () => {
     },
     [currentFilters, fetchJourneys]
   );
-
-  // Forcer le rechargement quand les filtres changent
-  useEffect(() => {}, [currentFilters]);
 
   // Nettoyer le timeout au démontage
   useEffect(() => {
@@ -270,7 +274,7 @@ export const useJourneyData = () => {
     filterLoading, // Exposer la barre de chargement discrète
     error,
     analysisDates,
-    selectedDate,
+    selectedDates,
     handleDateSelect,
     fetchJourneys,
     applyFilters,

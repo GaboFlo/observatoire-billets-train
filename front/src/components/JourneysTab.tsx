@@ -21,8 +21,8 @@ interface JourneysTabProps {
   journeys: Journey[];
   allJourneys?: Journey[]; // Nouvelles données non filtrées
   analysisDates?: string[];
-  selectedDate?: string | null;
-  onDateSelect?: (date: string | null) => void;
+  selectedDates?: string[]; // Changé pour supporter multiple dates
+  onDateSelect?: (dates: string[]) => void; // Changé pour supporter multiple dates
   applyFilters?: (filters: {
     excludedCarriers?: string[];
     excludedClasses?: string[];
@@ -32,7 +32,7 @@ interface JourneysTabProps {
     excludedCarriers: string[];
     excludedClasses: string[];
     excludedDiscountCards: string[];
-    selectedDate: string | null;
+    selectedDates: string[]; // Changé pour supporter multiple dates
   };
 }
 
@@ -40,7 +40,7 @@ const JourneysTab = ({
   journeys,
   allJourneys,
   analysisDates = [],
-  selectedDate,
+  selectedDates = [],
   onDateSelect,
   applyFilters: propApplyFilters,
   currentFilters,
@@ -88,7 +88,7 @@ const JourneysTab = ({
     filters.excludedCarriers.length > 0 ||
     filters.excludedClasses.length > 0 ||
     filters.excludedDiscountCards.length > 1 ||
-    selectedDate;
+    selectedDates.length > 0;
 
   const displayJourneys =
     selectedRouteJourneyIds.length > 0
@@ -199,7 +199,7 @@ const JourneysTab = ({
           onClassFilter={handleClassFilter}
           onDiscountCardFilter={handleDiscountCardFilter}
           analysisDates={analysisDates}
-          selectedDate={selectedDate}
+          selectedDates={selectedDates}
           onDateSelect={onDateSelect}
         />
       </div>
@@ -236,7 +236,7 @@ const JourneysTab = ({
                   setSelectedRouteJourneyIds([]);
                   clearFilters();
                   if (onDateSelect) {
-                    onDateSelect(null);
+                    onDateSelect([]);
                   }
                 }}
                 className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
@@ -333,7 +333,7 @@ const JourneysTab = ({
                           className="bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400"
                         >
                           <Link
-                            to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+                            to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
                           >
                             Analyse détaillée
                           </Link>

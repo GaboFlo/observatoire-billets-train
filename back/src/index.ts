@@ -105,24 +105,43 @@ interface CacheEntry {
   timestamp: number;
 }
 
+// Cache pour l'endpoint journey-details
+interface JourneyDetailsCacheEntry {
+  data: DetailedPricingResult[];
+  timestamp: number;
+}
+
 const pricingCache = new Map<string, CacheEntry>();
+const journeyDetailsCache = new Map<string, JourneyDetailsCacheEntry>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 const generateCacheKey = (filters: {
   excludedCarriers: string[];
   excludedClasses: string[];
   excludedDiscountCards: string[];
-  selectedDate: string | null;
+  selectedDates: string[];
+  departureStationId?: number;
+  arrivalStationId?: number;
+  trainNumber?: number;
 }): string => {
   return JSON.stringify({
     excludedCarriers: filters.excludedCarriers.toSorted(),
     excludedClasses: filters.excludedClasses.toSorted(),
     excludedDiscountCards: filters.excludedDiscountCards.toSorted(),
-    selectedDate: filters.selectedDate,
+    selectedDates: filters.selectedDates.toSorted(),
+    departureStationId: filters.departureStationId,
+    arrivalStationId: filters.arrivalStationId,
+    trainNumber: filters.trainNumber,
   });
 };
 
 const isCacheValid = (entry: CacheEntry): boolean => {
+  return Date.now() - entry.timestamp < CACHE_TTL;
+};
+
+const isJourneyDetailsCacheValid = (
+  entry: JourneyDetailsCacheEntry
+): boolean => {
   return Date.now() - entry.timestamp < CACHE_TTL;
 };
 
@@ -291,7 +310,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       excludedCarriers = [],
       excludedClasses = [],
       excludedDiscountCards = [],
-      selectedDate = null,
+      selectedDates = [],
     } = req.body;
 
     // Vérifier le cache
@@ -299,7 +318,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       excludedCarriers,
       excludedClasses,
       excludedDiscountCards,
-      selectedDate,
+      selectedDates,
     });
 
     const cachedEntry = pricingCache.get(cacheKey);
@@ -328,12 +347,35 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       baseMatch["pricing.discount_card"] = { $nin: excludedDiscountCards };
     }
 
-    // Ajouter le filtre par date si spécifié
-    if (selectedDate) {
-      baseMatch.departure_date = {
-        $gte: new Date(selectedDate),
-        $lt: new Date(new Date(selectedDate).getTime() + 24 * 60 * 60 * 1000),
-      };
+    // Ajouter le filtre par dates si spécifiées
+    if (selectedDates.length > 0) {
+      // Pour une seule date, utiliser une plage simple
+      if (selectedDates.length === 1) {
+        const date = selectedDates[0];
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        baseMatch.departure_date = {
+          $gte: startDate,
+          $lte: endDate,
+        };
+      } else {
+        // Pour plusieurs dates, utiliser $or avec des conditions de plage
+        const orConditions = selectedDates.map((date: string) => {
+          const startDate = new Date(date);
+          startDate.setHours(0, 0, 0, 0);
+          const endDate = new Date(date);
+          endDate.setHours(23, 59, 59, 999);
+          return {
+            departure_date: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          };
+        });
+        baseMatch.$or = orConditions;
+      }
     }
 
     const data = await Train.aggregate<AggregatedPricingResult>(
@@ -419,6 +461,166 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
   }
 });
 
+// Nouvel endpoint POST pour les pages dédiées par trajet
+app.post("/api/trains/journey-details", async (req: Request, res: Response) => {
+  try {
+    const {
+      excludedCarriers = [],
+      excludedClasses = [],
+      excludedDiscountCards = [],
+      selectedDates = [],
+      departureStationId,
+      arrivalStationId,
+      trainNumber,
+    } = req.body;
+
+    // Vérifier le cache
+    const cacheKey = generateCacheKey({
+      excludedCarriers,
+      excludedClasses,
+      excludedDiscountCards,
+      selectedDates,
+      departureStationId,
+      arrivalStationId,
+      trainNumber,
+    });
+
+    const cachedEntry = journeyDetailsCache.get(cacheKey);
+    if (cachedEntry && isJourneyDetailsCacheValid(cachedEntry)) {
+      console.log("Cache hit pour /api/trains/journey-details");
+      return res.json(cachedEntry.data);
+    }
+
+    // Construire le match de base
+    const baseMatch: any = {
+      "pricing.unsellable_reason": null,
+    };
+
+    // Ajouter les filtres par compagnies exclues
+    if (excludedCarriers.length > 0) {
+      baseMatch.carrier = { $nin: excludedCarriers };
+    }
+
+    // Ajouter les filtres par classes exclues
+    if (excludedClasses.length > 0) {
+      baseMatch["pricing.travel_class"] = { $nin: excludedClasses };
+    }
+
+    // Ajouter les filtres par cartes de réduction exclues
+    if (excludedDiscountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $nin: excludedDiscountCards };
+    }
+
+    // Ajouter le filtre par dates si spécifiées
+    if (selectedDates.length > 0) {
+      // Pour une seule date, utiliser une plage simple
+      if (selectedDates.length === 1) {
+        const date = selectedDates[0];
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        baseMatch.departure_date = {
+          $gte: startDate,
+          $lte: endDate,
+        };
+      } else {
+        // Pour plusieurs dates, utiliser $or avec des conditions de plage
+        const orConditions = selectedDates.map((date: string) => {
+          const startDate = new Date(date);
+          startDate.setHours(0, 0, 0, 0);
+          const endDate = new Date(date);
+          endDate.setHours(23, 59, 59, 999);
+          return {
+            departure_date: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          };
+        });
+        baseMatch.$or = orConditions;
+      }
+    }
+
+    // Ajouter les filtres spécifiques au trajet
+    if (departureStationId) {
+      baseMatch["departure_station.id"] = departureStationId;
+    }
+
+    if (arrivalStationId) {
+      baseMatch["arrival_station.id"] = arrivalStationId;
+    }
+
+    if (trainNumber) {
+      baseMatch.train_number = trainNumber;
+    }
+
+    const data = await Train.aggregate<DetailedPricingResult>([
+      {
+        $match: baseMatch,
+      },
+      {
+        $addFields: {
+          daysBeforeDeparture: {
+            $ceil: {
+              $divide: [
+                { $subtract: ["$departure_date", new Date()] },
+                1000 * 60 * 60 * 24,
+              ],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          departureStation: "$departure_station.name",
+          departureStationId: "$departure_station.id",
+          arrivalStation: "$arrival_station.name",
+          arrivalStationId: "$arrival_station.id",
+          travelClass: "$pricing.travel_class",
+          discountCard: "$pricing.discount_card",
+          trainName: "$train_name",
+          trainNumber: "$train_number",
+          carrier: "$carrier",
+          minPrice: "$pricing.price",
+          avgPrice: "$pricing.price",
+          maxPrice: "$pricing.price",
+          departureDate: {
+            $dateToString: { format: "%Y-%m-%d", date: "$departure_date" },
+          },
+          departureTime: {
+            $dateToString: { format: "%H:%M", date: "$departure_date" },
+          },
+          arrivalTime: {
+            $dateToString: { format: "%H:%M", date: "$arrival_date" },
+          },
+          is_sellable: "$pricing.is_sellable",
+          unsellable_reason: "$pricing.unsellable_reason",
+          daysBeforeDeparture: 1,
+        },
+      },
+      { $sort: { departureTime: 1 } },
+    ]);
+
+    // Mettre en cache les résultats
+    journeyDetailsCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
+
+    res.json(data);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des détails de trajet:",
+      error
+    );
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des détails de trajet." });
+  }
+});
+
 app.get(
   "/api/trains/details/:departureStation/:arrivalStation",
   async (req: Request, res: Response) => {
@@ -480,6 +682,108 @@ app.get(
       res
         .status(500)
         .json({ error: "Erreur lors de la récupération des détails." });
+    }
+  }
+);
+
+// Route POST pour les détails avec filtres (cohérent avec la page d'accueil)
+app.post(
+  "/api/trains/details/:departureStation/:arrivalStation",
+  async (req: Request, res: Response) => {
+    try {
+      const { departureStation, arrivalStation } = req.params;
+      const {
+        excludedCarriers = [],
+        excludedClasses = [],
+        excludedDiscountCards = [],
+        selectedDate = null,
+      } = req.body;
+
+      // Construire les conditions de match avec les filtres
+      const matchConditions: any = {
+        "departure_station.name": departureStation,
+        "arrival_station.name": arrivalStation,
+      };
+
+      // Ajouter les filtres si ils sont fournis
+      if (excludedCarriers && excludedCarriers.length > 0) {
+        matchConditions.carrier = { $nin: excludedCarriers };
+      }
+
+      if (excludedClasses && excludedClasses.length > 0) {
+        matchConditions["pricing.travel_class"] = { $nin: excludedClasses };
+      }
+
+      if (excludedDiscountCards && excludedDiscountCards.length > 0) {
+        matchConditions["pricing.discount_card"] = {
+          $nin: excludedDiscountCards,
+        };
+      }
+
+      if (selectedDate) {
+        const startDate = new Date(selectedDate);
+        const endDate = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+        matchConditions.departure_date = {
+          $gte: startDate,
+          $lt: endDate,
+        };
+      }
+
+      const data = await Train.aggregate<DetailedPricingResult>([
+        {
+          $match: matchConditions,
+        },
+        {
+          $addFields: {
+            daysBeforeDeparture: {
+              $ceil: {
+                $divide: [
+                  { $subtract: ["$departure_date", new Date()] },
+                  1000 * 60 * 60 * 24,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            departureStation: "$departure_station.name",
+            departureStationId: "$mappedDepartureStationId",
+            arrivalStation: "$arrival_station.name",
+            arrivalStationId: "$mappedArrivalStationId",
+            travelClass: "$pricing.travel_class",
+            discountCard: "$pricing.discount_card",
+            trainName: "$train_name",
+            carrier: "$carrier",
+            minPrice: "$pricing.price",
+            avgPrice: "$pricing.price",
+            maxPrice: "$pricing.price",
+            departureDate: {
+              $dateToString: { format: "%Y-%m-%d", date: "$departure_date" },
+            },
+            departureTime: {
+              $dateToString: { format: "%H:%M", date: "$departure_date" },
+            },
+            arrivalTime: {
+              $dateToString: { format: "%H:%M", date: "$arrival_date" },
+            },
+            is_sellable: "$pricing.is_sellable",
+            unsellable_reason: "$pricing.unsellable_reason",
+            daysBeforeDeparture: 1,
+          },
+        },
+      ]);
+
+      res.json(data);
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des détails avec filtres:",
+        error
+      );
+      res.status(500).json({
+        error: "Erreur lors de la récupération des détails avec filtres.",
+      });
     }
   }
 );

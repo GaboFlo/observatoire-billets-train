@@ -2,13 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DetailedPricingResult } from "@/types/journey";
 import {
-  AlertTriangle,
-  Calendar,
-  CheckCircle,
-  Train,
-  TrendingDown,
-  TrendingUp,
-} from "lucide-react";
+  carrierTranslations,
+  travelClassTranslations,
+} from "@/utils/translations";
+import { AlertTriangle, Calendar, Train } from "lucide-react";
 
 interface JourneyKPIsProps {
   offers: DetailedPricingResult[];
@@ -53,7 +50,13 @@ const JourneyKPIs = ({ offers }: JourneyKPIsProps) => {
 
   // Compagnies et classes uniques
   const uniqueCarriers = [...new Set(offers.map((offer) => offer.carrier))];
-  const uniqueClasses = [...new Set(offers.map((offer) => offer.travelClass))];
+  const uniqueClasses = [
+    ...new Set(
+      offers
+        .map((offer) => offer.travelClass)
+        .filter((travelClass) => travelClass !== null)
+    ),
+  ];
 
   // Raisons de non-disponibilité
   const soldOutReasons = offers
@@ -66,21 +69,15 @@ const JourneyKPIs = ({ offers }: JourneyKPIsProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* Disponibilité */}
       <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            Disponibilité
+            Nombre de trajets étudiés
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
-            {availableOffers}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            sur {totalOffers} offres disponibles
-          </p>
+          <div className="text-2xl font-bold text-green-600">{totalOffers}</div>
+
           {soldOutOffers > 0 && (
             <div className="mt-2 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3 text-orange-500" />
@@ -89,32 +86,6 @@ const JourneyKPIs = ({ offers }: JourneyKPIsProps) => {
               </span>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Variation de prix */}
-      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            {priceTrend > 0 ? (
-              <TrendingUp className="h-4 w-4 text-red-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-green-600" />
-            )}
-            Variation
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div
-            className={`text-2xl font-bold ${
-              priceTrend > 0 ? "text-red-600" : "text-green-600"
-            }`}
-          >
-            {priceVariationPercent}%
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {priceVariation}€ d'écart
-          </p>
         </CardContent>
       </Card>
 
@@ -136,7 +107,7 @@ const JourneyKPIs = ({ offers }: JourneyKPIsProps) => {
           <div className="mt-2 flex flex-wrap gap-1">
             {uniqueCarriers.slice(0, 2).map((carrier) => (
               <Badge key={carrier} variant="outline" className="text-xs">
-                {carrier}
+                {carrierTranslations[carrier]}
               </Badge>
             ))}
             {uniqueCarriers.length > 2 && (
@@ -164,7 +135,7 @@ const JourneyKPIs = ({ offers }: JourneyKPIsProps) => {
           <div className="mt-2 flex flex-wrap gap-1">
             {uniqueClasses.map((className) => (
               <Badge key={className} variant="outline" className="text-xs">
-                {className}
+                {travelClassTranslations[className]}
               </Badge>
             ))}
           </div>

@@ -49,7 +49,7 @@ const JourneyCard = ({ journey, filteredPrices }: JourneyCardProps) => {
       <CardFooter>
         <Button variant="outline" asChild className="w-full">
           <Link
-            to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+            to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
           >
             Analyse détaillée
           </Link>

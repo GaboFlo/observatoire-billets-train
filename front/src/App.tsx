@@ -18,7 +18,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route
-            path="/journey/:departureStation/:arrivalStation"
+            path="/journey/:departureStation/:arrivalStation/:departureStationId/:arrivalStationId"
             element={<JourneyDetails />}
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

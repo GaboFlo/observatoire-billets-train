@@ -22,8 +22,8 @@ interface GlobalFiltersProps {
   onDiscountCardFilter: (discountCard: string) => void;
   // Nouvelles props pour les dates
   analysisDates?: string[];
-  selectedDate?: string | null;
-  onDateSelect?: (date: string | null) => void;
+  selectedDates?: string[]; // Changé pour supporter multiple dates
+  onDateSelect?: (dates: string[]) => void; // Changé pour supporter multiple dates
   onReload?: () => void; // Nouveau prop pour le rechargement
 }
 
@@ -34,17 +34,17 @@ const GlobalFilters = ({
   onClassFilter,
   onDiscountCardFilter,
   analysisDates = [],
-  selectedDate,
+  selectedDates = [],
   onDateSelect,
   onReload,
 }: GlobalFiltersProps) => {
-  const [isExpanded, setIsExpanded] = useState(true); // Déplié par défaut
+  const [isExpanded, setIsExpanded] = useState(false); // Plié par défaut
 
   const hasActiveFilters =
     filters.excludedCarriers.length > 0 ||
     filters.excludedClasses.length > 0 ||
     filters.excludedDiscountCards.length > 1 || // Plus de 1 car MAX est toujours exclu par défaut
-    selectedDate; // Ajouter la date sélectionnée aux filtres actifs
+    selectedDates.length > 0; // Ajouter les dates sélectionnées aux filtres actifs
 
   const getActiveFiltersCount = () => {
     return (
@@ -53,7 +53,7 @@ const GlobalFilters = ({
       (filters.excludedDiscountCards.length > 1
         ? filters.excludedDiscountCards.length - 1
         : 0) +
-      (selectedDate ? 1 : 0) // Compter la date sélectionnée
+      selectedDates.length // Compter les dates sélectionnées
     );
   };
 
@@ -87,7 +87,14 @@ const GlobalFilters = ({
 
   const handleDateClick = (date: string) => {
     if (onDateSelect) {
-      onDateSelect(selectedDate === date ? null : date);
+      const isSelected = selectedDates.includes(date);
+      if (isSelected) {
+        // Retirer la date de la sélection
+        onDateSelect(selectedDates.filter((d) => d !== date));
+      } else {
+        // Ajouter la date à la sélection
+        onDateSelect([...selectedDates, date]);
+      }
     }
   };
 
@@ -101,7 +108,7 @@ const GlobalFilters = ({
       onDiscountCardFilter(discountCard)
     );
     if (onDateSelect) {
-      onDateSelect(null);
+      onDateSelect([]);
     }
   };
 
@@ -168,7 +175,7 @@ const GlobalFilters = ({
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {analysisDates.map((date, index) => {
                   const status = getDateStatus(date);
-                  const isSelected = selectedDate === date;
+                  const isSelected = selectedDates.includes(date);
 
                   const statusColors = {
                     past: "bg-gray-100 text-gray-600 border-gray-200",

@@ -35,7 +35,7 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
               className="w-full justify-start"
             >
               <Link
-                to={`/journey/${journey.departureStation}/${journey.arrivalStation}`}
+                to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
               >
                 <div className="text-left">
                   <p className="font-medium">{journey.name}</p>

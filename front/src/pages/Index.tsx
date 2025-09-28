@@ -5,9 +5,6 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import PageHeader from "../components/PageHeader";
 import { useJourneyData } from "../hooks/useJourneyData";
 
-// Flag global pour éviter les appels multiples au pricing
-let pricingLoaded = false;
-
 const Index = () => {
   const {
     journeys,
@@ -16,25 +13,22 @@ const Index = () => {
     filterLoading,
     error,
     analysisDates,
-    selectedDate,
+    selectedDates,
     handleDateSelect,
     fetchJourneys,
     applyFilters,
     currentFilters,
   } = useJourneyData();
 
-  // Charger les données initiales au démarrage (une seule fois)
+  // Charger les données initiales au démarrage
   useEffect(() => {
-    if (!pricingLoaded) {
-      fetchJourneys({
-        excludedCarriers: [],
-        excludedClasses: [],
-        excludedDiscountCards: ["MAX"], // Exclure MAX par défaut
-        selectedDate: null,
-      });
-      pricingLoaded = true;
-    }
-  }, []); // Dépendances vides pour éviter les re-renders
+    fetchJourneys({
+      excludedCarriers: [],
+      excludedClasses: [],
+      excludedDiscountCards: ["MAX"], // Exclure MAX par défaut
+      selectedDates: [],
+    });
+  }, [fetchJourneys]);
 
   if (loading && journeys.length === 0) {
     return <LoadingAnimation />;
@@ -59,7 +53,7 @@ const Index = () => {
             journeys={journeys}
             allJourneys={allJourneys}
             analysisDates={analysisDates}
-            selectedDate={selectedDate}
+            selectedDates={selectedDates}
             onDateSelect={handleDateSelect}
             applyFilters={applyFilters}
             currentFilters={currentFilters}
