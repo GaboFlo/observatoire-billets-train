@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import datesData from "../data/dates.json";
 
 export interface Journey {
   id: string;
@@ -173,39 +174,7 @@ export const useJourneyData = () => {
   // Dates d'analyse fixes
   useEffect(() => {
     if (!datesLoaded) {
-      const fixedDates = [
-        "2024-11-22",
-        "2024-11-24",
-        "2024-12-19",
-        "2024-12-20",
-        "2024-12-30",
-        "2024-12-31",
-        "2025-01-31",
-        "2025-02-07",
-        "2025-04-30",
-        "2025-06-06",
-        "2025-06-08",
-        "2025-07-11",
-        "2025-07-14",
-        "2025-09-06",
-        "2025-09-07",
-        "2025-11-28",
-        "2025-11-30",
-        "2025-12-07",
-        "2025-12-12",
-        "2025-12-14",
-        "2025-12-19",
-        "2025-12-20",
-        "2026-01-03",
-        "2026-01-04",
-        "2026-01-17",
-        "2026-01-19",
-        "2026-02-13",
-        "2026-02-14",
-        "2026-02-15",
-        "2026-02-16",
-      ];
-      setAnalysisDates(fixedDates);
+      setAnalysisDates(datesData);
       setDatesLoaded(true);
     }
   }, [datesLoaded]);

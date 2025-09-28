@@ -1,5 +1,6 @@
 import { DetailedPricingResult, GroupedJourney } from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
+import datesData from "../data/dates.json";
 
 interface JourneyDetailsFilters {
   excludedCarriers: string[];
@@ -192,49 +193,7 @@ export const useJourneyDetails = (
       setDetailedOffers([]);
       setError(null);
       setLoading(false);
-
-      // Définir les dates fixes par défaut (même que dans useJourneyData)
-      const fixedDates = [
-        "2024-11-22",
-        "2024-11-24",
-        "2024-12-19",
-        "2024-12-20",
-        "2024-12-30",
-        "2024-12-31",
-        "2025-01-31",
-        "2025-02-07",
-        "2025-04-30",
-        "2025-06-06",
-        "2025-06-08",
-        "2025-07-11",
-        "2025-07-14",
-        "2025-08-15",
-        "2025-09-01",
-        "2025-09-02",
-        "2025-10-31",
-        "2025-11-01",
-        "2025-12-24",
-        "2025-12-25",
-        "2025-12-26",
-        "2025-12-31",
-        "2026-01-01",
-        "2026-01-02",
-        "2026-01-19",
-        "2026-02-16",
-        "2026-03-31",
-        "2026-04-01",
-        "2026-05-01",
-        "2026-05-08",
-        "2026-05-09",
-        "2026-05-20",
-        "2026-07-14",
-        "2026-08-15",
-        "2026-11-01",
-        "2026-11-11",
-        "2026-12-25",
-        "2026-12-26",
-      ];
-      setAnalysisDates(fixedDates);
+      setAnalysisDates(datesData);
     }
   }, [departureStation, arrivalStation]);
 
