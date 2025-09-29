@@ -92,13 +92,6 @@ const UnifiedFilters = ({
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
-      console.log("🔍 Déclenchement de l'analyse avec les filtres:", {
-        selectedDate,
-        selectedTrain,
-        selectedCarriers,
-        selectedClasses,
-        selectedDiscountCards,
-      });
       // Ici on pourrait appeler une fonction de callback pour déclencher l'analyse
     }, 400);
   }, [

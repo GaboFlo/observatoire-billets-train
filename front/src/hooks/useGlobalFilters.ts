@@ -140,8 +140,23 @@ export const useGlobalFilters = (
   };
 
   const clearFilters = () => {
-    setFilters(DEFAULT_FILTERS);
-    onFiltersChange?.(DEFAULT_FILTERS);
+    // Réinitialiser avec toutes les options disponibles (y compris MAX)
+    const allFilters = {
+      carriers:
+        availableOptions.carriers.length > 0
+          ? availableOptions.carriers
+          : DEFAULT_FILTERS.carriers,
+      classes:
+        availableOptions.classes.length > 0
+          ? availableOptions.classes
+          : DEFAULT_FILTERS.classes,
+      discountCards:
+        availableOptions.discountCards.length > 0
+          ? availableOptions.discountCards
+          : DEFAULT_FILTERS.discountCards, // Inclure MAX
+    };
+    setFilters(allFilters);
+    onFiltersChange?.(allFilters);
   };
 
   return {

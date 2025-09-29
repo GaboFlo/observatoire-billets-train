@@ -62,7 +62,6 @@ export const useJourneyDetails = (
   // Fonction pour récupérer les dates disponibles
   const fetchAvailableDates = useCallback(async () => {
     try {
-      console.log("📅 Récupération des dates disponibles");
       setLoading(true);
 
       const response = await fetch("/api/trains/available-dates", {
@@ -83,7 +82,6 @@ export const useJourneyDetails = (
       }
 
       const dates: string[] = await response.json();
-      console.log("📅 Dates disponibles:", dates.length);
       setAnalysisDates(dates);
       setError(null);
     } catch (err) {
@@ -102,7 +100,6 @@ export const useJourneyDetails = (
   const fetchTrainsForDate = useCallback(
     async (date: string) => {
       try {
-        console.log("🚂 Récupération des trains pour la date:", date);
         setFilterLoading(true);
 
         const response = await fetch("/api/trains/trains-for-date", {
@@ -124,7 +121,6 @@ export const useJourneyDetails = (
         }
 
         const trains: TrainInfo[] = await response.json();
-        console.log("🚂 Trains disponibles:", trains.length);
         setAvailableTrains(trains);
         setError(null);
       } catch (err) {
@@ -145,8 +141,6 @@ export const useJourneyDetails = (
   const fetchDateStatistics = useCallback(
     async (date: string, trainNumber?: string) => {
       try {
-        console.log("📊 Récupération des statistiques pour la date:", date);
-
         const response = await fetch("/api/trains/date-statistics", {
           method: "POST",
           headers: {
@@ -170,7 +164,6 @@ export const useJourneyDetails = (
         }
 
         const stats = await response.json();
-        console.log("📊 Statistiques de la date:", stats);
         return stats;
       } catch (err) {
         console.error("❌ Erreur statistiques:", err);
@@ -184,11 +177,6 @@ export const useJourneyDetails = (
   const fetchTrainStatistics = useCallback(
     async (trainNumber: string, date: string) => {
       try {
-        console.log(
-          "🚂📊 Récupération des statistiques pour le train:",
-          trainNumber
-        );
-
         const response = await fetch("/api/trains/train-statistics", {
           method: "POST",
           headers: {
@@ -209,7 +197,6 @@ export const useJourneyDetails = (
         }
 
         const stats = await response.json();
-        console.log("🚂📊 Statistiques du train:", stats);
         return stats;
       } catch (err) {
         console.error("❌ Erreur statistiques train:", err);
@@ -301,15 +288,6 @@ export const useJourneyDetails = (
           avgPrice,
         };
 
-        console.log("🔄 Mise à jour des données journey:", {
-          minPrice: journeyData.minPrice,
-          avgPrice: journeyData.avgPrice,
-          maxPrice: journeyData.maxPrice,
-          carriers: journeyData.carriers,
-          classes: journeyData.classes,
-          discountCards: journeyData.discountCards,
-        });
-
         setJourney(journeyData);
         setDetailedOffers(data);
 
@@ -349,8 +327,6 @@ export const useJourneyDetails = (
   // applyFilters ne doit dépendre que de fetchJourneyDetails pour éviter les boucles infinies
   const applyFilters = useCallback(
     (newFilters: Partial<JourneyDetailsFilters>) => {
-      console.log("🔧 applyFilters appelé avec:", newFilters);
-
       // Annuler le timeout précédent
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -362,15 +338,10 @@ export const useJourneyDetails = (
         ...newFilters,
       };
 
-      console.log("🔧 Filtres mis à jour:", updatedFilters);
       setCurrentFilters(updatedFilters);
 
       // Débouncer l'appel à l'API
       debounceTimeoutRef.current = setTimeout(() => {
-        console.log(
-          "🔧 Déclenchement de fetchJourneyDetails avec:",
-          updatedFilters
-        );
         fetchJourneyDetails(updatedFilters);
       }, 400); // 0.4 secondes de debounce
     },
@@ -380,13 +351,6 @@ export const useJourneyDetails = (
   // Chargement initial - récupérer les dates disponibles
   useEffect(() => {
     if (departureStation && arrivalStation) {
-      console.log(
-        "🚀 Chargement initial pour:",
-        departureStation,
-        "→",
-        arrivalStation
-      );
-
       // Réinitialiser l'état
       setSelectedDate(null);
       setAvailableTrains([]);
@@ -433,7 +397,6 @@ export const useJourneyDetails = (
   // Fonctions de gestion des sélections
   const handleDateSelect = useCallback(
     (date: string) => {
-      console.log("📅 Date sélectionnée:", date);
       setSelectedDate(date);
       setSelectedTrain(null); // Réinitialiser la sélection de train
       fetchTrainsForDate(date);
@@ -442,7 +405,6 @@ export const useJourneyDetails = (
   );
 
   const handleTrainSelect = useCallback((trainNumber: string) => {
-    console.log("🚂 Train sélectionné:", trainNumber);
     setSelectedTrain(trainNumber);
   }, []);
 
@@ -504,8 +466,6 @@ export const useJourneyDetails = (
   const fetchAvailableOptions = useCallback(
     async (date: string) => {
       try {
-        console.log("🔍 Récupération des options disponibles pour:", date);
-
         const response = await fetch("/api/trains/date-statistics", {
           method: "POST",
           headers: {
@@ -529,7 +489,6 @@ export const useJourneyDetails = (
         }
 
         const stats = await response.json();
-        console.log("📊 Options disponibles:", stats);
 
         setAvailableCarriers(stats.carriers || []);
         setAvailableClasses(stats.classes || []);
@@ -544,21 +503,12 @@ export const useJourneyDetails = (
   // Fonction pour déclencher l'analyse avec les filtres actuels
   const triggerAnalysis = useCallback(async () => {
     try {
-      console.log("🔍 Déclenchement de l'analyse avec les filtres:", {
-        selectedDate,
-        selectedTrain,
-        selectedCarriers,
-        selectedClasses,
-        selectedDiscountCards,
-      });
-
       setFilterLoading(true);
 
       let analysisResult;
 
       if (!selectedDate) {
         // Cas 1: Aucune date sélectionnée - Statistiques générales sur le trajet
-        console.log("📊 Analyse générale du trajet");
         const response = await fetch("/api/trains/pricing", {
           method: "POST",
           headers: {
@@ -579,7 +529,6 @@ export const useJourneyDetails = (
         }
 
         const generalData = await response.json();
-        console.log("📊 Données générales:", generalData);
 
         // Trouver les données pour ce trajet spécifique
         const journeyData = generalData.find(
@@ -600,7 +549,6 @@ export const useJourneyDetails = (
         };
       } else if (!selectedTrain) {
         // Cas 2: Date sélectionnée mais pas de train - Statistiques de la date
-        console.log("📊 Analyse de la date:", selectedDate);
         const response = await fetch("/api/trains/date-statistics", {
           method: "POST",
           headers: {
@@ -624,10 +572,8 @@ export const useJourneyDetails = (
         }
 
         analysisResult = await response.json();
-        console.log("📊 Statistiques de la date:", analysisResult);
       } else {
         // Cas 3: Date ET train sélectionnés - Analyse spécifique du train
-        console.log("📊 Analyse du train spécifique:", selectedTrain);
         const response = await fetch("/api/trains/train-statistics", {
           method: "POST",
           headers: {
@@ -648,7 +594,6 @@ export const useJourneyDetails = (
         }
 
         analysisResult = await response.json();
-        console.log("📊 Statistiques du train:", analysisResult);
       }
 
       // Mettre à jour les données avec le résultat de l'analyse

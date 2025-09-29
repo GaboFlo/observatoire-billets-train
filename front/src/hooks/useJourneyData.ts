@@ -74,8 +74,6 @@ export const useJourneyData = () => {
           selectedDates: filters?.selectedDates || [],
         };
 
-        console.log("🚀 Requête API avec filtres:", requestBody);
-
         const response = await fetch("/api/trains/pricing", {
           method: "POST",
           headers: {
@@ -144,11 +142,6 @@ export const useJourneyData = () => {
         );
 
         const processedJourneys = Array.from(journeyMap.values());
-        console.log(
-          "📊 Données reçues de l'API:",
-          processedJourneys.length,
-          "voyages"
-        );
         setJourneys(processedJourneys);
 
         // Stocker toutes les données non filtrées UNIQUEMENT lors du premier chargement

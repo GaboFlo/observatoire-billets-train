@@ -51,10 +51,13 @@ export const stationTranslations: TranslationMap = {
 };
 
 export const translate = (
-  value: string,
+  value: string | undefined,
   translationMap: TranslationMap,
   fallback?: string
 ): string => {
+  if (value === undefined) {
+    return fallback || "OUPS";
+  }
   const translation = translationMap[value];
   if (translation) {
     return translation;

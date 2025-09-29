@@ -16,8 +16,6 @@ const AvailableTrainsSelector = ({
   selectedTrainName,
   selectedDepartureDate,
 }: AvailableTrainsSelectorProps) => {
-  console.log("🚂 AvailableTrainsSelector reçoit:", offers.length, "offres");
-
   // Grouper les offres par train et date
   const groupedOffers = offers.reduce(
     (acc, offer) => {
@@ -62,22 +60,12 @@ const AvailableTrainsSelector = ({
     return timeString.substring(0, 5); // HH:MM
   };
 
-  const getMinPrice = (offers: DetailedPricingResult[]) => {
-    return Math.min(...offers.map((offer) => offer.minPrice));
-  };
-
   const isSelected = (trainNumber: string, departureDate: string) => {
     return (
       selectedTrainName === trainNumber &&
       selectedDepartureDate === departureDate
     );
   };
-
-  console.log(
-    "📊 Grouped offers:",
-    Object.keys(groupedOffers).length,
-    "groupes"
-  );
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">

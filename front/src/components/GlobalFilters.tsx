@@ -1,9 +1,12 @@
-import { CalendarDays, ChevronDown, ChevronUp, Filter, X } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronUp, Filter } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
-import { GlobalFilters as GlobalFiltersType } from "../hooks/useGlobalFilters";
+import {
+  DEFAULT_FILTERS,
+  GlobalFilters as GlobalFiltersType,
+} from "../hooks/useGlobalFilters";
 import {
   translateCarrier,
   translateDiscountCard,
@@ -40,21 +43,63 @@ const GlobalFilters = ({
 }: GlobalFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false); // Plié par défaut
 
-  const hasActiveFilters =
-    (filters?.carriers?.length || 0) > 0 ||
-    (filters?.classes?.length || 0) > 0 ||
-    (filters?.discountCards?.length || 0) > 1 || // Plus de 1 car MAX est toujours inclus par défaut
-    selectedDates.length > 0; // Ajouter les dates sélectionnées aux filtres actifs
+  // Vérifier si les filtres actuels sont différents des filtres par défaut
+  const hasActiveFilters = () => {
+    if (!filters) return false;
+
+    // Comparer les carriers
+    const carriersDifferent =
+      JSON.stringify(filters.carriers?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.carriers.toSorted());
+
+    // Comparer les classes
+    const classesDifferent =
+      JSON.stringify(filters.classes?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.classes.toSorted());
+
+    // Comparer les discountCards
+    const discountCardsDifferent =
+      JSON.stringify(filters.discountCards?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.discountCards.toSorted());
+
+    // Vérifier les dates sélectionnées
+    const hasSelectedDates = selectedDates.length > 0;
+
+    return (
+      carriersDifferent ||
+      classesDifferent ||
+      discountCardsDifferent ||
+      hasSelectedDates
+    );
+  };
 
   const getActiveFiltersCount = () => {
-    return (
-      (filters?.carriers?.length || 0) +
-      (filters?.classes?.length || 0) +
-      ((filters?.discountCards?.length || 0) > 1
-        ? (filters?.discountCards?.length || 0) - 1
-        : 0) +
-      selectedDates.length // Compter les dates sélectionnées
-    );
+    if (!filters) return 0;
+
+    let count = 0;
+
+    // Compter les carriers différents des filtres par défaut
+    const carriersDifferent =
+      JSON.stringify(filters.carriers?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.carriers.toSorted());
+    if (carriersDifferent) count += 1;
+
+    // Compter les classes différentes des filtres par défaut
+    const classesDifferent =
+      JSON.stringify(filters.classes?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.classes.toSorted());
+    if (classesDifferent) count += 1;
+
+    // Compter les discountCards différentes des filtres par défaut
+    const discountCardsDifferent =
+      JSON.stringify(filters.discountCards?.toSorted()) !==
+      JSON.stringify(DEFAULT_FILTERS.discountCards.toSorted());
+    if (discountCardsDifferent) count += 1;
+
+    // Compter les dates sélectionnées
+    count += selectedDates.length;
+
+    return count;
   };
 
   const formatDate = (dateString: string) => {
@@ -98,18 +143,6 @@ const GlobalFilters = ({
     }
   };
 
-  const clearAllFilters = () => {
-    // Réinitialiser tous les filtres
-    filters?.carriers?.forEach((carrier) => onCarrierFilter(carrier));
-    filters?.classes?.forEach((travelClass) => onClassFilter(travelClass));
-    filters?.discountCards?.forEach((discountCard) =>
-      onDiscountCardFilter(discountCard)
-    );
-    if (onDateSelect) {
-      onDateSelect([]);
-    }
-  };
-
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
       <CardHeader className="pb-4">
@@ -120,7 +153,7 @@ const GlobalFilters = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
-              {hasActiveFilters && (
+              {hasActiveFilters() && (
                 <p className="text-sm text-gray-500">
                   {getActiveFiltersCount()} filtre(s) actif(s)
                 </p>
@@ -128,16 +161,6 @@ const GlobalFilters = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="w-4 h-4 mr-1" /> Effacer tout
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"
@@ -284,8 +307,7 @@ const GlobalFilters = ({
                         key={`discount-${discountCard}-${index}`}
                         variant="secondary"
                         className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                          filters?.discountCards?.includes(discountCard) ||
-                          false
+                          filters?.discountCards?.includes(discountCard)
                             ? "bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 text-gray-700 border border-purple-200 hover:border-purple-300 hover:shadow-md"
                             : "bg-gray-100 text-gray-400 line-through opacity-50"
                         }`}

@@ -45,7 +45,6 @@ export const getRouteData = async (
         properties: {
           dep: dep,
           arr: arr,
-        
         },
       };
     }
@@ -63,7 +62,6 @@ export const getRouteData = async (
         properties: {
           dep: arr,
           arr: dep,
-       
         },
         geometry: {
           ...data.geometry,
@@ -75,7 +73,6 @@ export const getRouteData = async (
       return reversedRouteData;
     }
 
-    console.log(`Route non trouvée: ${routeKey} ou ${routeKeyReverse}`);
     return null;
   } catch (error) {
     console.error("Erreur lors de la récupération de la route:", error);

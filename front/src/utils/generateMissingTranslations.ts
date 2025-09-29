@@ -1,4 +1,4 @@
-import { AggregatedPricingResult, GroupedJourney } from "../types/journey";
+import { GroupedJourney } from "../types/journey";
 import { generateTranslationTemplate } from "./translationConfig";
 import {
   carrierTranslations,
@@ -25,9 +25,9 @@ export const analyzeAndGenerateMissingTranslations = (
     journey.discountCards?.forEach((card: string) =>
       allDiscountCards.add(card)
     );
-    journey.offers?.forEach((offer: AggregatedPricingResult) =>
-      allTrainNames.add(offer.trainName)
-    );
+    // Note: AggregatedPricingResult n'a pas de trainName,
+    // cette propriété existe seulement dans DetailedPricingResult
+    // Pour l'instant, on skip cette partie
   });
 
   // Générer les templates pour chaque type
@@ -73,25 +73,21 @@ export const logMissingTranslations = (journeys: GroupedJourney[]) => {
 
   if (missing.carriers !== "// Toutes les traductions sont présentes") {
     console.group("📦 Compagnies manquantes :");
-    console.log(missing.carriers);
     console.groupEnd();
   }
 
   if (missing.classes !== "// Toutes les traductions sont présentes") {
     console.group("🎫 Classes manquantes :");
-    console.log(missing.classes);
     console.groupEnd();
   }
 
   if (missing.discountCards !== "// Toutes les traductions sont présentes") {
     console.group("💳 Cartes de réduction manquantes :");
-    console.log(missing.discountCards);
     console.groupEnd();
   }
 
   if (missing.trainNames !== "// Toutes les traductions sont présentes") {
     console.group("🚂 Noms de trains manquants :");
-    console.log(missing.trainNames);
     console.groupEnd();
   }
 
@@ -128,7 +124,6 @@ export const copyMissingTranslationsToClipboard = async (
 
   try {
     await navigator.clipboard.writeText(clipboardText);
-    console.log("✅ Traductions manquantes copiées dans le presse-papiers");
   } catch (error) {
     console.error("❌ Erreur lors de la copie dans le presse-papiers:", error);
   }

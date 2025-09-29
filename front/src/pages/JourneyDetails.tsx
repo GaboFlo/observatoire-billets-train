@@ -1,3 +1,4 @@
+import { stationTranslations, translateStation } from "@/utils/translations";
 import {
   ArrowLeft,
   ArrowRightLeft,
@@ -65,20 +66,10 @@ const JourneyDetails = () => {
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
 
   // Logs de débogage
-  console.log("🔍 JourneyDetails - analysisDates:", analysisDates.length);
-  console.log("🔍 JourneyDetails - selectedDate:", selectedDate);
-  console.log("🔍 JourneyDetails - availableTrains:", availableTrains.length);
-  console.log("🔍 JourneyDetails - selectedTrain:", selectedTrain);
-  console.log("🔍 JourneyDetails - error:", error);
-  console.log("🔍 JourneyDetails - loading:", loading);
-  console.log("🔍 JourneyDetails - filterLoading:", filterLoading);
 
   const handleInvertJourney = () => {
-    console.log("🔄 Inversion du trajet");
-
     // Construire la nouvelle URL avec les stations inversées
     const newUrl = `/journey/${arrivalStation}/${departureStation}/${arrivalStationId}/${departureStationId}`;
-    console.log("🔄 Navigation vers:", newUrl);
     navigate(newUrl);
   };
 
@@ -87,7 +78,14 @@ const JourneyDetails = () => {
   }
 
   // Afficher un message si aucune date n'est disponible
-  if (analysisDates.length === 0 && !loading && !error && !filterLoading) {
+  if (
+    analysisDates.length === 0 &&
+    !loading &&
+    !error &&
+    !filterLoading &&
+    departureStation &&
+    arrivalStation
+  ) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container px-4 py-8 mx-auto">
@@ -101,7 +99,13 @@ const JourneyDetails = () => {
               </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation} ⟶ {arrivalStation}
+                  {departureStation
+                    ? stationTranslations[departureStation]
+                    : "Station de départ"}{" "}
+                  ⟶{" "}
+                  {arrivalStation
+                    ? stationTranslations[arrivalStation]
+                    : "Station d'arrivée"}
                 </h1>
                 <p className="text-gray-500 text-sm"></p>
               </div>
@@ -145,7 +149,13 @@ const JourneyDetails = () => {
               </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation} ⟶ {arrivalStation}
+                  {departureStation
+                    ? stationTranslations[departureStation]
+                    : "Station de départ"}{" "}
+                  ⟶{" "}
+                  {arrivalStation
+                    ? stationTranslations[arrivalStation]
+                    : "Station d'arrivée"}
                 </h1>
                 <p className="text-gray-500 text-sm"></p>
               </div>
@@ -208,7 +218,13 @@ const JourneyDetails = () => {
               </Button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation} ⟶ {arrivalStation}
+                  {departureStation
+                    ? translateStation(departureStation)
+                    : "Station de départ"}{" "}
+                  ⟶{" "}
+                  {arrivalStation
+                    ? translateStation(arrivalStation)
+                    : "Station d'arrivée"}
                 </h1>
                 <p className="text-gray-500 text-sm"></p>
               </div>

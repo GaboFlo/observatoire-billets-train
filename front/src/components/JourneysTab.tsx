@@ -100,15 +100,6 @@ const JourneysTab = ({
   // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
   const filteredJourneys = journeys;
 
-  console.log("🎯 JourneysTab reçoit:", journeys.length, "voyages");
-
-  const hasActiveFilters =
-    (filters?.carriers?.length || 0) > 0 ||
-    (filters?.classes?.length || 0) > 0 ||
-    (filters?.discountCards?.length || 0) > 1 ||
-    (selectedDates.length > 0 &&
-      selectedDates.length < (analysisDates?.length || 0));
-
   const displayJourneys =
     selectedRouteJourneyIds.length > 0
       ? journeys.filter((journey: Journey) =>
@@ -224,7 +215,7 @@ const JourneysTab = ({
       </div>
 
       {/* Indicateur de sélection de route et filtres actifs */}
-      {(selectedRouteJourneyIds.length > 0 || hasActiveFilters) && (
+      {selectedRouteJourneyIds.length > 0 && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -319,7 +310,11 @@ const JourneysTab = ({
               <TableBody>
                 {sortedJourneys.map((journey: Journey) => {
                   const journeyPrices = getJourneyPrices(journey);
-                  const { arrival } = parseJourneyName(journey.name);
+                  const { departure, arrival } = parseJourneyName(journey.name);
+
+                  // Afficher la station qui n'est pas Paris
+                  const displayStation =
+                    departure === "Paris" ? arrival : departure;
 
                   return (
                     <TableRow
@@ -327,7 +322,7 @@ const JourneysTab = ({
                       className="hover:bg-gray-50/50 transition-colors border-b border-gray-100"
                     >
                       <TableCell className="font-semibold text-gray-900">
-                        {translateStation(arrival)}
+                        {translateStation(displayStation)}
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
