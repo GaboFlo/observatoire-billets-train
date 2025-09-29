@@ -41,17 +41,17 @@ const GlobalFilters = ({
   const [isExpanded, setIsExpanded] = useState(false); // Plié par défaut
 
   const hasActiveFilters =
-    filters.excludedCarriers.length > 0 ||
-    filters.excludedClasses.length > 0 ||
-    filters.excludedDiscountCards.length > 1 || // Plus de 1 car MAX est toujours exclu par défaut
+    (filters?.carriers?.length || 0) > 0 ||
+    (filters?.classes?.length || 0) > 0 ||
+    (filters?.discountCards?.length || 0) > 1 || // Plus de 1 car MAX est toujours inclus par défaut
     selectedDates.length > 0; // Ajouter les dates sélectionnées aux filtres actifs
 
   const getActiveFiltersCount = () => {
     return (
-      filters.excludedCarriers.length +
-      filters.excludedClasses.length +
-      (filters.excludedDiscountCards.length > 1
-        ? filters.excludedDiscountCards.length - 1
+      (filters?.carriers?.length || 0) +
+      (filters?.classes?.length || 0) +
+      ((filters?.discountCards?.length || 0) > 1
+        ? (filters?.discountCards?.length || 0) - 1
         : 0) +
       selectedDates.length // Compter les dates sélectionnées
     );
@@ -100,11 +100,9 @@ const GlobalFilters = ({
 
   const clearAllFilters = () => {
     // Réinitialiser tous les filtres
-    filters.excludedCarriers.forEach((carrier) => onCarrierFilter(carrier));
-    filters.excludedClasses.forEach((travelClass) =>
-      onClassFilter(travelClass)
-    );
-    filters.excludedDiscountCards.forEach((discountCard) =>
+    filters?.carriers?.forEach((carrier) => onCarrierFilter(carrier));
+    filters?.classes?.forEach((travelClass) => onClassFilter(travelClass));
+    filters?.discountCards?.forEach((discountCard) =>
       onDiscountCardFilter(discountCard)
     );
     if (onDateSelect) {
@@ -219,17 +217,17 @@ const GlobalFilters = ({
               <div className="flex flex-wrap gap-3">
                 {availableOptions.carriers.map(
                   (carrier: string, index: number) => {
-                    const isExcluded =
-                      filters.excludedCarriers.includes(carrier);
+                    const isSelected =
+                      filters?.carriers?.includes(carrier) || false;
 
                     return (
                       <Badge
                         key={`carrier-${carrier}-${index}`}
                         variant="secondary"
                         className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                          isExcluded
-                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                            : "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-gray-700 border border-blue-200 hover:border-blue-300 hover:shadow-md"
+                          isSelected
+                            ? "bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-gray-700 border border-blue-200 hover:border-blue-300 hover:shadow-md"
+                            : "bg-gray-100 text-gray-400 line-through opacity-50"
                         }`}
                         onClick={() => onCarrierFilter(carrier)}
                       >
@@ -250,17 +248,17 @@ const GlobalFilters = ({
               <div className="flex flex-wrap gap-3">
                 {availableOptions.classes.map(
                   (travelClass: string, index: number) => {
-                    const isExcluded =
-                      filters.excludedClasses.includes(travelClass);
+                    const isSelected =
+                      filters?.classes?.includes(travelClass) || false;
 
                     return (
                       <Badge
                         key={`class-${travelClass}-${index}`}
                         variant="secondary"
                         className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                          isExcluded
-                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                            : "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-gray-700 border border-green-200 hover:border-green-300 hover:shadow-md"
+                          isSelected
+                            ? "bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 text-gray-700 border border-green-200 hover:border-green-300 hover:shadow-md"
+                            : "bg-gray-100 text-gray-400 line-through opacity-50"
                         }`}
                         onClick={() => onClassFilter(travelClass)}
                       >
@@ -281,17 +279,15 @@ const GlobalFilters = ({
               <div className="flex flex-wrap gap-3">
                 {availableOptions.discountCards.map(
                   (discountCard: string, index: number) => {
-                    const isExcluded =
-                      filters.excludedDiscountCards.includes(discountCard);
-
                     return (
                       <Badge
                         key={`discount-${discountCard}-${index}`}
                         variant="secondary"
                         className={`cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                          isExcluded
-                            ? "bg-gray-100 text-gray-400 line-through opacity-50"
-                            : "bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 text-gray-700 border border-purple-200 hover:border-purple-300 hover:shadow-md"
+                          filters?.discountCards?.includes(discountCard) ||
+                          false
+                            ? "bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100 text-gray-700 border border-purple-200 hover:border-purple-300 hover:shadow-md"
+                            : "bg-gray-100 text-gray-400 line-through opacity-50"
                         }`}
                         onClick={() => onDiscountCardFilter(discountCard)}
                       >

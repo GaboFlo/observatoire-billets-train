@@ -8,6 +8,7 @@ import {
   Popup,
   TileLayer,
 } from "react-leaflet";
+import { truncatePrice } from "../lib/utils";
 import { getRouteData, RouteData } from "../services/routeService";
 import { GroupedJourney } from "../types/journey";
 
@@ -288,11 +289,14 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                                   {line.arrivalStation}
                                 </div>
                                 <div className="text-sm font-semibold text-blue-600">
-                                  Prix moyen : {forwardJourneys[0].avgPrice}€
+                                  Prix moyen :{" "}
+                                  {truncatePrice(forwardJourneys[0].avgPrice)}€
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  Prix min : {forwardJourneys[0].minPrice}€ |
-                                  Prix max : {forwardJourneys[0].maxPrice}€
+                                  Prix min :{" "}
+                                  {truncatePrice(forwardJourneys[0].minPrice)}€
+                                  | Prix max :{" "}
+                                  {truncatePrice(forwardJourneys[0].maxPrice)}€
                                 </div>
                               </div>
                             )}
@@ -304,11 +308,14 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                                   {line.departureStation}
                                 </div>
                                 <div className="text-sm font-semibold text-blue-600">
-                                  Prix moyen : {reverseJourneys[0].avgPrice}€
+                                  Prix moyen :{" "}
+                                  {truncatePrice(reverseJourneys[0].avgPrice)}€
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  Prix min : {reverseJourneys[0].minPrice}€ |
-                                  Prix max : {reverseJourneys[0].maxPrice}€
+                                  Prix min :{" "}
+                                  {truncatePrice(reverseJourneys[0].minPrice)}€
+                                  | Prix max :{" "}
+                                  {truncatePrice(reverseJourneys[0].maxPrice)}€
                                 </div>
                               </div>
                             )}

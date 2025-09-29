@@ -53,10 +53,10 @@ export interface JourneyFilters {
     selectedDiscountCard?: string;
     selectedCarrier?: string;
     selectedDiscountCards?: string[];
-    excludedDiscountCards?: string[];
+    discountCards?: string[];
     selectedClasses?: string[];
-    excludedClasses?: string[];
+    classes?: string[];
     selectedCarriers?: string[];
-    excludedCarriers?: string[];
+    carriers?: string[];
   };
 }

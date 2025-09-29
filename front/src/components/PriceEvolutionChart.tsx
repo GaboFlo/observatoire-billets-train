@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { truncatePrice } from "@/lib/utils";
 import { DetailedPricingResult } from "@/types/journey";
 import { AlertTriangle, Calendar, TrendingUp } from "lucide-react";
 import {
@@ -46,7 +47,11 @@ const PriceEvolutionChart = ({ offers }: PriceEvolutionChartProps) => {
       };
     }
 
-    acc[days].prices.push(offer.minPrice, offer.avgPrice, offer.maxPrice);
+    acc[days].prices.push(
+      truncatePrice(offer.minPrice),
+      truncatePrice(offer.avgPrice),
+      truncatePrice(offer.maxPrice)
+    );
 
     if (offer.is_sellable) {
       acc[days].availableTrains++;
@@ -64,12 +69,12 @@ const PriceEvolutionChart = ({ offers }: PriceEvolutionChartProps) => {
   const chartData: ChartDataPoint[] = Object.values(groupedByDays)
     .map((group) => ({
       daysBeforeDeparture: group.daysBeforeDeparture,
-      minPrice: Math.min(...group.prices),
-      avgPrice: Math.round(
+      minPrice: truncatePrice(Math.min(...group.prices)),
+      avgPrice: truncatePrice(
         group.prices.reduce((sum: number, price: number) => sum + price, 0) /
           group.prices.length
       ),
-      maxPrice: Math.max(...group.prices),
+      maxPrice: truncatePrice(Math.max(...group.prices)),
       availableTrains: group.availableTrains,
       soldOutTrains: group.soldOutTrains,
       soldOutReason: Array.from(group.soldOutReasons).join(", "),
@@ -77,9 +82,11 @@ const PriceEvolutionChart = ({ offers }: PriceEvolutionChartProps) => {
     .sort((a, b) => a.daysBeforeDeparture - b.daysBeforeDeparture);
 
   const formatTooltip = (value: any, name: string) => {
-    if (name === "minPrice") return [`${value}€`, "Prix minimum"];
-    if (name === "avgPrice") return [`${value}€`, "Prix moyen"];
-    if (name === "maxPrice") return [`${value}€`, "Prix maximum"];
+    if (name === "minPrice")
+      return [`${truncatePrice(value)}€`, "Prix minimum"];
+    if (name === "avgPrice") return [`${truncatePrice(value)}€`, "Prix moyen"];
+    if (name === "maxPrice")
+      return [`${truncatePrice(value)}€`, "Prix maximum"];
     if (name === "availableTrains") return [value, "Trains disponibles"];
     if (name === "soldOutTrains") return [value, "Trains complets"];
     return [value, name];
@@ -116,13 +123,13 @@ const PriceEvolutionChart = ({ offers }: PriceEvolutionChartProps) => {
       offer.avgPrice,
       offer.maxPrice,
     ]);
-    const minPrice = Math.min(...allPrices);
-    const maxPrice = Math.max(...allPrices);
-    const avgPrice = Math.round(
+    const minPrice = truncatePrice(Math.min(...allPrices));
+    const maxPrice = truncatePrice(Math.max(...allPrices));
+    const avgPrice = truncatePrice(
       allPrices.reduce((sum, price) => sum + price, 0) / allPrices.length
     );
 
-    const priceVariation = maxPrice - minPrice;
+    const priceVariation = truncatePrice(maxPrice - minPrice);
     const priceVariationPercent = Math.round((priceVariation / minPrice) * 100);
 
     return (

@@ -38,14 +38,14 @@ export const useJourneyData = () => {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [datesLoaded, setDatesLoaded] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<{
-    excludedCarriers: string[];
-    excludedClasses: string[];
-    excludedDiscountCards: string[];
+    carriers: string[];
+    classes: string[];
+    discountCards: string[];
     selectedDates: string[];
   }>({
-    excludedCarriers: [],
-    excludedClasses: [],
-    excludedDiscountCards: ["MAX"],
+    carriers: [],
+    classes: [],
+    discountCards: [],
     selectedDates: [],
   });
 
@@ -54,9 +54,9 @@ export const useJourneyData = () => {
 
   const fetchJourneys = useCallback(
     async (filters?: {
-      excludedCarriers?: string[];
-      excludedClasses?: string[];
-      excludedDiscountCards?: string[];
+      carriers?: string[];
+      classes?: string[];
+      discountCards?: string[];
       selectedDates?: string[];
     }) => {
       try {
@@ -68,11 +68,13 @@ export const useJourneyData = () => {
         }
 
         const requestBody = {
-          excludedCarriers: filters?.excludedCarriers || [],
-          excludedClasses: filters?.excludedClasses || [],
-          excludedDiscountCards: filters?.excludedDiscountCards || [],
+          carriers: filters?.carriers || [],
+          classes: filters?.classes || [],
+          discountCards: filters?.discountCards || [],
           selectedDates: filters?.selectedDates || [],
         };
+
+        console.log("🚀 Requête API avec filtres:", requestBody);
 
         const response = await fetch("/api/trains/pricing", {
           method: "POST",
@@ -142,6 +144,11 @@ export const useJourneyData = () => {
         );
 
         const processedJourneys = Array.from(journeyMap.values());
+        console.log(
+          "📊 Données reçues de l'API:",
+          processedJourneys.length,
+          "voyages"
+        );
         setJourneys(processedJourneys);
 
         // Stocker toutes les données non filtrées UNIQUEMENT lors du premier chargement
@@ -154,9 +161,9 @@ export const useJourneyData = () => {
         }
 
         setCurrentFilters({
-          excludedCarriers: filters?.excludedCarriers || [],
-          excludedClasses: filters?.excludedClasses || [],
-          excludedDiscountCards: filters?.excludedDiscountCards || ["MAX"],
+          carriers: filters?.carriers || [],
+          classes: filters?.classes || [],
+          discountCards: filters?.discountCards || [],
           selectedDates: filters?.selectedDates || [],
         });
         setError(null);
@@ -188,9 +195,9 @@ export const useJourneyData = () => {
   // Fonction pour appliquer les filtres avec debounce et cumulation
   const applyFilters = useCallback(
     (newFilters: {
-      excludedCarriers?: string[];
-      excludedClasses?: string[];
-      excludedDiscountCards?: string[];
+      carriers?: string[];
+      classes?: string[];
+      discountCards?: string[];
       selectedDates?: string[];
     }) => {
       // Annuler le timeout précédent
@@ -201,22 +208,10 @@ export const useJourneyData = () => {
       // Créer les nouveaux filtres en cumulant avec les filtres actuels
       const updatedFilters = {
         ...currentFilters,
-        excludedCarriers:
-          newFilters.excludedCarriers !== undefined
-            ? newFilters.excludedCarriers
-            : currentFilters.excludedCarriers,
-        excludedClasses:
-          newFilters.excludedClasses !== undefined
-            ? newFilters.excludedClasses
-            : currentFilters.excludedClasses,
-        excludedDiscountCards:
-          newFilters.excludedDiscountCards !== undefined
-            ? newFilters.excludedDiscountCards
-            : currentFilters.excludedDiscountCards,
-        selectedDates:
-          newFilters.selectedDates !== undefined
-            ? newFilters.selectedDates
-            : currentFilters.selectedDates,
+        carriers: newFilters.carriers ?? currentFilters.carriers,
+        classes: newFilters.classes ?? currentFilters.classes,
+        discountCards: newFilters.discountCards ?? currentFilters.discountCards,
+        selectedDates: newFilters.selectedDates ?? currentFilters.selectedDates,
       };
 
       // Débouncer l'appel à l'API

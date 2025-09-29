@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { TicketPrice } from "../data/mockData";
+import { truncatePrice } from "../lib/utils";
 import PriceFiltersComponent, { PriceFilters } from "./PriceFilters";
 
 interface FormattedTicketPrice extends TicketPrice {
@@ -99,7 +100,7 @@ const PriceTable = ({
                     <TableCell className="font-medium">
                       {item.formattedDate}
                     </TableCell>
-                    <TableCell>{item.price}€</TableCell>
+                    <TableCell>{truncatePrice(item.price)}€</TableCell>
                     <TableCell className="flex items-center gap-1">
                       {item.priceChange !== 0 && (
                         <>
@@ -116,7 +117,7 @@ const PriceTable = ({
                             }
                           >
                             {item.priceChange > 0 ? "+" : ""}
-                            {item.priceChange}€
+                            {truncatePrice(item.priceChange)}€
                           </span>
                         </>
                       )}

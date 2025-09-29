@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { translateCarrier } from "@/utils/translations";
+import {
+  translateCarrier,
+  translateDiscountCard,
+  translateTravelClass,
+} from "@/utils/translations";
 import { ArrowRightLeft, Calendar, Filter, Train } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -129,11 +133,8 @@ const UnifiedFilters = ({
             </div>
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">
-                Filtres et analyse
+                Filtres
               </CardTitle>
-              <p className="text-sm text-gray-500">
-                Configurez vos critères d'analyse
-              </p>
             </div>
           </div>
           <Button
@@ -151,12 +152,6 @@ const UnifiedFilters = ({
         <CardContent className="space-y-6">
           {/* Inverser le sens */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                <ArrowRightLeft className="w-4 h-4" />
-                Direction du trajet
-              </h3>
-            </div>
             <Button
               variant="outline"
               size="sm"
@@ -167,7 +162,6 @@ const UnifiedFilters = ({
               Inverser le sens du trajet
             </Button>
           </div>
-
           {/* Sélection de date */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
@@ -199,8 +193,88 @@ const UnifiedFilters = ({
                 ))}
               </div>
             )}
-          </div>
-
+          </div>{" "}
+          {/* Compagnies ferroviaires */}
+          {availableCarriers.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-900">
+                Compagnies ferroviaires
+              </h3>
+              <div className="space-y-2">
+                {availableCarriers.map((carrier) => (
+                  <div key={carrier} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`carrier-${carrier}`}
+                      checked={selectedCarriers.includes(carrier)}
+                      onCheckedChange={() => onCarrierToggle(carrier)}
+                    />
+                    <label
+                      htmlFor={`carrier-${carrier}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {translateCarrier(carrier)}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Classes de voyage */}
+          {availableClasses.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-900">
+                Classes de voyage
+              </h3>
+              <div className="space-y-2">
+                {availableClasses.map((travelClass) => (
+                  <div
+                    key={travelClass}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={`class-${travelClass}`}
+                      checked={selectedClasses.includes(travelClass)}
+                      onCheckedChange={() => onClassToggle(travelClass)}
+                    />
+                    <label
+                      htmlFor={`class-${travelClass}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {translateTravelClass(travelClass)}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Cartes de réduction */}
+          {availableDiscountCards.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-gray-900">
+                Cartes de réduction
+              </h3>
+              <div className="space-y-2">
+                {availableDiscountCards.map((discountCard) => (
+                  <div
+                    key={discountCard}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={`discount-${discountCard}`}
+                      checked={selectedDiscountCards.includes(discountCard)}
+                      onCheckedChange={() => onDiscountCardToggle(discountCard)}
+                    />
+                    <label
+                      htmlFor={`discount-${discountCard}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {translateDiscountCard(discountCard)}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Sélection de train */}
           {selectedDate && availableTrains.length > 0 && (
             <div className="space-y-3">
@@ -246,91 +320,6 @@ const UnifiedFilters = ({
               </div>
             </div>
           )}
-
-          {/* Compagnies ferroviaires */}
-          {availableCarriers.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Compagnies ferroviaires
-              </h3>
-              <div className="space-y-2">
-                {availableCarriers.map((carrier) => (
-                  <div key={carrier} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`carrier-${carrier}`}
-                      checked={selectedCarriers.includes(carrier)}
-                      onCheckedChange={() => onCarrierToggle(carrier)}
-                    />
-                    <label
-                      htmlFor={`carrier-${carrier}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {translateCarrier(carrier)}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Classes de voyage */}
-          {availableClasses.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Classes de voyage
-              </h3>
-              <div className="space-y-2">
-                {availableClasses.map((travelClass) => (
-                  <div
-                    key={travelClass}
-                    className="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      id={`class-${travelClass}`}
-                      checked={selectedClasses.includes(travelClass)}
-                      onCheckedChange={() => onClassToggle(travelClass)}
-                    />
-                    <label
-                      htmlFor={`class-${travelClass}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {travelClass}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Cartes de réduction */}
-          {availableDiscountCards.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Cartes de réduction
-              </h3>
-              <div className="space-y-2">
-                {availableDiscountCards.map((discountCard) => (
-                  <div
-                    key={discountCard}
-                    className="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      id={`discount-${discountCard}`}
-                      checked={selectedDiscountCards.includes(discountCard)}
-                      onCheckedChange={() => onDiscountCardToggle(discountCard)}
-                    />
-                    <label
-                      htmlFor={`discount-${discountCard}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {discountCard}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Indicateur de chargement */}
           {filterLoading && (
             <div className="flex items-center justify-center py-4">

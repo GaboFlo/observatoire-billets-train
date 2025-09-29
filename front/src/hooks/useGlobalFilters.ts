@@ -2,10 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { GroupedJourney } from "../types/journey";
 
 export interface GlobalFilters {
-  excludedCarriers: string[];
-  excludedClasses: string[];
-  excludedDiscountCards: string[];
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
 }
+
+// Filtres par défaut centralisés
+export const DEFAULT_FILTERS: GlobalFilters = {
+  carriers: ["SNCF", "db", "ouigo", "sncf", "eurostar", "trenitalia_france"],
+  classes: ["economy", "first"],
+  discountCards: ["NONE", "AVANTAGE_JEUNE"],
+};
 
 export const useGlobalFilters = (
   journeys: GroupedJourney[],
@@ -14,15 +21,32 @@ export const useGlobalFilters = (
   allJourneys?: GroupedJourney[] // Nouvelles données non filtrées pour les options
 ) => {
   const [filters, setFilters] = useState<GlobalFilters>({
-    excludedCarriers: currentFilters?.excludedCarriers || [],
-    excludedClasses: currentFilters?.excludedClasses || [],
-    excludedDiscountCards: currentFilters?.excludedDiscountCards || [],
+    carriers: currentFilters?.carriers || DEFAULT_FILTERS.carriers,
+    classes: currentFilters?.classes || DEFAULT_FILTERS.classes,
+    discountCards:
+      currentFilters?.discountCards || DEFAULT_FILTERS.discountCards,
   });
+
+  // Initialiser les filtres avec toutes les options disponibles sauf MAX (une seule fois)
+  const [initialized, setInitialized] = useState(false);
 
   // Synchroniser les filtres quand currentFilters change
   useEffect(() => {
     if (currentFilters) {
-      setFilters(currentFilters);
+      setFilters((prevFilters) => {
+        // Éviter les mises à jour inutiles en comparant les valeurs
+        if (
+          JSON.stringify(prevFilters.carriers) !==
+            JSON.stringify(currentFilters.carriers) ||
+          JSON.stringify(prevFilters.classes) !==
+            JSON.stringify(currentFilters.classes) ||
+          JSON.stringify(prevFilters.discountCards) !==
+            JSON.stringify(currentFilters.discountCards)
+        ) {
+          return currentFilters;
+        }
+        return prevFilters;
+      });
     }
   }, [currentFilters]);
 
@@ -55,56 +79,73 @@ export const useGlobalFilters = (
     };
   }, [allJourneys, journeys]);
 
+  // Initialiser les filtres avec les valeurs par défaut (une seule fois)
+  useEffect(() => {
+    if (!initialized) {
+      const newFilters = {
+        carriers: currentFilters?.carriers || DEFAULT_FILTERS.carriers,
+        classes: currentFilters?.classes || DEFAULT_FILTERS.classes,
+        discountCards:
+          currentFilters?.discountCards || DEFAULT_FILTERS.discountCards,
+      };
+      setFilters(newFilters);
+      setInitialized(true);
+      onFiltersChange?.(newFilters);
+    }
+  }, [
+    initialized,
+    onFiltersChange,
+    currentFilters?.carriers,
+    currentFilters?.classes,
+    currentFilters?.discountCards,
+  ]);
+
   // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
   const filteredJourneys = journeys;
 
   const handleCarrierFilter = (carrier: string) => {
+    const currentCarriers = filters.carriers || [];
     const newFilters = {
       ...filters,
-      excludedCarriers: filters.excludedCarriers.includes(carrier)
-        ? filters.excludedCarriers.filter((c) => c !== carrier)
-        : [...filters.excludedCarriers, carrier],
+      carriers: currentCarriers.includes(carrier)
+        ? currentCarriers.filter((c) => c !== carrier)
+        : [...currentCarriers, carrier],
     };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
   };
 
   const handleClassFilter = (travelClass: string) => {
+    const currentClasses = filters.classes || [];
     const newFilters = {
       ...filters,
-      excludedClasses: filters.excludedClasses.includes(travelClass)
-        ? filters.excludedClasses.filter((c) => c !== travelClass)
-        : [...filters.excludedClasses, travelClass],
+      classes: currentClasses.includes(travelClass)
+        ? currentClasses.filter((c) => c !== travelClass)
+        : [...currentClasses, travelClass],
     };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
   };
 
   const handleDiscountCardFilter = (discountCard: string) => {
+    const currentDiscountCards = filters.discountCards || [];
     const newFilters = {
       ...filters,
-      excludedDiscountCards: filters.excludedDiscountCards.includes(
-        discountCard
-      )
-        ? filters.excludedDiscountCards.filter((c) => c !== discountCard)
-        : [...filters.excludedDiscountCards, discountCard],
+      discountCards: currentDiscountCards.includes(discountCard)
+        ? currentDiscountCards.filter((c) => c !== discountCard)
+        : [...currentDiscountCards, discountCard],
     };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
   };
 
   const clearFilters = () => {
-    const newFilters = {
-      excludedCarriers: [],
-      excludedClasses: [],
-      excludedDiscountCards: [],
-    };
-    setFilters(newFilters);
-    onFiltersChange?.(newFilters);
+    setFilters(DEFAULT_FILTERS);
+    onFiltersChange?.(DEFAULT_FILTERS);
   };
 
   return {
-    filters,
+    filters: filters || DEFAULT_FILTERS,
     availableOptions,
     filteredJourneys,
     handleCarrierFilter,

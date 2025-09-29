@@ -2,9 +2,9 @@ import { DetailedPricingResult, GroupedJourney } from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface JourneyDetailsFilters {
-  excludedCarriers: string[];
-  excludedClasses: string[];
-  excludedDiscountCards: string[];
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
   selectedDates?: string[];
   departureStationId?: number;
   arrivalStationId?: number;
@@ -48,10 +48,12 @@ export const useJourneyDetails = (
     string[]
   >([]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
-    excludedCarriers: [],
-    excludedClasses: [],
-    excludedDiscountCards: [],
+    carriers: [],
+    classes: [],
+    discountCards: ["MAX"],
     selectedDates: [],
+    departureStationId,
+    arrivalStationId,
   });
 
   // Ref pour le debounce
@@ -141,7 +143,7 @@ export const useJourneyDetails = (
 
   // Fonction pour récupérer les statistiques globales pour une date
   const fetchDateStatistics = useCallback(
-    async (date: string) => {
+    async (date: string, trainNumber?: string) => {
       try {
         console.log("📊 Récupération des statistiques pour la date:", date);
 
@@ -154,6 +156,10 @@ export const useJourneyDetails = (
             departureStationId,
             arrivalStationId,
             date,
+            trainNumber: trainNumber || null,
+            carriers: [],
+            classes: [],
+            discountCards: ["MAX"], // Toujours inclure MAX par défaut
           }),
         });
 
@@ -213,6 +219,7 @@ export const useJourneyDetails = (
     [departureStationId, arrivalStationId]
   );
 
+  // fetchJourneyDetails ne doit dépendre que des IDs de stations pour éviter les boucles infinies
   const fetchJourneyDetails = useCallback(
     async (filters?: JourneyDetailsFilters) => {
       try {
@@ -225,9 +232,9 @@ export const useJourneyDetails = (
 
         // Corps de la requête POST avec les filtres (cohérent avec la page d'accueil)
         const requestBody = {
-          excludedCarriers: filters?.excludedCarriers || [],
-          excludedClasses: filters?.excludedClasses || [],
-          excludedDiscountCards: filters?.excludedDiscountCards || [],
+          carriers: filters?.carriers || [],
+          classes: filters?.classes || [],
+          discountCards: filters?.discountCards || [],
           selectedDates: filters?.selectedDates || [],
           departureStationId: filters?.departureStationId || departureStationId,
           arrivalStationId: filters?.arrivalStationId || arrivalStationId,
@@ -294,19 +301,30 @@ export const useJourneyDetails = (
           avgPrice,
         };
 
+        console.log("🔄 Mise à jour des données journey:", {
+          minPrice: journeyData.minPrice,
+          avgPrice: journeyData.avgPrice,
+          maxPrice: journeyData.maxPrice,
+          carriers: journeyData.carriers,
+          classes: journeyData.classes,
+          discountCards: journeyData.discountCards,
+        });
+
         setJourney(journeyData);
         setDetailedOffers(data);
 
-        // Mettre à jour les filtres actuels
-        setCurrentFilters({
-          excludedCarriers: filters?.excludedCarriers || [],
-          excludedClasses: filters?.excludedClasses || [],
-          excludedDiscountCards: filters?.excludedDiscountCards || [],
-          selectedDates: filters?.selectedDates || [],
-          departureStationId: filters?.departureStationId,
-          arrivalStationId: filters?.arrivalStationId,
-          trainNumber: filters?.trainNumber,
-        });
+        // Mettre à jour les filtres actuels seulement si des filtres sont fournis
+        if (filters) {
+          setCurrentFilters({
+            carriers: filters.carriers || [],
+            classes: filters.classes || [],
+            discountCards: filters.discountCards || [],
+            selectedDates: filters.selectedDates || [],
+            departureStationId: filters.departureStationId,
+            arrivalStationId: filters.arrivalStationId,
+            trainNumber: filters.trainNumber,
+          });
+        }
 
         // Extraire les dates uniques des offres pour les filtres
         const uniqueDates = [
@@ -323,13 +341,16 @@ export const useJourneyDetails = (
         setFilterLoading(false);
       }
     },
-    [departureStationId, arrivalStationId, journey, detailedOffers.length]
+    [departureStationId, arrivalStationId]
   );
 
   // Fonction pour appliquer les filtres avec debounce
 
+  // applyFilters ne doit dépendre que de fetchJourneyDetails pour éviter les boucles infinies
   const applyFilters = useCallback(
     (newFilters: Partial<JourneyDetailsFilters>) => {
+      console.log("🔧 applyFilters appelé avec:", newFilters);
+
       // Annuler le timeout précédent
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -341,14 +362,19 @@ export const useJourneyDetails = (
         ...newFilters,
       };
 
+      console.log("🔧 Filtres mis à jour:", updatedFilters);
       setCurrentFilters(updatedFilters);
 
       // Débouncer l'appel à l'API
       debounceTimeoutRef.current = setTimeout(() => {
+        console.log(
+          "🔧 Déclenchement de fetchJourneyDetails avec:",
+          updatedFilters
+        );
         fetchJourneyDetails(updatedFilters);
       }, 400); // 0.4 secondes de debounce
     },
-    [currentFilters, fetchJourneyDetails]
+    [fetchJourneyDetails]
   );
 
   // Chargement initial - récupérer les dates disponibles
@@ -390,6 +416,17 @@ export const useJourneyDetails = (
 
       // Récupérer les dates disponibles
       fetchAvailableDates();
+
+      // Charger les données initiales avec les IDs de stations
+      // Utiliser des filtres explicites pour éviter la boucle infinie avec currentFilters
+      fetchJourneyDetails({
+        carriers: [],
+        classes: [],
+        discountCards: ["MAX"],
+        selectedDates: [],
+        departureStationId,
+        arrivalStationId,
+      });
     }
   }, [departureStation, arrivalStation, fetchAvailableDates]);
 
@@ -410,29 +447,58 @@ export const useJourneyDetails = (
   }, []);
 
   // Nouvelles fonctions de gestion des filtres
-  const handleCarrierToggle = useCallback((carrier: string) => {
-    setSelectedCarriers((prev) =>
-      prev.includes(carrier)
-        ? prev.filter((c) => c !== carrier)
-        : [...prev, carrier]
-    );
-  }, []);
+  const handleCarrierToggle = useCallback(
+    (carrier: string) => {
+      const newSelectedCarriers = selectedCarriers.includes(carrier)
+        ? selectedCarriers.filter((c) => c !== carrier)
+        : [...selectedCarriers, carrier];
 
-  const handleClassToggle = useCallback((travelClass: string) => {
-    setSelectedClasses((prev) =>
-      prev.includes(travelClass)
-        ? prev.filter((c) => c !== travelClass)
-        : [...prev, travelClass]
-    );
-  }, []);
+      setSelectedCarriers(newSelectedCarriers);
 
-  const handleDiscountCardToggle = useCallback((discountCard: string) => {
-    setSelectedDiscountCards((prev) =>
-      prev.includes(discountCard)
-        ? prev.filter((c) => c !== discountCard)
-        : [...prev, discountCard]
-    );
-  }, []);
+      // Déclencher un appel API avec les nouveaux filtres
+      // Maintenant on passe directement les carriers sélectionnés
+      applyFilters({
+        carriers: newSelectedCarriers,
+      });
+    },
+    [selectedCarriers, applyFilters]
+  );
+
+  const handleClassToggle = useCallback(
+    (travelClass: string) => {
+      const newSelectedClasses = selectedClasses.includes(travelClass)
+        ? selectedClasses.filter((c) => c !== travelClass)
+        : [...selectedClasses, travelClass];
+
+      setSelectedClasses(newSelectedClasses);
+
+      // Déclencher un appel API avec les nouveaux filtres
+      // Maintenant on passe directement les classes sélectionnées
+      applyFilters({
+        classes: newSelectedClasses,
+      });
+    },
+    [selectedClasses, applyFilters]
+  );
+
+  const handleDiscountCardToggle = useCallback(
+    (discountCard: string) => {
+      const newSelectedDiscountCards = selectedDiscountCards.includes(
+        discountCard
+      )
+        ? selectedDiscountCards.filter((c) => c !== discountCard)
+        : [...selectedDiscountCards, discountCard];
+
+      setSelectedDiscountCards(newSelectedDiscountCards);
+
+      // Déclencher un appel API avec les nouveaux filtres
+      // Maintenant on passe directement les cartes sélectionnées
+      applyFilters({
+        discountCards: newSelectedDiscountCards,
+      });
+    },
+    [selectedDiscountCards, applyFilters]
+  );
 
   // Fonction pour récupérer les options disponibles (carriers, classes, discountCards)
   const fetchAvailableOptions = useCallback(
@@ -449,6 +515,10 @@ export const useJourneyDetails = (
             departureStationId,
             arrivalStationId,
             date,
+            trainNumber: null,
+            carriers: [],
+            classes: [],
+            discountCards: ["MAX"],
           }),
         });
 
@@ -473,8 +543,6 @@ export const useJourneyDetails = (
 
   // Fonction pour déclencher l'analyse avec les filtres actuels
   const triggerAnalysis = useCallback(async () => {
-    if (!selectedDate) return;
-
     try {
       console.log("🔍 Déclenchement de l'analyse avec les filtres:", {
         selectedDate,
@@ -486,55 +554,117 @@ export const useJourneyDetails = (
 
       setFilterLoading(true);
 
-      // Construire le body de la requête
-      const requestBody: {
-        departureStationId: number;
-        arrivalStationId: number;
-        date: string;
-        trainNumber?: string;
-        carriers?: string[];
-        classes?: string[];
-        discountCards?: string[];
-      } = {
-        departureStationId: departureStationId!,
-        arrivalStationId: arrivalStationId!,
-        date: selectedDate,
-      };
+      let analysisResult;
 
-      // Ajouter les filtres seulement s'ils sont sélectionnés
-      if (selectedTrain) {
-        requestBody.trainNumber = selectedTrain;
-      }
-      if (selectedCarriers.length > 0) {
-        requestBody.carriers = selectedCarriers;
-      }
-      if (selectedClasses.length > 0) {
-        requestBody.classes = selectedClasses;
-      }
-      if (selectedDiscountCards.length > 0) {
-        requestBody.discountCards = selectedDiscountCards;
-      }
+      if (!selectedDate) {
+        // Cas 1: Aucune date sélectionnée - Statistiques générales sur le trajet
+        console.log("📊 Analyse générale du trajet");
+        const response = await fetch("/api/trains/pricing", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            excludedCarriers: [],
+            excludedClasses: [],
+            excludedDiscountCards: [],
+            selectedDates: [],
+          }),
+        });
 
-      console.log("📤 Envoi de la requête d'analyse:", requestBody);
+        if (!response.ok) {
+          throw new Error(
+            `Erreur lors de l'analyse générale: ${response.status}`
+          );
+        }
 
-      // Appeler l'endpoint d'analyse (à créer)
-      const response = await fetch("/api/trains/analysis", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+        const generalData = await response.json();
+        console.log("📊 Données générales:", generalData);
 
-      if (!response.ok) {
-        throw new Error(`Erreur lors de l'analyse: ${response.status}`);
+        // Trouver les données pour ce trajet spécifique
+        const journeyData = generalData.find(
+          (item: any) =>
+            item.departureStationId === departureStationId &&
+            item.arrivalStationId === arrivalStationId
+        );
+
+        analysisResult = journeyData || {
+          totalOffers: 0,
+          minPrice: 0,
+          maxPrice: 0,
+          avgPrice: 0,
+          carriers: [],
+          classes: [],
+          discountCards: [],
+          totalTrains: 0,
+        };
+      } else if (!selectedTrain) {
+        // Cas 2: Date sélectionnée mais pas de train - Statistiques de la date
+        console.log("📊 Analyse de la date:", selectedDate);
+        const response = await fetch("/api/trains/date-statistics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            departureStationId,
+            arrivalStationId,
+            date: selectedDate,
+            trainNumber: null,
+            carriers: selectedCarriers,
+            classes: selectedClasses,
+            discountCards: selectedDiscountCards,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Erreur lors de l'analyse de date: ${response.status}`
+          );
+        }
+
+        analysisResult = await response.json();
+        console.log("📊 Statistiques de la date:", analysisResult);
+      } else {
+        // Cas 3: Date ET train sélectionnés - Analyse spécifique du train
+        console.log("📊 Analyse du train spécifique:", selectedTrain);
+        const response = await fetch("/api/trains/train-statistics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            departureStationId,
+            arrivalStationId,
+            date: selectedDate,
+            trainNumber: selectedTrain,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Erreur lors de l'analyse du train: ${response.status}`
+          );
+        }
+
+        analysisResult = await response.json();
+        console.log("📊 Statistiques du train:", analysisResult);
       }
-
-      const analysisResult = await response.json();
-      console.log("📊 Résultat de l'analyse:", analysisResult);
 
       // Mettre à jour les données avec le résultat de l'analyse
-      // Ici on pourrait mettre à jour journey, detailedOffers, etc.
+      if (analysisResult) {
+        // Mettre à jour l'objet journey avec les nouvelles statistiques
+        setJourney((prev) =>
+          prev
+            ? {
+                ...prev,
+                minPrice: analysisResult.minPrice || 0,
+                maxPrice: analysisResult.maxPrice || 0,
+                avgPrice: analysisResult.avgPrice || 0,
+              }
+            : null
+        );
+      }
     } catch (err) {
       console.error("❌ Erreur analyse:", err);
       setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");

@@ -74,13 +74,7 @@ export const createDefaultFilters = (
   groupedJourneys: GroupedJourney[]
 ): JourneyFilters => {
   const defaultFilters: JourneyFilters = {};
-  groupedJourneys.forEach((journey) => {
-    if (journey.discountCards.includes("MAX")) {
-      defaultFilters[journey.id] = {
-        excludedDiscountCards: ["MAX"],
-      };
-    }
-  });
+  // Plus d'exclusion par défaut de MAX - toutes les cartes sont incluses par défaut
   return defaultFilters;
 };
 

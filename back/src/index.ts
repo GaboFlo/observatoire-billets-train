@@ -116,18 +116,18 @@ const journeyDetailsCache = new Map<string, JourneyDetailsCacheEntry>();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 const generateCacheKey = (filters: {
-  excludedCarriers: string[];
-  excludedClasses: string[];
-  excludedDiscountCards: string[];
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
   selectedDates: string[];
   departureStationId?: number;
   arrivalStationId?: number;
   trainNumber?: number;
 }): string => {
   return JSON.stringify({
-    excludedCarriers: filters.excludedCarriers.toSorted(),
-    excludedClasses: filters.excludedClasses.toSorted(),
-    excludedDiscountCards: filters.excludedDiscountCards.toSorted(),
+    carriers: filters.carriers.toSorted(),
+    classes: filters.classes.toSorted(),
+    discountCards: filters.discountCards.toSorted(),
     selectedDates: filters.selectedDates.toSorted(),
     departureStationId: filters.departureStationId,
     arrivalStationId: filters.arrivalStationId,
@@ -307,17 +307,17 @@ app.get("/api/trains/pricing", async (req: Request, res: Response) => {
 app.post("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
     const {
-      excludedCarriers = [],
-      excludedClasses = [],
-      excludedDiscountCards = [],
+      carriers = [],
+      classes = [],
+      discountCards = [],
       selectedDates = [],
     } = req.body;
 
     // Vérifier le cache
     const cacheKey = generateCacheKey({
-      excludedCarriers,
-      excludedClasses,
-      excludedDiscountCards,
+      carriers,
+      classes,
+      discountCards,
       selectedDates,
     });
 
@@ -332,19 +332,19 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       "pricing.unsellable_reason": null,
     };
 
-    // Ajouter les filtres par compagnies exclues
-    if (excludedCarriers.length > 0) {
-      baseMatch.carrier = { $nin: excludedCarriers };
+    // Ajouter les filtres par compagnies (inclusifs)
+    if (carriers.length > 0) {
+      baseMatch.carrier = { $in: carriers };
     }
 
-    // Ajouter les filtres par classes exclues
-    if (excludedClasses.length > 0) {
-      baseMatch["pricing.travel_class"] = { $nin: excludedClasses };
+    // Ajouter les filtres par classes (inclusifs)
+    if (classes.length > 0) {
+      baseMatch["pricing.travel_class"] = { $in: classes };
     }
 
-    // Ajouter les filtres par cartes de réduction exclues
-    if (excludedDiscountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $nin: excludedDiscountCards };
+    // Ajouter les filtres par cartes de réduction (inclusifs)
+    if (discountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $in: discountCards };
     }
 
     // Ajouter le filtre par dates si spécifiées
@@ -465,9 +465,9 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
 app.post("/api/trains/journey-details", async (req: Request, res: Response) => {
   try {
     const {
-      excludedCarriers = [],
-      excludedClasses = [],
-      excludedDiscountCards = [],
+      carriers = [],
+      classes = [],
+      discountCards = [],
       selectedDates = [],
       departureStationId,
       arrivalStationId,
@@ -476,9 +476,9 @@ app.post("/api/trains/journey-details", async (req: Request, res: Response) => {
 
     // Vérifier le cache
     const cacheKey = generateCacheKey({
-      excludedCarriers,
-      excludedClasses,
-      excludedDiscountCards,
+      carriers,
+      classes,
+      discountCards,
       selectedDates,
       departureStationId,
       arrivalStationId,
@@ -496,19 +496,19 @@ app.post("/api/trains/journey-details", async (req: Request, res: Response) => {
       "pricing.unsellable_reason": null,
     };
 
-    // Ajouter les filtres par compagnies exclues
-    if (excludedCarriers.length > 0) {
-      baseMatch.carrier = { $nin: excludedCarriers };
+    // Ajouter les filtres par compagnies (inclusifs)
+    if (carriers.length > 0) {
+      baseMatch.carrier = { $in: carriers };
     }
 
-    // Ajouter les filtres par classes exclues
-    if (excludedClasses.length > 0) {
-      baseMatch["pricing.travel_class"] = { $nin: excludedClasses };
+    // Ajouter les filtres par classes (inclusifs)
+    if (classes.length > 0) {
+      baseMatch["pricing.travel_class"] = { $in: classes };
     }
 
-    // Ajouter les filtres par cartes de réduction exclues
-    if (excludedDiscountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $nin: excludedDiscountCards };
+    // Ajouter les filtres par cartes de réduction (inclusifs)
+    if (discountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $in: discountCards };
     }
 
     // Ajouter le filtre par dates si spécifiées
@@ -693,9 +693,9 @@ app.post(
     try {
       const { departureStation, arrivalStation } = req.params;
       const {
-        excludedCarriers = [],
-        excludedClasses = [],
-        excludedDiscountCards = [],
+        carriers = [],
+        classes = [],
+        discountCards = [],
         selectedDate = null,
       } = req.body;
 
@@ -705,18 +705,18 @@ app.post(
         "arrival_station.name": arrivalStation,
       };
 
-      // Ajouter les filtres si ils sont fournis
-      if (excludedCarriers && excludedCarriers.length > 0) {
-        matchConditions.carrier = { $nin: excludedCarriers };
+      // Ajouter les filtres si ils sont fournis (inclusifs)
+      if (carriers && carriers.length > 0) {
+        matchConditions.carrier = { $in: carriers };
       }
 
-      if (excludedClasses && excludedClasses.length > 0) {
-        matchConditions["pricing.travel_class"] = { $nin: excludedClasses };
+      if (classes && classes.length > 0) {
+        matchConditions["pricing.travel_class"] = { $in: classes };
       }
 
-      if (excludedDiscountCards && excludedDiscountCards.length > 0) {
+      if (discountCards && discountCards.length > 0) {
         matchConditions["pricing.discount_card"] = {
-          $nin: excludedDiscountCards,
+          $in: discountCards,
         };
       }
 
@@ -913,7 +913,15 @@ app.post("/api/trains/trains-for-date", async (req: Request, res: Response) => {
 // 3. Endpoint pour les statistiques globales d'une date
 app.post("/api/trains/date-statistics", async (req: Request, res: Response) => {
   try {
-    const { departureStationId, arrivalStationId, date } = req.body;
+    const {
+      departureStationId,
+      arrivalStationId,
+      date,
+      trainNumber,
+      carriers = [],
+      classes = [],
+      discountCards = [],
+    } = req.body;
 
     if (!departureStationId || !arrivalStationId || !date) {
       return res.status(400).json({
@@ -926,17 +934,40 @@ app.post("/api/trains/date-statistics", async (req: Request, res: Response) => {
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
 
+    // Construire le match de base
+    const baseMatch: any = {
+      "departure_station.id": departureStationId,
+      "arrival_station.id": arrivalStationId,
+      departure_date: {
+        $gte: startDate,
+        $lte: endDate,
+      },
+      "pricing.unsellable_reason": null,
+    };
+
+    // Ajouter le filtre par train si spécifié
+    if (trainNumber) {
+      baseMatch.train_number = parseInt(trainNumber);
+    }
+
+    // Ajouter les filtres par compagnies (inclusion)
+    if (carriers.length > 0) {
+      baseMatch.carrier = { $in: carriers };
+    }
+
+    // Ajouter les filtres par classes (inclusion)
+    if (classes.length > 0) {
+      baseMatch["pricing.travel_class"] = { $in: classes };
+    }
+
+    // Ajouter les filtres par cartes de réduction (inclusion)
+    if (discountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $in: discountCards };
+    }
+
     const data = await Train.aggregate([
       {
-        $match: {
-          "departure_station.id": departureStationId,
-          "arrival_station.id": arrivalStationId,
-          departure_date: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-          "pricing.unsellable_reason": null,
-        },
+        $match: baseMatch,
       },
       {
         $group: {
@@ -1101,11 +1132,9 @@ app.post("/api/trains/analysis", async (req: Request, res: Response) => {
     } = req.body;
 
     if (!departureStationId || !arrivalStationId || !date) {
-      return res
-        .status(400)
-        .json({
-          error: "departureStationId, arrivalStationId et date sont requis",
-        });
+      return res.status(400).json({
+        error: "departureStationId, arrivalStationId et date sont requis",
+      });
     }
 
     const startDate = new Date(date);

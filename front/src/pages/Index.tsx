@@ -3,6 +3,7 @@ import ErrorDisplay from "../components/ErrorDisplay";
 import JourneysTab from "../components/JourneysTab";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PageHeader from "../components/PageHeader";
+import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyData } from "../hooks/useJourneyData";
 
 const Index = () => {
@@ -23,10 +24,8 @@ const Index = () => {
   // Charger les données initiales au démarrage
   useEffect(() => {
     fetchJourneys({
-      excludedCarriers: [],
-      excludedClasses: [],
-      excludedDiscountCards: ["MAX"], // Exclure MAX par défaut
-      selectedDates: [],
+      ...DEFAULT_FILTERS,
+      selectedDates: [], // Toutes les dates disponibles
     });
   }, [fetchJourneys]);
 

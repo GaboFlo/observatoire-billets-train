@@ -13,7 +13,7 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
   const [filters, setFilters] = useState<JourneyDetailsFilters>({
     excludedCarriers: [],
     excludedClasses: [],
-    excludedDiscountCards: [],
+    excludedDiscountCards: ["MAX"],
   });
 
   const filteredOffers = useMemo(() => {
@@ -96,7 +96,7 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
     setFilters({
       excludedCarriers: [],
       excludedClasses: [],
-      excludedDiscountCards: [],
+      excludedDiscountCards: ["MAX"],
     });
   };
 

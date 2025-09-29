@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp, MapPin, TrendingUp } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -24,15 +24,16 @@ interface JourneysTabProps {
   selectedDates?: string[]; // Changé pour supporter multiple dates
   onDateSelect?: (dates: string[]) => void; // Changé pour supporter multiple dates
   applyFilters?: (filters: {
-    excludedCarriers?: string[];
-    excludedClasses?: string[];
-    excludedDiscountCards?: string[];
+    carriers?: string[];
+    classes?: string[];
+    discountCards?: string[];
+    selectedDates?: string[];
   }) => void;
   currentFilters?: {
-    excludedCarriers: string[];
-    excludedClasses: string[];
-    excludedDiscountCards: string[];
-    selectedDates: string[]; // Changé pour supporter multiple dates
+    carriers: string[];
+    classes: string[];
+    discountCards: string[];
+    selectedDates: string[];
   };
 }
 
@@ -58,14 +59,29 @@ const JourneysTab = ({
   // Callback pour appliquer les filtres quand ils changent
   const handleFiltersChange = useCallback(
     (filters: {
-      excludedCarriers: string[];
-      excludedClasses: string[];
-      excludedDiscountCards: string[];
+      carriers: string[];
+      classes: string[];
+      discountCards: string[];
     }) => {
-      applyFilters(filters);
+      // Envoyer directement les filtres inclusifs à l'API
+      applyFilters({
+        carriers: filters.carriers,
+        classes: filters.classes,
+        discountCards: filters.discountCards,
+      });
     },
     [applyFilters]
   );
+
+  // Mémoriser la transformation des filtres pour éviter la boucle infinie
+  const transformedCurrentFilters = useMemo(() => {
+    if (!currentFilters) return undefined;
+    return {
+      carriers: currentFilters.carriers,
+      classes: currentFilters.classes,
+      discountCards: currentFilters.discountCards,
+    };
+  }, [currentFilters]);
 
   const {
     availableOptions,
@@ -77,18 +93,21 @@ const JourneysTab = ({
   } = useGlobalFilters(
     journeys,
     handleFiltersChange,
-    currentFilters,
+    transformedCurrentFilters,
     allJourneys
   ); // Passer allJourneys
 
   // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
   const filteredJourneys = journeys;
 
+  console.log("🎯 JourneysTab reçoit:", journeys.length, "voyages");
+
   const hasActiveFilters =
-    filters.excludedCarriers.length > 0 ||
-    filters.excludedClasses.length > 0 ||
-    filters.excludedDiscountCards.length > 1 ||
-    selectedDates.length > 0;
+    (filters?.carriers?.length || 0) > 0 ||
+    (filters?.classes?.length || 0) > 0 ||
+    (filters?.discountCards?.length || 0) > 1 ||
+    (selectedDates.length > 0 &&
+      selectedDates.length < (analysisDates?.length || 0));
 
   const displayJourneys =
     selectedRouteJourneyIds.length > 0
@@ -300,7 +319,7 @@ const JourneysTab = ({
               <TableBody>
                 {sortedJourneys.map((journey: Journey) => {
                   const journeyPrices = getJourneyPrices(journey);
-                  const { departure, arrival } = parseJourneyName(journey.name);
+                  const { arrival } = parseJourneyName(journey.name);
 
                   return (
                     <TableRow

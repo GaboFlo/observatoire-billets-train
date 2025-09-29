@@ -9,16 +9,15 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import JourneyKPIs from "../components/JourneyKPIs";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
-import TrainDetailsTable from "../components/TrainDetailsTable";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import UnifiedFilters from "../components/UnifiedFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
+import { truncatePrice } from "../lib/utils";
 
 const JourneyDetails = () => {
   const {
@@ -63,8 +62,7 @@ const JourneyDetails = () => {
     arrivalStationId ? parseInt(arrivalStationId) : undefined
   );
 
-  const { filteredOffers, handleTrainSelect: handleTrainSelectFilter } =
-    useJourneyDetailsFilters(detailedOffers);
+  const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
 
   // Logs de débogage
   console.log("🔍 JourneyDetails - analysisDates:", analysisDates.length);
@@ -181,7 +179,10 @@ const JourneyDetails = () => {
             <h2 className="text-2xl font-semibold text-gray-700 mb-2">
               Erreur de chargement
             </h2>
-            <p className="text-gray-500 mb-8">{error}</p>
+            <p className="text-gray-500 mb-8">
+              {error} <br />
+              Attention à la réouverture des portes en réessayant{" "}
+            </p>
             <Button onClick={() => window.location.reload()}>Réessayer</Button>
           </div>
         </div>
@@ -249,107 +250,110 @@ const JourneyDetails = () => {
             </div>
 
             <div className="lg:col-span-2 space-y-8">
-              {/* Train sélectionné */}
-              {selectedTrain && (
-                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 rounded-xl">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <Train className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div className="text-sm text-green-800">
-                          <span className="font-semibold">
-                            Train sélectionné :
-                          </span>{" "}
-                          <span>Train {selectedTrain}</span>
-                          {selectedDate && (
-                            <span>
-                              {" "}
-                              -{" "}
-                              {new Date(selectedDate).toLocaleDateString(
-                                "fr-FR"
-                              )}
-                            </span>
-                          )}
-                        </div>
+              {/* Bandeau unifié d'analyse */}
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <ChartBar className="w-4 h-4 text-blue-600" />
                       </div>
+                      <div className="text-sm text-blue-800">
+                        <span className="font-semibold">
+                          Analyse actuelle :
+                        </span>{" "}
+                        {!selectedDate ? (
+                          <span>Statistiques générales du trajet</span>
+                        ) : !selectedTrain ? (
+                          <span>
+                            Statistiques pour le{" "}
+                            {new Date(selectedDate).toLocaleDateString("fr-FR")}
+                          </span>
+                        ) : (
+                          <span>
+                            Train {selectedTrain} du{" "}
+                            {new Date(selectedDate).toLocaleDateString("fr-FR")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {selectedTrain && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleTrainSelect("")}
-                        className="text-green-600 hover:text-green-800 hover:bg-green-100"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
                       >
                         Voir tous les trains
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* KPIs et statistiques */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  title="Prix Moyen"
-                  value={`${journey?.avgPrice || 0}€`}
-                  description="Prix moyen des offres disponibles"
-                  icon={ChartLine}
-                  color="blue"
-                />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {" "}
                 <StatCard
                   title="Prix Minimum"
-                  value={`${journey?.minPrice || 0}€`}
+                  value={`${truncatePrice(journey?.minPrice || 0)}€`}
                   description="Le tarif le plus bas observé"
                   icon={TrendingDown}
                   color="green"
                 />
                 <StatCard
+                  title="Prix Moyen"
+                  value={`${truncatePrice(journey?.avgPrice || 0)}€`}
+                  description="Prix moyen des offres disponibles"
+                  icon={ChartLine}
+                  color="blue"
+                />
+                <StatCard
                   title="Prix Maximum"
-                  value={`${journey?.maxPrice || 0}€`}
+                  value={`${truncatePrice(journey?.maxPrice || 0)}€`}
                   description="Le tarif le plus élevé observé"
                   icon={TrendingUp}
                   color="orange"
                 />
-                <StatCard
-                  title="Variation Mensuelle"
-                  value={`${
-                    monthlyChange > 0 ? "+" : ""
-                  }${monthlyChange.toFixed(1)}%`}
-                  description="Par rapport au mois précédent"
-                  icon={ChartBar}
-                  color="purple"
-                />
               </div>
 
               {/* Contenu conditionnel selon la sélection */}
+              {!selectedDate && (
+                <div className="text-center py-16">
+                  <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+                  <p className="text-gray-500 mb-8">
+                    Sélectionnez une date pour affiner l'analyse.
+                  </p>
+                </div>
+              )}
+
               {selectedDate && !selectedTrain && (
                 <div className="text-center py-16">
                   <Train className="mx-auto h-16 w-16 text-gray-400 mb-4" />
                   <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                    Sélectionnez un train
+                    Statistiques de la date
                   </h2>
-                  <p className="text-gray-500">
-                    Choisissez un train dans la liste à gauche pour voir les
-                    détails
+                  <p className="text-gray-500 mb-8">
+                    Affichage des statistiques pour le{" "}
+                    {new Date(selectedDate).toLocaleDateString("fr-FR")}.
+                    Sélectionnez un train spécifique pour une analyse détaillée.
                   </p>
+                  <PriceEvolutionChart offers={filteredOffers} />
                 </div>
               )}
 
               {selectedDate && selectedTrain && (
                 <>
-                  <JourneyKPIs offers={filteredOffers} />
+                  <div className="text-center py-8">
+                    <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                      Analyse détaillée du train {selectedTrain}
+                    </h2>
+                    <p className="text-gray-500">
+                      Statistiques spécifiques pour le train {selectedTrain} du{" "}
+                      {new Date(selectedDate).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
                   <PriceEvolutionChart offers={filteredOffers} />
-                  <TrainDetailsTable
-                    offers={filteredOffers}
-                    onTrainSelect={(trainName, departureDate) => {
-                      console.log(
-                        "🚂 Train sélectionné dans le tableau:",
-                        trainName,
-                        departureDate
-                      );
-                      handleTrainSelectFilter(trainName, departureDate);
-                    }}
-                  />
                 </>
               )}
             </div>
