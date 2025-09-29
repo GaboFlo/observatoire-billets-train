@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   Calendar,
-  ChartBar,
   ChartLine,
   Train,
   TrendingDown,
@@ -14,7 +13,6 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
 import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
 import UnifiedFilters from "../components/UnifiedFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
@@ -254,7 +252,7 @@ const JourneyDetails = () => {
                 selectedCarriers={selectedCarriers}
                 selectedClasses={selectedClasses}
                 selectedDiscountCards={selectedDiscountCards}
-                onDateSelect={(date) => handleDateSelect(date || "")}
+                onDateSelect={handleDateSelect}
                 onTrainSelect={(train) => handleTrainSelect(train || "")}
                 onCarrierToggle={handleCarrierToggle}
                 onClassToggle={handleClassToggle}
@@ -266,47 +264,6 @@ const JourneyDetails = () => {
             </div>
 
             <div className="lg:col-span-2 space-y-8">
-              {/* Bandeau unifié d'analyse */}
-              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <ChartBar className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="text-sm text-blue-800">
-                        <span className="font-semibold">
-                          Analyse actuelle :
-                        </span>{" "}
-                        {!selectedDate ? (
-                          <span>Statistiques générales du trajet</span>
-                        ) : !selectedTrain ? (
-                          <span>
-                            Statistiques pour le{" "}
-                            {new Date(selectedDate).toLocaleDateString("fr-FR")}
-                          </span>
-                        ) : (
-                          <span>
-                            Train {selectedTrain} du{" "}
-                            {new Date(selectedDate).toLocaleDateString("fr-FR")}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {selectedTrain && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleTrainSelect("")}
-                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-                      >
-                        Voir tous les trains
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* KPIs et statistiques */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {" "}
@@ -342,33 +299,17 @@ const JourneyDetails = () => {
                   </p>
                 </div>
               )}
-
               {selectedDate && !selectedTrain && (
                 <div className="text-center py-16">
                   <Train className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                  <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                    Statistiques de la date
-                  </h2>
                   <p className="text-gray-500 mb-8">
-                    Affichage des statistiques pour le{" "}
-                    {new Date(selectedDate).toLocaleDateString("fr-FR")}.
-                    Sélectionnez un train spécifique pour une analyse détaillée.
+                    Sélectionnez un train pour affiner l'analyse.
                   </p>
-                  <PriceEvolutionChart offers={filteredOffers} />
                 </div>
               )}
 
               {selectedDate && selectedTrain && (
                 <>
-                  <div className="text-center py-8">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                      Analyse détaillée du train {selectedTrain}
-                    </h2>
-                    <p className="text-gray-500">
-                      Statistiques spécifiques pour le train {selectedTrain} du{" "}
-                      {new Date(selectedDate).toLocaleDateString("fr-FR")}
-                    </p>
-                  </div>
                   <PriceEvolutionChart offers={filteredOffers} />
                 </>
               )}

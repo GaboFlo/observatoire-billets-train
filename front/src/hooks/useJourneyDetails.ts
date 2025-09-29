@@ -396,10 +396,14 @@ export const useJourneyDetails = (
 
   // Fonctions de gestion des sélections
   const handleDateSelect = useCallback(
-    (date: string) => {
+    (date: string | null) => {
       setSelectedDate(date);
       setSelectedTrain(null); // Réinitialiser la sélection de train
-      fetchTrainsForDate(date);
+
+      // Ne faire l'appel API que si une date spécifique est sélectionnée
+      if (date !== null) {
+        fetchTrainsForDate(date);
+      }
     },
     [fetchTrainsForDate]
   );

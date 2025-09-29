@@ -6,7 +6,14 @@ import {
   translateDiscountCard,
   translateTravelClass,
 } from "@/utils/translations";
-import { ArrowRightLeft, Calendar, Filter, Train } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  Train,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UnifiedFiltersProps {
@@ -45,6 +52,49 @@ interface TrainInfo {
   minPrice: number;
 }
 
+// Composant pour les sections collapsibles
+const CollapsibleSection = ({
+  title,
+  icon: Icon,
+  isExpanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) => (
+  <div className="space-y-3">
+    <div
+      className="flex items-center justify-between cursor-pointer"
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+        <Icon className="w-4 h-4" />
+        {title}
+      </h3>
+      <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
+        {isExpanded ? (
+          <ChevronUp className="w-4 h-4" />
+        ) : (
+          <ChevronDown className="w-4 h-4" />
+        )}
+      </Button>
+    </div>
+    {isExpanded && children}
+  </div>
+);
+
 const UnifiedFilters = ({
   availableDates,
   availableTrains,
@@ -66,6 +116,13 @@ const UnifiedFilters = ({
   filterLoading = false,
 }: UnifiedFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isDateSectionExpanded, setIsDateSectionExpanded] = useState(true);
+  const [isCarrierSectionExpanded, setIsCarrierSectionExpanded] =
+    useState(true);
+  const [isClassSectionExpanded, setIsClassSectionExpanded] = useState(true);
+  const [isDiscountCardSectionExpanded, setIsDiscountCardSectionExpanded] =
+    useState(true);
+  const [isTrainSectionExpanded, setIsTrainSectionExpanded] = useState(true);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const formatDate = (dateString: string) => {
@@ -156,11 +213,12 @@ const UnifiedFilters = ({
             </Button>
           </div>
           {/* Sélection de date */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Date de voyage
-            </h3>
+          <CollapsibleSection
+            title="Date de voyage"
+            icon={Calendar}
+            isExpanded={isDateSectionExpanded}
+            onToggle={() => setIsDateSectionExpanded(!isDateSectionExpanded)}
+          >
             {availableDates.length === 0 ? (
               <p className="text-sm text-gray-500">Aucune date disponible</p>
             ) : (
@@ -186,13 +244,17 @@ const UnifiedFilters = ({
                 ))}
               </div>
             )}
-          </div>{" "}
+          </CollapsibleSection>
           {/* Compagnies ferroviaires */}
           {availableCarriers.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Compagnies ferroviaires
-              </h3>
+            <CollapsibleSection
+              title="Compagnies ferroviaires"
+              icon={Train}
+              isExpanded={isCarrierSectionExpanded}
+              onToggle={() =>
+                setIsCarrierSectionExpanded(!isCarrierSectionExpanded)
+              }
+            >
               <div className="space-y-2">
                 {availableCarriers.map((carrier) => (
                   <div key={carrier} className="flex items-center space-x-2">
@@ -210,14 +272,18 @@ const UnifiedFilters = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
           {/* Classes de voyage */}
           {availableClasses.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Classes de voyage
-              </h3>
+            <CollapsibleSection
+              title="Classes de voyage"
+              icon={Filter}
+              isExpanded={isClassSectionExpanded}
+              onToggle={() =>
+                setIsClassSectionExpanded(!isClassSectionExpanded)
+              }
+            >
               <div className="space-y-2">
                 {availableClasses.map((travelClass) => (
                   <div
@@ -238,14 +304,18 @@ const UnifiedFilters = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
           {/* Cartes de réduction */}
           {availableDiscountCards.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900">
-                Cartes de réduction
-              </h3>
+            <CollapsibleSection
+              title="Cartes de réduction"
+              icon={Filter}
+              isExpanded={isDiscountCardSectionExpanded}
+              onToggle={() =>
+                setIsDiscountCardSectionExpanded(!isDiscountCardSectionExpanded)
+              }
+            >
               <div className="space-y-2">
                 {availableDiscountCards.map((discountCard) => (
                   <div
@@ -266,15 +336,18 @@ const UnifiedFilters = ({
                   </div>
                 ))}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
           {/* Sélection de train */}
           {selectedDate && availableTrains.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                <Train className="w-4 h-4" />
-                Train spécifique
-              </h3>
+            <CollapsibleSection
+              title="Train spécifique"
+              icon={Train}
+              isExpanded={isTrainSectionExpanded}
+              onToggle={() =>
+                setIsTrainSectionExpanded(!isTrainSectionExpanded)
+              }
+            >
               <div className="grid grid-cols-1 gap-2">
                 <Button
                   variant={selectedTrain === null ? "default" : "outline"}
@@ -311,7 +384,7 @@ const UnifiedFilters = ({
                   </Button>
                 ))}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
           {/* Indicateur de chargement */}
           {filterLoading && (
