@@ -4,6 +4,7 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import {
+  ALL_DISCOUNT_CARDS,
   DEFAULT_FILTERS,
   GlobalFilters as GlobalFiltersType,
 } from "../hooks/useGlobalFilters";
@@ -238,7 +239,7 @@ const GlobalFilters = ({
                 Compagnies ferroviaires
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.carriers.map(
+                {DEFAULT_FILTERS.carriers.map(
                   (carrier: string, index: number) => {
                     const isSelected =
                       filters?.carriers?.includes(carrier) || false;
@@ -269,7 +270,7 @@ const GlobalFilters = ({
                 Classes de voyage
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.classes.map(
+                {DEFAULT_FILTERS.classes.map(
                   (travelClass: string, index: number) => {
                     const isSelected =
                       filters?.classes?.includes(travelClass) || false;
@@ -300,7 +301,7 @@ const GlobalFilters = ({
                 Cartes de réduction
               </h4>
               <div className="flex flex-wrap gap-3">
-                {availableOptions.discountCards.map(
+                {ALL_DISCOUNT_CARDS.map(
                   (discountCard: string, index: number) => {
                     return (
                       <Badge

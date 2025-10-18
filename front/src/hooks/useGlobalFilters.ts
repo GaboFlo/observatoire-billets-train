@@ -7,6 +7,7 @@ export interface GlobalFilters {
   discountCards: string[];
 }
 
+export const ALL_DISCOUNT_CARDS = ["NONE", "AVANTAGE_JEUNE", "MAX"];
 // Filtres par défaut centralisés
 export const DEFAULT_FILTERS: GlobalFilters = {
   carriers: ["SNCF", "db", "ouigo", "sncf", "eurostar", "trenitalia_france"],
