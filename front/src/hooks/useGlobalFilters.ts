@@ -60,18 +60,23 @@ export const useGlobalFilters = (
     // Toujours utiliser allJourneys si disponible, même s'il est vide
     const dataToUse = allJourneys ?? journeys;
 
-    dataToUse.forEach((journey) => {
+    for (const journey of dataToUse) {
       // Utiliser directement les propriétés du voyage
-      journey.carriers.forEach((carrier) => carriers.add(carrier));
-      journey.classes.forEach((travelClass) => classes.add(travelClass));
-      journey.discountCards.forEach((discountCard) =>
-        discountCards.add(discountCard)
-      );
-    });
+      for (const carrier of journey.carriers) {
+        carriers.add(carrier);
+      }
+      for (const travelClass of journey.classes) {
+        classes.add(travelClass);
+      }
+      for (const discountCard of journey.discountCards) {
+        discountCards.add(discountCard);
+      }
+    }
 
-    // S'assurer que MAX et NONE sont toujours inclus dans les cartes de réduction
+    // S'assurer que MAX, NONE et AVANTAGE_JEUNE sont toujours inclus dans les cartes de réduction
     discountCards.add("MAX");
     discountCards.add("NONE");
+    discountCards.add("AVANTAGE_JEUNE");
 
     return {
       carriers: Array.from(carriers).sort(),

@@ -42,11 +42,21 @@ export const useJourneyDetails = (
   const [selectedDiscountCards, setSelectedDiscountCards] = useState<string[]>(
     []
   );
-  const [availableCarriers, setAvailableCarriers] = useState<string[]>([]);
-  const [availableClasses, setAvailableClasses] = useState<string[]>([]);
+  const [availableCarriers, setAvailableCarriers] = useState<string[]>([
+    "SNCF",
+    "db",
+    "ouigo",
+    "sncf",
+    "eurostar",
+    "trenitalia_france",
+  ]);
+  const [availableClasses, setAvailableClasses] = useState<string[]>([
+    "economy",
+    "first",
+  ]);
   const [availableDiscountCards, setAvailableDiscountCards] = useState<
     string[]
-  >([]);
+  >(["NONE", "AVANTAGE_JEUNE", "MAX"]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
     classes: [],
@@ -319,6 +329,7 @@ export const useJourneyDetails = (
         setFilterLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [departureStationId, arrivalStationId]
   );
 
@@ -343,8 +354,9 @@ export const useJourneyDetails = (
       // Débouncer l'appel à l'API
       debounceTimeoutRef.current = setTimeout(() => {
         fetchJourneyDetails(updatedFilters);
-      }, 400); // 0.4 secondes de debounce
+      }, 450); // 0.45 secondes de debounce
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [fetchJourneyDetails]
   );
 
@@ -392,7 +404,65 @@ export const useJourneyDetails = (
         arrivalStationId,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [departureStation, arrivalStation, fetchAvailableDates]);
+
+  // Fonction pour récupérer les options disponibles (carriers, classes, discountCards)
+  const fetchAvailableOptions = useCallback(
+    async (date?: string) => {
+      try {
+        // Si aucune date n'est fournie, utiliser la première date disponible ou une date par défaut
+        const targetDate =
+          date || analysisDates[0] || new Date().toISOString().split("T")[0];
+
+        const response = await fetch("/api/trains/date-statistics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            departureStationId,
+            arrivalStationId,
+            date: targetDate,
+            trainNumber: null,
+            carriers: [],
+            classes: [],
+            discountCards: ["MAX"],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Erreur lors du chargement des options: ${response.status}`
+          );
+        }
+
+        const stats = await response.json();
+
+        setAvailableCarriers(stats.carriers || []);
+        setAvailableClasses(stats.classes || []);
+
+        // S'assurer que les cartes de réduction par défaut sont toujours incluses
+        const defaultDiscountCards = ["NONE", "AVANTAGE_JEUNE", "MAX"];
+        const apiDiscountCards = stats.discountCards || [];
+        const allDiscountCards = [
+          ...new Set([...defaultDiscountCards, ...apiDiscountCards]),
+        ];
+        setAvailableDiscountCards(allDiscountCards);
+      } catch (err) {
+        console.error("❌ Erreur options:", err);
+        // En cas d'erreur, garder les valeurs par défaut
+      }
+    },
+    [departureStationId, arrivalStationId, analysisDates]
+  );
+
+  // Récupérer les options disponibles après l'initialisation
+  useEffect(() => {
+    if (departureStation && arrivalStation) {
+      fetchAvailableOptions();
+    }
+  }, [departureStation, arrivalStation, fetchAvailableOptions]);
 
   // Fonctions de gestion des sélections
   const handleDateSelect = useCallback(
@@ -466,44 +536,6 @@ export const useJourneyDetails = (
     [selectedDiscountCards, applyFilters]
   );
 
-  // Fonction pour récupérer les options disponibles (carriers, classes, discountCards)
-  const fetchAvailableOptions = useCallback(
-    async (date: string) => {
-      try {
-        const response = await fetch("/api/trains/date-statistics", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            departureStationId,
-            arrivalStationId,
-            date,
-            trainNumber: null,
-            carriers: [],
-            classes: [],
-            discountCards: ["MAX"],
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Erreur lors du chargement des options: ${response.status}`
-          );
-        }
-
-        const stats = await response.json();
-
-        setAvailableCarriers(stats.carriers || []);
-        setAvailableClasses(stats.classes || []);
-        setAvailableDiscountCards(stats.discountCards || []);
-      } catch (err) {
-        console.error("❌ Erreur options:", err);
-      }
-    },
-    [departureStationId, arrivalStationId]
-  );
-
   // Fonction pour déclencher l'analyse avec les filtres actuels
   const triggerAnalysis = useCallback(async () => {
     try {
@@ -519,9 +551,9 @@ export const useJourneyDetails = (
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            excludedCarriers: [],
-            excludedClasses: [],
-            excludedDiscountCards: [],
+            carriers: selectedCarriers,
+            classes: selectedClasses,
+            discountCards: selectedDiscountCards,
             selectedDates: [],
           }),
         });
@@ -536,7 +568,7 @@ export const useJourneyDetails = (
 
         // Trouver les données pour ce trajet spécifique
         const journeyData = generalData.find(
-          (item: any) =>
+          (item: { departureStationId: number; arrivalStationId: number }) =>
             item.departureStationId === departureStationId &&
             item.arrivalStationId === arrivalStationId
         );
@@ -551,7 +583,7 @@ export const useJourneyDetails = (
           discountCards: [],
           totalTrains: 0,
         };
-      } else if (!selectedTrain) {
+      } else if (selectedTrain === null) {
         // Cas 2: Date sélectionnée mais pas de train - Statistiques de la date
         const response = await fetch("/api/trains/date-statistics", {
           method: "POST",
@@ -638,7 +670,7 @@ export const useJourneyDetails = (
 
     debounceTimeoutRef.current = setTimeout(() => {
       triggerAnalysis();
-    }, 400);
+    }, 450);
   }, [triggerAnalysis]);
 
   // Récupérer les options disponibles quand une date est sélectionnée

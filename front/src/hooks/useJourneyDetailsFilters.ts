@@ -2,34 +2,43 @@ import { DetailedPricingResult } from "@/types/journey";
 import { useMemo, useState } from "react";
 
 interface JourneyDetailsFilters {
-  excludedCarriers: string[];
-  excludedClasses: string[];
-  excludedDiscountCards: string[];
+  carriers: string[];
+  classes: string[];
+  discountCards: string[];
   selectedTrainName?: string;
   selectedDepartureDate?: string;
 }
 
 export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
   const [filters, setFilters] = useState<JourneyDetailsFilters>({
-    excludedCarriers: [],
-    excludedClasses: [],
-    excludedDiscountCards: ["MAX"],
+    carriers: [],
+    classes: [],
+    discountCards: ["MAX"],
   });
 
   const filteredOffers = useMemo(() => {
     return offers.filter((offer) => {
-      // Filtre par compagnie
-      if (filters.excludedCarriers.includes(offer.carrier)) {
+      // Filtre par compagnie - inclure seulement si la liste est vide ou contient la compagnie
+      if (
+        filters.carriers.length > 0 &&
+        !filters.carriers.includes(offer.carrier)
+      ) {
         return false;
       }
 
-      // Filtre par classe de voyage
-      if (filters.excludedClasses.includes(offer.travelClass)) {
+      // Filtre par classe de voyage - inclure seulement si la liste est vide ou contient la classe
+      if (
+        filters.classes.length > 0 &&
+        !filters.classes.includes(offer.travelClass)
+      ) {
         return false;
       }
 
-      // Filtre par carte de réduction
-      if (filters.excludedDiscountCards.includes(offer.discountCard)) {
+      // Filtre par carte de réduction - inclure seulement si la liste est vide ou contient la carte
+      if (
+        filters.discountCards.length > 0 &&
+        !filters.discountCards.includes(offer.discountCard)
+      ) {
         return false;
       }
 
@@ -56,27 +65,27 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
   const handleCarrierFilter = (carrier: string) => {
     setFilters((prev) => ({
       ...prev,
-      excludedCarriers: prev.excludedCarriers.includes(carrier)
-        ? prev.excludedCarriers.filter((c) => c !== carrier)
-        : [...prev.excludedCarriers, carrier],
+      carriers: prev.carriers.includes(carrier)
+        ? prev.carriers.filter((c) => c !== carrier)
+        : [...prev.carriers, carrier],
     }));
   };
 
   const handleClassFilter = (travelClass: string) => {
     setFilters((prev) => ({
       ...prev,
-      excludedClasses: prev.excludedClasses.includes(travelClass)
-        ? prev.excludedClasses.filter((c) => c !== travelClass)
-        : [...prev.excludedClasses, travelClass],
+      classes: prev.classes.includes(travelClass)
+        ? prev.classes.filter((c) => c !== travelClass)
+        : [...prev.classes, travelClass],
     }));
   };
 
   const handleDiscountCardFilter = (discountCard: string) => {
     setFilters((prev) => ({
       ...prev,
-      excludedDiscountCards: prev.excludedDiscountCards.includes(discountCard)
-        ? prev.excludedDiscountCards.filter((c) => c !== discountCard)
-        : [...prev.excludedDiscountCards, discountCard],
+      discountCards: prev.discountCards.includes(discountCard)
+        ? prev.discountCards.filter((c) => c !== discountCard)
+        : [...prev.discountCards, discountCard],
     }));
   };
 
@@ -94,9 +103,9 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
 
   const clearFilters = () => {
     setFilters({
-      excludedCarriers: [],
-      excludedClasses: [],
-      excludedDiscountCards: ["MAX"],
+      carriers: [],
+      classes: [],
+      discountCards: ["MAX"],
     });
   };
 
