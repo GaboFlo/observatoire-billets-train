@@ -20,6 +20,12 @@ export const discountCardTranslations: TranslationMap = {
   MAX: "TGV Max",
 };
 
+export const flexibilityTranslations: TranslationMap = {
+  nonflexi: "Non modifiable",
+  flexi: "Remboursable et échangeable",
+  semiflexi: "Remboursable",
+};
+
 export const carrierTranslations: TranslationMap = {
   sncf: "SNCF",
   db: "Deutsche Bahn",
@@ -74,6 +80,10 @@ export const translateDiscountCard = (discountCard: string): string => {
   return translate(discountCard, discountCardTranslations, discountCard);
 };
 
+export const translateFlexibility = (flexibility: string): string => {
+  return translate(flexibility, flexibilityTranslations, flexibility);
+};
+
 export const translateCarrier = (carrier: string): string => {
   return translate(carrier, carrierTranslations, carrier);
 };
@@ -97,6 +107,7 @@ export const useTranslations = () => {
   return {
     translateTravelClass,
     translateDiscountCard,
+    translateFlexibility,
     translateCarrier,
     translateTrainName,
     translateStation,

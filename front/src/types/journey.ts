@@ -9,6 +9,7 @@ export interface AggregatedPricingResult {
   carriers: string[];
   classes: string[];
   discountCards: string[];
+  flexibilities: string[];
 }
 
 export interface DetailedPricingResult {
@@ -18,6 +19,7 @@ export interface DetailedPricingResult {
   arrivalStationId: number;
   travelClass: string;
   discountCard: string;
+  flexibility: string;
   trainName: string;
   carrier: string;
   minPrice: number;
@@ -29,6 +31,21 @@ export interface DetailedPricingResult {
   is_sellable: boolean;
   unsellable_reason: string | null;
   daysBeforeDeparture: number;
+}
+
+export interface ChartDataResult {
+  price: number;
+  is_sellable: boolean;
+  daysBeforeDeparture: number;
+}
+
+export interface ChartStatsResult {
+  chartData: ChartDataResult[];
+  stats: {
+    minPrice: number;
+    maxPrice: number;
+    avgPrice: number;
+  };
 }
 
 export interface GroupedJourney {

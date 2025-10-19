@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   translateCarrier,
   translateDiscountCard,
+  translateFlexibility,
   translateTravelClass,
 } from "@/utils/translations";
 import { Calendar, ChevronDown, ChevronUp, Filter, Train } from "lucide-react";
@@ -16,6 +17,7 @@ interface UnifiedFiltersProps {
   availableCarriers: string[];
   availableClasses: string[];
   availableDiscountCards: string[];
+  availableFlexibilities: string[];
 
   // États sélectionnés
   selectedDate: string | null;
@@ -23,6 +25,7 @@ interface UnifiedFiltersProps {
   selectedCarriers: string[];
   selectedClasses: string[];
   selectedDiscountCards: string[];
+  selectedFlexibilities: string[];
 
   // Callbacks
   onDateSelect: (date: string | null) => void;
@@ -30,6 +33,7 @@ interface UnifiedFiltersProps {
   onCarrierToggle: (carrier: string) => void;
   onClassToggle: (travelClass: string) => void;
   onDiscountCardToggle: (discountCard: string) => void;
+  onFlexibilityToggle: (flexibility: string) => void;
   onInvertJourney: () => void;
 
   // États de chargement
@@ -94,16 +98,19 @@ const UnifiedFilters = ({
   availableCarriers,
   availableClasses,
   availableDiscountCards,
+  availableFlexibilities,
   selectedDate,
   selectedTrain,
   selectedCarriers,
   selectedClasses,
   selectedDiscountCards,
+  selectedFlexibilities,
   onDateSelect,
   onTrainSelect,
   onCarrierToggle,
   onClassToggle,
   onDiscountCardToggle,
+  onFlexibilityToggle,
   onInvertJourney,
   loading = false,
   filterLoading = false,
@@ -131,6 +138,12 @@ const UnifiedFilters = ({
   const [isDiscountCardSectionExpanded, setIsDiscountCardSectionExpanded] =
     useState(() => {
       const saved = localStorage.getItem("filter-section-discount");
+      return saved ? JSON.parse(saved) : true;
+    });
+
+  const [isFlexibilitySectionExpanded, setIsFlexibilitySectionExpanded] =
+    useState(() => {
+      const saved = localStorage.getItem("filter-section-flexibility");
       return saved ? JSON.parse(saved) : true;
     });
 
@@ -180,6 +193,15 @@ const UnifiedFilters = ({
     setIsDiscountCardSectionExpanded(newState);
     localStorage.setItem("filter-section-discount", JSON.stringify(newState));
   }, [isDiscountCardSectionExpanded]);
+
+  const toggleFlexibilitySection = useCallback(() => {
+    const newState = !isFlexibilitySectionExpanded;
+    setIsFlexibilitySectionExpanded(newState);
+    localStorage.setItem(
+      "filter-section-flexibility",
+      JSON.stringify(newState)
+    );
+  }, [isFlexibilitySectionExpanded]);
 
   const toggleTrainSection = useCallback(() => {
     const newState = !isTrainSectionExpanded;
@@ -274,7 +296,10 @@ const UnifiedFilters = ({
                 <div key={carrier} className="flex items-center space-x-2">
                   <Checkbox
                     id={`carrier-${carrier}`}
-                    checked={selectedCarriers.includes(carrier)}
+                    checked={
+                      selectedCarriers.length === 0 ||
+                      selectedCarriers.includes(carrier)
+                    }
                     onCheckedChange={() => onCarrierToggle(carrier)}
                   />
                   <label
@@ -301,7 +326,10 @@ const UnifiedFilters = ({
                 <div key={travelClass} className="flex items-center space-x-2">
                   <Checkbox
                     id={`class-${travelClass}`}
-                    checked={selectedClasses.includes(travelClass)}
+                    checked={
+                      selectedClasses.length === 0 ||
+                      selectedClasses.includes(travelClass)
+                    }
                     onCheckedChange={() => onClassToggle(travelClass)}
                   />
                   <label
@@ -328,7 +356,10 @@ const UnifiedFilters = ({
                 <div key={discountCard} className="flex items-center space-x-2">
                   <Checkbox
                     id={`discount-${discountCard}`}
-                    checked={selectedDiscountCards.includes(discountCard)}
+                    checked={
+                      selectedDiscountCards.length === 0 ||
+                      selectedDiscountCards.includes(discountCard)
+                    }
                     onCheckedChange={() => onDiscountCardToggle(discountCard)}
                   />
                   <label
@@ -336,6 +367,36 @@ const UnifiedFilters = ({
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
                     {translateDiscountCard(discountCard)}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+        {/* Flexibilité */}
+        {availableFlexibilities.length > 0 && (
+          <CollapsibleSection
+            title="Flexibilité"
+            icon={Filter}
+            isExpanded={isFlexibilitySectionExpanded}
+            onToggle={toggleFlexibilitySection}
+          >
+            <div className="space-y-2">
+              {availableFlexibilities.map((flexibility) => (
+                <div key={flexibility} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`flexibility-${flexibility}`}
+                    checked={
+                      selectedFlexibilities.length === 0 ||
+                      selectedFlexibilities.includes(flexibility)
+                    }
+                    onCheckedChange={() => onFlexibilityToggle(flexibility)}
+                  />
+                  <label
+                    htmlFor={`flexibility-${flexibility}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {translateFlexibility(flexibility)}
                   </label>
                 </div>
               ))}
@@ -371,12 +432,32 @@ const UnifiedFilters = ({
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
-                      <span>Train {train.trainNumber}</span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <span
+                        className={
+                          selectedTrain === train.trainNumber
+                            ? "text-white"
+                            : ""
+                        }
+                      >
+                        Train {train.trainNumber}
+                      </span>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${
+                          selectedTrain === train.trainNumber
+                            ? "text-gray-800 bg-white/90"
+                            : "text-gray-500 bg-gray-100"
+                        }`}
+                      >
                         {translateCarrier(train.carrier)}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div
+                      className={`text-xs ${
+                        selectedTrain === train.trainNumber
+                          ? "text-white"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {formatTime(train.departureTime)} -{" "}
                       {formatTime(train.arrivalTime)}
                     </div>

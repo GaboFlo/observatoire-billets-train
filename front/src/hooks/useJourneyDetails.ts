@@ -1,4 +1,9 @@
-import { DetailedPricingResult, GroupedJourney } from "@/types/journey";
+import {
+  ChartDataResult,
+  ChartStatsResult,
+  DetailedPricingResult,
+  GroupedJourney,
+} from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface JourneyDetailsFilters {
@@ -30,9 +35,22 @@ export const useJourneyDetails = (
   const [detailedOffers, setDetailedOffers] = useState<DetailedPricingResult[]>(
     []
   );
+  const [calculatedStats, setCalculatedStats] = useState<{
+    minPrice: number;
+    maxPrice: number;
+    avgPrice: number;
+  }>({ minPrice: 0, maxPrice: 0, avgPrice: 0 });
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
+  const [chartDataLoaded, setChartDataLoaded] = useState(false);
+  const [baseDataLoaded, setBaseDataLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // État de chargement global : true tant que toutes les données ne sont pas chargées
+  const isGlobalLoading = loading || !baseDataLoaded || !chartDataLoaded;
+
+  // Utiliser filterLoading pour l'indicateur linéaire au lieu du loading global
+  const shouldShowLinearLoader = isGlobalLoading || filterLoading;
   const [analysisDates, setAnalysisDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [availableTrains, setAvailableTrains] = useState<TrainInfo[]>([]);
@@ -40,6 +58,9 @@ export const useJourneyDetails = (
   const [selectedCarriers, setSelectedCarriers] = useState<string[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedDiscountCards, setSelectedDiscountCards] = useState<string[]>(
+    []
+  );
+  const [selectedFlexibilities, setSelectedFlexibilities] = useState<string[]>(
     []
   );
   const [availableCarriers, setAvailableCarriers] = useState<string[]>([
@@ -57,10 +78,13 @@ export const useJourneyDetails = (
   const [availableDiscountCards, setAvailableDiscountCards] = useState<
     string[]
   >(["NONE", "AVANTAGE_JEUNE", "MAX"]);
+  const [availableFlexibilities, setAvailableFlexibilities] = useState<
+    string[]
+  >(["nonflexi", "flexi", "semiflexi"]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
     classes: [],
-    discountCards: ["MAX"],
+    discountCards: [],
     selectedDates: [],
     departureStationId,
     arrivalStationId,
@@ -103,6 +127,7 @@ export const useJourneyDetails = (
       );
     } finally {
       setLoading(false);
+      setBaseDataLoaded(true);
     }
   }, [departureStationId, arrivalStationId]);
 
@@ -226,7 +251,7 @@ export const useJourneyDetails = (
             arrivalStationId,
             carriers: [],
             classes: [],
-            discountCards: ["MAX"],
+            discountCards: [],
             selectedDates: [targetDate],
           }),
         });
@@ -243,12 +268,17 @@ export const useJourneyDetails = (
           ? responseData[0]
           : responseData;
 
-        setAvailableCarriers(stats.carriers || []);
-        setAvailableClasses(stats.classes || []);
+        if (stats && typeof stats === "object") {
+          setAvailableCarriers(stats.carriers || []);
+          setAvailableClasses(stats.classes || []);
+        } else {
+          setAvailableCarriers([]);
+          setAvailableClasses([]);
+        }
 
         // S'assurer que les cartes de réduction par défaut sont toujours incluses
         const defaultDiscountCards = ["NONE", "AVANTAGE_JEUNE", "MAX"];
-        const apiDiscountCards = stats.discountCards || [];
+        const apiDiscountCards = stats?.discountCards || [];
         const allDiscountCards = [
           ...new Set([...defaultDiscountCards, ...apiDiscountCards]),
         ];
@@ -342,6 +372,24 @@ export const useJourneyDetails = (
     [selectedDiscountCards, applyFilters]
   );
 
+  const handleFlexibilityToggle = useCallback(
+    (flexibility: string) => {
+      const newSelectedFlexibilities = selectedFlexibilities.includes(
+        flexibility
+      )
+        ? selectedFlexibilities.filter((f) => f !== flexibility)
+        : [...selectedFlexibilities, flexibility];
+
+      setSelectedFlexibilities(newSelectedFlexibilities);
+
+      // Déclencher un appel API avec les nouveaux filtres
+      applyFilters({
+        flexibilities: newSelectedFlexibilities,
+      });
+    },
+    [selectedFlexibilities, applyFilters]
+  );
+
   // Fonction pour faire une requête pricing
   const makePricingRequest = useCallback(
     async (requestBody: Record<string, unknown>) => {
@@ -366,9 +414,19 @@ export const useJourneyDetails = (
   // Fonction pour déterminer le type d'analyse et construire le body de la requête
   const getAnalysisRequest = useCallback(() => {
     const baseRequest = {
-      carriers: selectedCarriers,
-      classes: selectedClasses,
-      discountCards: selectedDiscountCards,
+      carriers:
+        selectedCarriers.length > 0 ? selectedCarriers : availableCarriers,
+      classes: selectedClasses.length > 0 ? selectedClasses : availableClasses,
+      discountCards:
+        selectedDiscountCards.length > 0
+          ? selectedDiscountCards
+          : availableDiscountCards,
+      flexibilities:
+        selectedFlexibilities.length > 0
+          ? selectedFlexibilities
+          : availableFlexibilities,
+      departureStationId,
+      arrivalStationId,
     };
 
     if (!selectedDate && !selectedTrain) {
@@ -377,28 +435,22 @@ export const useJourneyDetails = (
 
     if (!selectedDate && selectedTrain) {
       return {
-        departureStationId,
-        arrivalStationId,
-        trainNumber: selectedTrain,
         ...baseRequest,
+        trainNumber: selectedTrain,
         selectedDates: [],
       };
     }
 
     if (selectedDate && selectedTrain === null) {
       return {
-        departureStationId,
-        arrivalStationId,
         ...baseRequest,
         selectedDates: [selectedDate],
       };
     }
 
     return {
-      departureStationId,
-      arrivalStationId,
-      trainNumber: selectedTrain,
       ...baseRequest,
+      trainNumber: selectedTrain,
       selectedDates: [selectedDate],
     };
   }, [
@@ -407,8 +459,13 @@ export const useJourneyDetails = (
     selectedCarriers,
     selectedClasses,
     selectedDiscountCards,
+    selectedFlexibilities,
     departureStationId,
     arrivalStationId,
+    availableCarriers,
+    availableClasses,
+    availableDiscountCards,
+    availableFlexibilities,
   ]);
 
   // Fonction pour traiter le résultat de l'analyse
@@ -456,9 +513,10 @@ export const useJourneyDetails = (
   const fetchStatisticsData = useCallback(async () => {
     try {
       setFilterLoading(true);
+      setChartDataLoaded(false);
 
       const requestBody = getAnalysisRequest();
-      const response = await fetch("/api/trains/statistics", {
+      const response = await fetch("/api/trains/chart-data", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -470,8 +528,34 @@ export const useJourneyDetails = (
         throw new Error(`Erreur lors de l'analyse : ${response.status}`);
       }
 
-      const statisticsData = await response.json();
+      const result: ChartStatsResult = await response.json();
+
+      // Stocker les statistiques calculées côté backend
+      setCalculatedStats(result.stats);
+
+      // Convertir les données de graphique en format DetailedPricingResult pour compatibilité
+      const statisticsData = result.chartData.map((item: ChartDataResult) => ({
+        departureStation: "",
+        departureStationId: 0,
+        arrivalStation: "",
+        arrivalStationId: 0,
+        travelClass: "economy", // Valeur par défaut pour éviter les filtres
+        discountCard: "",
+        flexibility: "nonflexi", // Valeur par défaut pour éviter les filtres
+        trainName: "",
+        carrier: "SNCF", // Valeur par défaut pour éviter les filtres
+        minPrice: item.price,
+        avgPrice: item.price,
+        maxPrice: item.price,
+        departureDate: "",
+        departureTime: "",
+        arrivalTime: "",
+        is_sellable: item.is_sellable,
+        unsellable_reason: null,
+        daysBeforeDeparture: item.daysBeforeDeparture,
+      }));
       setDetailedOffers(statisticsData);
+      setChartDataLoaded(true);
     } catch (err) {
       console.error("❌ Erreur statistiques:", err);
       setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
@@ -507,7 +591,17 @@ export const useJourneyDetails = (
       triggerAnalysis();
       fetchStatisticsData();
     }, 450);
-  }, [triggerAnalysis, fetchStatisticsData]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedDate,
+    selectedTrain,
+    selectedCarriers,
+    selectedClasses,
+    selectedDiscountCards,
+    departureStationId,
+    arrivalStationId,
+  ]);
 
   // Fonction pour récupérer tous les trains distincts pour ce trajet
   const fetchAllTrainsForJourney = useCallback(async () => {
@@ -582,8 +676,9 @@ export const useJourneyDetails = (
   return {
     journey,
     detailedOffers,
-    loading,
-    filterLoading,
+    calculatedStats,
+    loading: false, // Ne plus utiliser le loading global
+    filterLoading: shouldShowLinearLoader, // Utiliser l'indicateur linéaire
     error,
     analysisDates,
     selectedDate,
@@ -592,9 +687,11 @@ export const useJourneyDetails = (
     selectedCarriers,
     selectedClasses,
     selectedDiscountCards,
+    selectedFlexibilities,
     availableCarriers,
     availableClasses,
     availableDiscountCards,
+    availableFlexibilities,
     applyFilters,
     currentFilters,
     handleDateSelect,
@@ -602,5 +699,6 @@ export const useJourneyDetails = (
     handleCarrierToggle,
     handleClassToggle,
     handleDiscountCardToggle,
+    handleFlexibilityToggle,
   };
 };

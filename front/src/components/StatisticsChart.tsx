@@ -28,16 +28,6 @@ interface StatisticsChartProps {
   loading?: boolean;
 }
 
-interface ChartDataPoint {
-  daysBeforeDeparture: number;
-  minPrice: number;
-  avgPrice: number;
-  maxPrice: number;
-  availableTrains: number;
-  soldOutTrains: number;
-  totalTrains: number;
-}
-
 const StatisticsChart = ({
   offers,
   selectedDate,
@@ -85,7 +75,7 @@ const StatisticsChart = ({
     // Convertir en format pour le graphique
     return Object.values(groupedByDays)
       .map((group) => ({
-        daysBeforeDeparture: group.daysBeforeDeparture,
+        daysBeforeDeparture: -group.daysBeforeDeparture,
         minPrice: truncatePrice(Math.min(...group.prices)),
         avgPrice: truncatePrice(
           group.prices.reduce((sum: number, price: number) => sum + price, 0) /
@@ -214,7 +204,7 @@ const StatisticsChart = ({
                 dataKey="minPrice"
                 stroke="#10b981"
                 strokeWidth={2}
-                dot={{ fill: "#10b981", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#10b981", strokeWidth: 2, r: 1 }}
               />
               <Line
                 type="monotone"
@@ -222,7 +212,7 @@ const StatisticsChart = ({
                 dataKey="avgPrice"
                 stroke="#3b82f6"
                 strokeWidth={2}
-                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 1 }}
               />
               <Line
                 type="monotone"
@@ -230,7 +220,7 @@ const StatisticsChart = ({
                 dataKey="maxPrice"
                 stroke="#ef4444"
                 strokeWidth={2}
-                dot={{ fill: "#ef4444", strokeWidth: 2, r: 4 }}
+                dot={{ fill: "#ef4444", strokeWidth: 2, r: 1 }}
               />
             </LineChart>
           </ResponsiveContainer>

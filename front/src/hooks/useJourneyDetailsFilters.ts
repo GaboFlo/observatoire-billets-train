@@ -5,6 +5,7 @@ interface JourneyDetailsFilters {
   carriers: string[];
   classes: string[];
   discountCards: string[];
+  flexibilities: string[];
   selectedTrainName?: string;
   selectedDepartureDate?: string;
 }
@@ -13,7 +14,8 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
   const [filters, setFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
     classes: [],
-    discountCards: ["MAX"],
+    discountCards: [], // Pas de filtre par défaut pour les données de graphique
+    flexibilities: [], // Pas de filtre par défaut pour les données de graphique
   });
 
   const filteredOffers = useMemo(() => {
@@ -38,6 +40,14 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
       if (
         filters.discountCards.length > 0 &&
         !filters.discountCards.includes(offer.discountCard)
+      ) {
+        return false;
+      }
+
+      // Filtre par flexibilité - inclure seulement si la liste est vide ou contient la flexibilité
+      if (
+        filters.flexibilities.length > 0 &&
+        !filters.flexibilities.includes(offer.flexibility)
       ) {
         return false;
       }
@@ -105,7 +115,7 @@ export const useJourneyDetailsFilters = (offers: DetailedPricingResult[]) => {
     setFilters({
       carriers: [],
       classes: [],
-      discountCards: ["MAX"],
+      discountCards: [],
     });
   };
 

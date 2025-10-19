@@ -45,6 +45,7 @@ interface AggregatedPricingResult {
   carriers: string[];
   classes: string[];
   discountCards: string[];
+  flexibilities: string[];
 }
 
 interface DetailedPricingResult {
@@ -65,6 +66,21 @@ interface DetailedPricingResult {
   is_sellable: boolean;
   unsellable_reason: string | null;
   daysBeforeDeparture: number;
+}
+
+interface ChartDataResult {
+  price: number;
+  is_sellable: boolean;
+  daysBeforeDeparture: number;
+}
+
+interface ChartStatsResult {
+  chartData: ChartDataResult[];
+  stats: {
+    minPrice: number;
+    maxPrice: number;
+    avgPrice: number;
+  };
 }
 
 const stationSchema = new Schema({
@@ -121,6 +137,7 @@ const generateCacheKey = (filters: {
   carriers: string[];
   classes: string[];
   discountCards: string[];
+  flexibilities: string[];
   selectedDates: string[];
   departureStationId?: number;
   arrivalStationId?: number;
@@ -130,6 +147,7 @@ const generateCacheKey = (filters: {
     carriers: filters.carriers.toSorted(),
     classes: filters.classes.toSorted(),
     discountCards: filters.discountCards.toSorted(),
+    flexibilities: filters.flexibilities.toSorted(),
     selectedDates: filters.selectedDates.toSorted(),
     departureStationId: filters.departureStationId,
     arrivalStationId: filters.arrivalStationId,
@@ -164,123 +182,13 @@ mongoose
   .then(() => console.log("✅ Connecté à MongoDB"))
   .catch((err) => console.error("❌ Erreur de connexion à MongoDB:", err));
 
-app.get("/api/trains/pricing", async (req: Request, res: Response) => {
-  try {
-    const { excludedCarriers, excludedClasses, excludedDiscountCards } =
-      req.query;
-
-    // Construire le match de base
-    const baseMatch: any = {
-      "pricing.unsellable_reason": null,
-    };
-
-    // Ajouter les filtres par compagnies exclues
-    if (excludedCarriers && typeof excludedCarriers === "string") {
-      const carriers = excludedCarriers.split(",");
-      if (carriers.length > 0) {
-        baseMatch.carrier = { $nin: carriers };
-      }
-    }
-
-    // Ajouter les filtres par classes exclues
-    if (excludedClasses && typeof excludedClasses === "string") {
-      const classes = excludedClasses.split(",");
-      if (classes.length > 0) {
-        baseMatch["pricing.travel_class"] = { $nin: classes };
-      }
-    }
-
-    // Ajouter les filtres par cartes de réduction exclues
-    if (excludedDiscountCards && typeof excludedDiscountCards === "string") {
-      const discountCards = excludedDiscountCards.split(",");
-      if (discountCards.length > 0) {
-        baseMatch["pricing.discount_card"] = { $nin: discountCards };
-      }
-    }
-
-    const data = await Train.aggregate<AggregatedPricingResult>(
-      [
-        {
-          $match: baseMatch,
-        },
-        {
-          $addFields: {
-            // Créer une clé de route normalisée pour regrouper les trajets aller-retour
-            routeKey: {
-              $cond: {
-                if: {
-                  $lt: ["$departure_station.id", "$arrival_station.id"],
-                },
-                then: {
-                  station1: "$departure_station.name",
-                  station1Id: "$departure_station.id",
-                  station2: "$arrival_station.name",
-                  station2Id: "$arrival_station.id",
-                },
-                else: {
-                  station1: "$arrival_station.name",
-                  station1Id: "$arrival_station.id",
-                  station2: "$departure_station.name",
-                  station2Id: "$departure_station.id",
-                },
-              },
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              station1: "$routeKey.station1",
-              station1Id: "$routeKey.station1Id",
-              station2: "$routeKey.station2",
-              station2Id: "$routeKey.station2Id",
-            },
-            minPrice: { $min: "$pricing.price" },
-            avgPrice: { $avg: "$pricing.price" },
-            maxPrice: { $max: "$pricing.price" },
-            // Collecter seulement les listes uniques
-            carriers: { $addToSet: "$carrier" },
-            classes: { $addToSet: "$pricing.travel_class" },
-            discountCards: { $addToSet: "$pricing.discount_card" },
-            // Garder les informations sur les deux sens
-            departureStation: { $first: "$departure_station.name" },
-            departureStationId: { $first: "$departure_station.id" },
-            arrivalStation: { $first: "$arrival_station.name" },
-            arrivalStationId: { $first: "$arrival_station.id" },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            departureStation: "$departureStation",
-            departureStationId: "$departureStationId",
-            arrivalStation: "$arrivalStation",
-            arrivalStationId: "$arrivalStationId",
-            minPrice: 1,
-            avgPrice: 1,
-            maxPrice: 1,
-            carriers: 1,
-            classes: 1,
-            discountCards: 1,
-          },
-        },
-      ],
-      { allowDiskUse: true }
-    );
-
-    res.json(data);
-  } catch (error) {
-    console.error("Erreur lors de l'agrégation des données:", error);
-    res.status(500).json({ error: "Erreur lors de l'agrégation des données." });
-  }
-});
-
 app.post("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
     const {
       carriers = [],
       classes = [],
       discountCards = [],
+      flexibilities = [],
       selectedDates = [],
       trainNumber,
       departureStationId,
@@ -292,6 +200,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       carriers,
       classes,
       discountCards,
+      flexibilities,
       selectedDates,
       trainNumber,
       departureStationId,
@@ -322,6 +231,11 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     // Ajouter les filtres par cartes de réduction (inclusifs)
     if (discountCards.length > 0) {
       baseMatch["pricing.discount_card"] = { $in: discountCards };
+    }
+
+    // Ajouter les filtres par flexibilité (inclusifs)
+    if (flexibilities.length > 0) {
+      baseMatch["pricing.flexibility"] = { $in: flexibilities };
     }
 
     // Ajouter le filtre par numéro de train si spécifié
@@ -412,6 +326,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             carriers: { $addToSet: "$carrier" },
             classes: { $addToSet: "$pricing.travel_class" },
             discountCards: { $addToSet: "$pricing.discount_card" },
+            flexibilities: { $addToSet: "$pricing.flexibility" },
             // Garder les informations sur les deux sens
             departureStation: { $first: "$departure_station.name" },
             departureStationId: { $first: "$departure_station.id" },
@@ -432,6 +347,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             carriers: 1,
             classes: 1,
             discountCards: 1,
+            flexibilities: 1,
           },
         },
       ],
@@ -710,7 +626,6 @@ app.post("/api/trains/trains-for-date", async (req: Request, res: Response) => {
             },
             carrier: "$carrier",
           },
-          minPrice: { $min: "$pricing.price" },
         },
       },
       {
@@ -720,7 +635,6 @@ app.post("/api/trains/trains-for-date", async (req: Request, res: Response) => {
           departureTime: "$_id.departureTime",
           arrivalTime: "$_id.arrivalTime",
           carrier: "$_id.carrier",
-          minPrice: 1,
         },
       },
       {
@@ -747,6 +661,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
       carriers = [],
       classes = [],
       discountCards = [],
+      flexibilities = [],
       selectedDates = [],
       trainNumber,
       departureStationId,
@@ -758,6 +673,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
       carriers,
       classes,
       discountCards,
+      flexibilities,
       selectedDates,
       trainNumber,
       departureStationId,
@@ -788,6 +704,11 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
     // Ajouter les filtres par cartes de réduction (inclusifs)
     if (discountCards.length > 0) {
       baseMatch["pricing.discount_card"] = { $in: discountCards };
+    }
+
+    // Ajouter les filtres par flexibilité (inclusifs)
+    if (flexibilities.length > 0) {
+      baseMatch["pricing.flexibility"] = { $in: flexibilities };
     }
 
     // Ajouter le filtre par numéro de train si spécifié
@@ -892,6 +813,234 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ error: "Erreur lors de l'analyse des statistiques." });
+  }
+});
+
+// Endpoint spécialisé pour les données de graphiques
+app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
+  try {
+    const {
+      carriers = [],
+      classes = [],
+      discountCards = [],
+      flexibilities = [],
+      selectedDates = [],
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
+    } = req.body;
+
+    // Vérifier le cache
+    const cacheKey = generateCacheKey({
+      carriers,
+      classes,
+      discountCards,
+      flexibilities,
+      selectedDates,
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
+    });
+
+    const cachedEntry = journeyDetailsCache.get(cacheKey);
+    if (cachedEntry && isJourneyDetailsCacheValid(cachedEntry)) {
+      console.log("Cache hit pour /api/trains/chart-data");
+      // Convertir les données détaillées en format graphique
+      const chartData = cachedEntry.data.map((item) => ({
+        price: item.minPrice,
+        is_sellable: item.is_sellable,
+        daysBeforeDeparture: item.daysBeforeDeparture,
+      }));
+
+      // Calculer les statistiques depuis le cache
+      const validPrices = chartData
+        .map((item) => item.price)
+        .filter(
+          (price) =>
+            typeof price === "number" && !Number.isNaN(price) && price >= 0
+        );
+
+      const stats =
+        validPrices.length > 0
+          ? {
+              minPrice: validPrices.reduce(
+                (min, price) => Math.min(min, price),
+                validPrices[0]
+              ),
+              maxPrice: validPrices.reduce(
+                (max, price) => Math.max(max, price),
+                validPrices[0]
+              ),
+              avgPrice:
+                validPrices.reduce((sum, price) => sum + price, 0) /
+                validPrices.length,
+            }
+          : {
+              minPrice: 0,
+              maxPrice: 0,
+              avgPrice: 0,
+            };
+
+      const result: ChartStatsResult = {
+        chartData,
+        stats,
+      };
+
+      return res.json(result);
+    }
+
+    // Construire le match de base
+    const baseMatch: any = {
+      "pricing.unsellable_reason": null,
+    };
+
+    // Ajouter les filtres par compagnies (inclusifs)
+    if (carriers.length > 0) {
+      baseMatch.carrier = { $in: carriers };
+    }
+
+    // Ajouter les filtres par classes (inclusifs)
+    if (classes.length > 0) {
+      baseMatch["pricing.travel_class"] = { $in: classes };
+    }
+
+    // Ajouter les filtres par cartes de réduction (inclusifs)
+    if (discountCards.length > 0) {
+      baseMatch["pricing.discount_card"] = { $in: discountCards };
+    }
+
+    // Ajouter les filtres par flexibilité (inclusifs)
+    if (flexibilities.length > 0) {
+      baseMatch["pricing.flexibility"] = { $in: flexibilities };
+    }
+
+    // Ajouter le filtre par numéro de train si spécifié
+    if (trainNumber) {
+      baseMatch.train_number = Number.parseInt(trainNumber);
+    }
+
+    // Ajouter les filtres par stations si spécifiées
+    if (departureStationId) {
+      baseMatch["departure_station.id"] = departureStationId;
+    }
+    if (arrivalStationId) {
+      baseMatch["arrival_station.id"] = arrivalStationId;
+    }
+
+    // Ajouter le filtre par dates si spécifiées
+    if (selectedDates.length > 0) {
+      // Pour une seule date, utiliser une plage simple
+      if (selectedDates.length === 1) {
+        const date = selectedDates[0];
+        const startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(date);
+        endDate.setHours(23, 59, 59, 999);
+        baseMatch.departure_date = {
+          $gte: startDate,
+          $lte: endDate,
+        };
+      } else {
+        // Pour plusieurs dates, utiliser $or avec des conditions de plage
+        const orConditions = selectedDates.map((date: string) => {
+          const startDate = new Date(date);
+          startDate.setHours(0, 0, 0, 0);
+          const endDate = new Date(date);
+          endDate.setHours(23, 59, 59, 999);
+          return {
+            departure_date: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          };
+        });
+        baseMatch.$or = orConditions;
+      }
+    }
+
+    const data = await Train.aggregate<ChartDataResult>([
+      {
+        $match: baseMatch,
+      },
+      {
+        $project: {
+          _id: 0,
+          price: "$pricing.price",
+          is_sellable: "$pricing.is_sellable",
+          daysBeforeDeparture: 1,
+        },
+      },
+    ]);
+
+    // Calculer les statistiques côté backend
+    const validPrices = data
+      .map((item) => item.price)
+      .filter(
+        (price) =>
+          typeof price === "number" && !Number.isNaN(price) && price >= 0
+      );
+
+    const stats =
+      validPrices.length > 0
+        ? {
+            minPrice: validPrices.reduce(
+              (min, price) => Math.min(min, price),
+              validPrices[0]
+            ),
+            maxPrice: validPrices.reduce(
+              (max, price) => Math.max(max, price),
+              validPrices[0]
+            ),
+            avgPrice:
+              validPrices.reduce((sum, price) => sum + price, 0) /
+              validPrices.length,
+          }
+        : {
+            minPrice: 0,
+            maxPrice: 0,
+            avgPrice: 0,
+          };
+
+    const result: ChartStatsResult = {
+      chartData: data,
+      stats,
+    };
+
+    // Mettre en cache les résultats (en format détaillé pour compatibilité)
+    const detailedData = data.map((item) => ({
+      departureStation: "",
+      departureStationId: 0,
+      arrivalStation: "",
+      arrivalStationId: 0,
+      travelClass: "",
+      discountCard: "",
+      trainName: "",
+      carrier: "",
+      minPrice: item.price,
+      avgPrice: item.price,
+      maxPrice: item.price,
+      departureDate: "",
+      departureTime: "",
+      arrivalTime: "",
+      is_sellable: item.is_sellable,
+      unsellable_reason: null,
+      daysBeforeDeparture: item.daysBeforeDeparture,
+    }));
+
+    journeyDetailsCache.set(cacheKey, {
+      data: detailedData,
+      timestamp: Date.now(),
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des données de graphique:",
+      error
+    );
+    res.status(500).json({
+      error: "Erreur lors de la récupération des données de graphique.",
+    });
   }
 });
 

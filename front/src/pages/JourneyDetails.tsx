@@ -7,10 +7,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import LoadingAnimation from "../components/LoadingAnimation";
-import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
@@ -35,6 +32,7 @@ const JourneyDetails = () => {
 
   const {
     detailedOffers,
+    calculatedStats,
     loading,
     filterLoading,
     error,
@@ -45,14 +43,17 @@ const JourneyDetails = () => {
     selectedCarriers,
     selectedClasses,
     selectedDiscountCards,
+    selectedFlexibilities,
     availableCarriers,
     availableClasses,
     availableDiscountCards,
+    availableFlexibilities,
     handleDateSelect,
     handleTrainSelect,
     handleCarrierToggle,
     handleClassToggle,
     handleDiscountCardToggle,
+    handleFlexibilityToggle,
   } = useJourneyDetails(
     departureStation || "",
     arrivalStation || "",
@@ -62,21 +63,6 @@ const JourneyDetails = () => {
   );
 
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
-
-  // Calculer les statistiques à partir des données filtrées pour la cohérence
-  const calculatedStats = useMemo(() => {
-    if (!filteredOffers || filteredOffers.length === 0) {
-      return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
-    }
-
-    const prices = filteredOffers.map((offer) => offer.minPrice);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const avgPrice =
-      prices.reduce((sum, price) => sum + price, 0) / prices.length;
-
-    return { minPrice, avgPrice, maxPrice };
-  }, [filteredOffers]);
 
   const handleInvertJourney = () => {
     // Construire la nouvelle URL avec les stations inversées
@@ -203,7 +189,7 @@ const JourneyDetails = () => {
             <p className="text-gray-500 mb-8">
               {error} <br />
               Certainement une panne de signalisation, rafraîchissez la page
-              pour ne pas louper vos correspondanes{" "}
+              pour ne pas louper vos correspondances{" "}
             </p>
             <Button onClick={() => globalThis.location.reload()}>
               Réessayer
@@ -219,7 +205,6 @@ const JourneyDetails = () => {
 
   return (
     <>
-      {filterLoading && <LoadingAnimation isFilterLoading={true} />}
       <div className="min-h-screen bg-gray-50">
         <div className="container px-4 py-8 mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -263,16 +248,19 @@ const JourneyDetails = () => {
                 availableCarriers={availableCarriers}
                 availableClasses={availableClasses}
                 availableDiscountCards={availableDiscountCards}
+                availableFlexibilities={availableFlexibilities}
                 selectedDate={selectedDate}
                 selectedTrain={selectedTrain}
                 selectedCarriers={selectedCarriers}
                 selectedClasses={selectedClasses}
                 selectedDiscountCards={selectedDiscountCards}
+                selectedFlexibilities={selectedFlexibilities}
                 onDateSelect={handleDateSelect}
                 onTrainSelect={(train) => handleTrainSelect(train || "")}
                 onCarrierToggle={handleCarrierToggle}
                 onClassToggle={handleClassToggle}
                 onDiscountCardToggle={handleDiscountCardToggle}
+                onFlexibilityToggle={handleFlexibilityToggle}
                 onInvertJourney={handleInvertJourney}
                 loading={loading}
                 filterLoading={filterLoading}
@@ -308,7 +296,7 @@ const JourneyDetails = () => {
               </div>
 
               {/* Statistiques graphiques - toujours affichées */}
-              <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
+              <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border -mt-4">
                 <StatisticsChart
                   offers={filteredOffers}
                   selectedDate={selectedDate}
@@ -316,13 +304,6 @@ const JourneyDetails = () => {
                   loading={filterLoading}
                 />
               </div>
-
-              {/* Graphique d'évolution des prix - affiché seulement si date et train sélectionnés */}
-              {selectedDate && selectedTrain && (
-                <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
-                  <PriceEvolutionChart offers={filteredOffers} />
-                </div>
-              )}
             </div>
           </div>
         </div>
