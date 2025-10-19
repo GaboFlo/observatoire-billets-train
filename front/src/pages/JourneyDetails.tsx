@@ -57,8 +57,8 @@ const JourneyDetails = () => {
     departureStation || "",
     arrivalStation || "",
     [],
-    departureStationId ? parseInt(departureStationId) : undefined,
-    arrivalStationId ? parseInt(arrivalStationId) : undefined
+    departureStationId ? Number.parseInt(departureStationId) : undefined,
+    arrivalStationId ? Number.parseInt(arrivalStationId) : undefined
   );
 
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
@@ -191,7 +191,9 @@ const JourneyDetails = () => {
               {error} <br />
               Attention à la réouverture des portes en réessayant{" "}
             </p>
-            <Button onClick={() => window.location.reload()}>Réessayer</Button>
+            <Button onClick={() => globalThis.location.reload()}>
+              Réessayer
+            </Button>
           </div>
         </div>
       </div>
@@ -264,30 +266,31 @@ const JourneyDetails = () => {
             </div>
 
             <div className="lg:col-span-2 space-y-8">
-              {/* KPIs et statistiques */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {" "}
-                <StatCard
-                  title="Prix Minimum"
-                  value={`${truncatePrice(journey?.minPrice || 0)}€`}
-                  description="Le tarif le plus bas observé"
-                  icon={TrendingDown}
-                  color="green"
-                />
-                <StatCard
-                  title="Prix Moyen"
-                  value={`${truncatePrice(journey?.avgPrice || 0)}€`}
-                  description="Prix moyen des offres disponibles"
-                  icon={ChartLine}
-                  color="blue"
-                />
-                <StatCard
-                  title="Prix Maximum"
-                  value={`${truncatePrice(journey?.maxPrice || 0)}€`}
-                  description="Le tarif le plus élevé observé"
-                  icon={TrendingUp}
-                  color="orange"
-                />
+              {/* KPIs et statistiques - Sticky sur PC */}
+              <div className="lg:sticky lg:top-4 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <StatCard
+                    title="Prix Minimum"
+                    value={`${truncatePrice(journey?.minPrice || 0)}€`}
+                    description="Le tarif le plus bas observé"
+                    icon={TrendingDown}
+                    color="green"
+                  />
+                  <StatCard
+                    title="Prix Moyen"
+                    value={`${truncatePrice(journey?.avgPrice || 0)}€`}
+                    description="Prix moyen des offres disponibles"
+                    icon={ChartLine}
+                    color="blue"
+                  />
+                  <StatCard
+                    title="Prix Maximum"
+                    value={`${truncatePrice(journey?.maxPrice || 0)}€`}
+                    description="Le tarif le plus élevé observé"
+                    icon={TrendingUp}
+                    color="orange"
+                  />
+                </div>
               </div>
 
               {/* Contenu conditionnel selon la sélection */}
@@ -309,9 +312,20 @@ const JourneyDetails = () => {
               )}
 
               {selectedDate && selectedTrain && (
-                <>
-                  <PriceEvolutionChart offers={filteredOffers} />
-                </>
+                <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
+                  <PriceEvolutionChart
+                    offers={filteredOffers}
+                    globalStats={
+                      journey
+                        ? {
+                            minPrice: journey.minPrice,
+                            avgPrice: journey.avgPrice,
+                            maxPrice: journey.maxPrice,
+                          }
+                        : null
+                    }
+                  />
+                </div>
               )}
             </div>
           </div>

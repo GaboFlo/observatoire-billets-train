@@ -162,37 +162,6 @@ mongoose
   .then(() => console.log("✅ Connecté à MongoDB"))
   .catch((err) => console.error("❌ Erreur de connexion à MongoDB:", err));
 
-app.get("/api/trains", async (req: Request, res: Response) => {
-  const { departure, arrival, date, trainNumber } = req.query;
-  try {
-    const data = await Train.find({
-      "departure_station.name": departure,
-      "arrival_station.name": arrival,
-      train_number: trainNumber,
-      departure_date: {
-        $gte: new Date(date as string),
-        $lt: new Date(new Date(date as string).getTime() + 24 * 60 * 60 * 1000),
-      },
-    });
-
-    // Appliquer le mapping des stations aux résultats
-    const mappedData = data.map((train) => {
-      const trainObj = train.toObject();
-
-      return trainObj;
-    });
-
-    res.json(mappedData);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des données:", error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des données." });
-  }
-});
-
-// Fonction pour mapper les IDs de stations
-
 app.get("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
     const { excludedCarriers, excludedClasses, excludedDiscountCards } =
@@ -311,6 +280,9 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       classes = [],
       discountCards = [],
       selectedDates = [],
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
     } = req.body;
 
     // Vérifier le cache
@@ -319,6 +291,9 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       classes,
       discountCards,
       selectedDates,
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
     });
 
     const cachedEntry = pricingCache.get(cacheKey);
@@ -345,6 +320,19 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     // Ajouter les filtres par cartes de réduction (inclusifs)
     if (discountCards.length > 0) {
       baseMatch["pricing.discount_card"] = { $in: discountCards };
+    }
+
+    // Ajouter le filtre par numéro de train si spécifié
+    if (trainNumber) {
+      baseMatch.train_number = Number.parseInt(trainNumber);
+    }
+
+    // Ajouter les filtres par stations si spécifiées
+    if (departureStationId) {
+      baseMatch["departure_station.id"] = departureStationId;
+    }
+    if (arrivalStationId) {
+      baseMatch["arrival_station.id"] = arrivalStationId;
     }
 
     // Ajouter le filtre par dates si spécifiées
@@ -458,166 +446,6 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Erreur lors de l'agrégation des données:", error);
     res.status(500).json({ error: "Erreur lors de l'agrégation des données." });
-  }
-});
-
-// Nouvel endpoint POST pour les pages dédiées par trajet
-app.post("/api/trains/journey-details", async (req: Request, res: Response) => {
-  try {
-    const {
-      carriers = [],
-      classes = [],
-      discountCards = [],
-      selectedDates = [],
-      departureStationId,
-      arrivalStationId,
-      trainNumber,
-    } = req.body;
-
-    // Vérifier le cache
-    const cacheKey = generateCacheKey({
-      carriers,
-      classes,
-      discountCards,
-      selectedDates,
-      departureStationId,
-      arrivalStationId,
-      trainNumber,
-    });
-
-    const cachedEntry = journeyDetailsCache.get(cacheKey);
-    if (cachedEntry && isJourneyDetailsCacheValid(cachedEntry)) {
-      console.log("Cache hit pour /api/trains/journey-details");
-      return res.json(cachedEntry.data);
-    }
-
-    // Construire le match de base
-    const baseMatch: any = {
-      "pricing.unsellable_reason": null,
-    };
-
-    // Ajouter les filtres par compagnies (inclusifs)
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-
-    // Ajouter les filtres par classes (inclusifs)
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-
-    // Ajouter les filtres par cartes de réduction (inclusifs)
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    // Ajouter le filtre par dates si spécifiées
-    if (selectedDates.length > 0) {
-      // Pour une seule date, utiliser une plage simple
-      if (selectedDates.length === 1) {
-        const date = selectedDates[0];
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        baseMatch.departure_date = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      } else {
-        // Pour plusieurs dates, utiliser $or avec des conditions de plage
-        const orConditions = selectedDates.map((date: string) => {
-          const startDate = new Date(date);
-          startDate.setHours(0, 0, 0, 0);
-          const endDate = new Date(date);
-          endDate.setHours(23, 59, 59, 999);
-          return {
-            departure_date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          };
-        });
-        baseMatch.$or = orConditions;
-      }
-    }
-
-    // Ajouter les filtres spécifiques au trajet
-    if (departureStationId) {
-      baseMatch["departure_station.id"] = departureStationId;
-    }
-
-    if (arrivalStationId) {
-      baseMatch["arrival_station.id"] = arrivalStationId;
-    }
-
-    if (trainNumber) {
-      baseMatch.train_number = trainNumber;
-    }
-
-    const data = await Train.aggregate<DetailedPricingResult>([
-      {
-        $match: baseMatch,
-      },
-      {
-        $addFields: {
-          daysBeforeDeparture: {
-            $ceil: {
-              $divide: [
-                { $subtract: ["$departure_date", new Date()] },
-                1000 * 60 * 60 * 24,
-              ],
-            },
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          departureStation: "$departure_station.name",
-          departureStationId: "$departure_station.id",
-          arrivalStation: "$arrival_station.name",
-          arrivalStationId: "$arrival_station.id",
-          travelClass: "$pricing.travel_class",
-          discountCard: "$pricing.discount_card",
-          trainName: "$train_name",
-          trainNumber: "$train_number",
-          carrier: "$carrier",
-          minPrice: "$pricing.price",
-          avgPrice: "$pricing.price",
-          maxPrice: "$pricing.price",
-          departureDate: {
-            $dateToString: { format: "%Y-%m-%d", date: "$departure_date" },
-          },
-          departureTime: {
-            $dateToString: { format: "%H:%M", date: "$departure_date" },
-          },
-          arrivalTime: {
-            $dateToString: { format: "%H:%M", date: "$arrival_date" },
-          },
-          is_sellable: "$pricing.is_sellable",
-          unsellable_reason: "$pricing.unsellable_reason",
-          daysBeforeDeparture: 1,
-        },
-      },
-      { $sort: { departureTime: 1 } },
-    ]);
-
-    // Mettre en cache les résultats
-    journeyDetailsCache.set(cacheKey, {
-      data,
-      timestamp: Date.now(),
-    });
-
-    res.json(data);
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des détails de trajet:",
-      error
-    );
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des détails de trajet." });
   }
 });
 
@@ -907,313 +735,6 @@ app.post("/api/trains/trains-for-date", async (req: Request, res: Response) => {
     res.status(500).json({
       error: "Erreur lors de la récupération des trains pour la date.",
     });
-  }
-});
-
-// 3. Endpoint pour les statistiques globales d'une date
-app.post("/api/trains/date-statistics", async (req: Request, res: Response) => {
-  try {
-    const {
-      departureStationId,
-      arrivalStationId,
-      date,
-      trainNumber,
-      carriers = [],
-      classes = [],
-      discountCards = [],
-    } = req.body;
-
-    if (!departureStationId || !arrivalStationId || !date) {
-      return res.status(400).json({
-        error: "departureStationId, arrivalStationId et date sont requis",
-      });
-    }
-
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-
-    // Construire le match de base
-    const baseMatch: any = {
-      "departure_station.id": departureStationId,
-      "arrival_station.id": arrivalStationId,
-      departure_date: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-      "pricing.unsellable_reason": null,
-    };
-
-    // Ajouter le filtre par train si spécifié
-    if (trainNumber) {
-      baseMatch.train_number = parseInt(trainNumber);
-    }
-
-    // Ajouter les filtres par compagnies (inclusion)
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-
-    // Ajouter les filtres par classes (inclusion)
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-
-    // Ajouter les filtres par cartes de réduction (inclusion)
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    const data = await Train.aggregate([
-      {
-        $match: baseMatch,
-      },
-      {
-        $group: {
-          _id: null,
-          totalTrains: { $addToSet: "$train_number" },
-          totalOffers: { $sum: 1 },
-          minPrice: { $min: "$pricing.price" },
-          maxPrice: { $max: "$pricing.price" },
-          avgPrice: { $avg: "$pricing.price" },
-          carriers: { $addToSet: "$carrier" },
-          classes: { $addToSet: "$pricing.travel_class" },
-          discountCards: { $addToSet: "$pricing.discount_card" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalTrains: { $size: "$totalTrains" },
-          totalOffers: 1,
-          minPrice: 1,
-          maxPrice: 1,
-          avgPrice: { $round: ["$avgPrice", 2] },
-          carriers: 1,
-          classes: 1,
-          discountCards: 1,
-        },
-      },
-    ]);
-
-    res.json(
-      data[0] || {
-        totalTrains: 0,
-        totalOffers: 0,
-        minPrice: 0,
-        maxPrice: 0,
-        avgPrice: 0,
-        carriers: [],
-        classes: [],
-        discountCards: [],
-      }
-    );
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des statistiques de date:",
-      error
-    );
-    res.status(500).json({
-      error: "Erreur lors de la récupération des statistiques de date.",
-    });
-  }
-});
-
-// 4. Endpoint pour les statistiques d'un train spécifique
-app.post(
-  "/api/trains/train-statistics",
-  async (req: Request, res: Response) => {
-    try {
-      const { departureStationId, arrivalStationId, date, trainNumber } =
-        req.body;
-
-      if (!departureStationId || !arrivalStationId || !date || !trainNumber) {
-        return res.status(400).json({
-          error:
-            "departureStationId, arrivalStationId, date et trainNumber sont requis",
-        });
-      }
-
-      const startDate = new Date(date);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setHours(23, 59, 59, 999);
-
-      const data = await Train.aggregate([
-        {
-          $match: {
-            "departure_station.id": departureStationId,
-            "arrival_station.id": arrivalStationId,
-            departure_date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-            train_number: parseInt(trainNumber),
-            "pricing.unsellable_reason": null,
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            totalOffers: { $sum: 1 },
-            minPrice: { $min: "$pricing.price" },
-            maxPrice: { $max: "$pricing.price" },
-            avgPrice: { $avg: "$pricing.price" },
-            carriers: { $addToSet: "$carrier" },
-            classes: { $addToSet: "$pricing.travel_class" },
-            discountCards: { $addToSet: "$pricing.discount_card" },
-            departureTime: {
-              $first: {
-                $dateToString: { format: "%H:%M", date: "$departure_date" },
-              },
-            },
-            arrivalTime: {
-              $first: {
-                $dateToString: { format: "%H:%M", date: "$arrival_date" },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            trainNumber: trainNumber,
-            totalOffers: 1,
-            minPrice: 1,
-            maxPrice: 1,
-            avgPrice: { $round: ["$avgPrice", 2] },
-            carriers: 1,
-            classes: 1,
-            discountCards: 1,
-            departureTime: 1,
-            arrivalTime: 1,
-          },
-        },
-      ]);
-
-      res.json(
-        data[0] || {
-          trainNumber: trainNumber,
-          totalOffers: 0,
-          minPrice: 0,
-          maxPrice: 0,
-          avgPrice: 0,
-          carriers: [],
-          classes: [],
-          discountCards: [],
-          departureTime: null,
-          arrivalTime: null,
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Erreur lors de la récupération des statistiques du train:",
-        error
-      );
-      res.status(500).json({
-        error: "Erreur lors de la récupération des statistiques du train.",
-      });
-    }
-  }
-);
-
-// 5. Endpoint pour l'analyse avec filtres
-app.post("/api/trains/analysis", async (req: Request, res: Response) => {
-  try {
-    const {
-      departureStationId,
-      arrivalStationId,
-      date,
-      trainNumber,
-      carriers = [],
-      classes = [],
-      discountCards = [],
-    } = req.body;
-
-    if (!departureStationId || !arrivalStationId || !date) {
-      return res.status(400).json({
-        error: "departureStationId, arrivalStationId et date sont requis",
-      });
-    }
-
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
-
-    // Construire le match de base
-    const baseMatch: any = {
-      "departure_station.id": departureStationId,
-      "arrival_station.id": arrivalStationId,
-      departure_date: {
-        $gte: startDate,
-        $lte: endDate,
-      },
-      "pricing.unsellable_reason": null,
-    };
-
-    // Ajouter les filtres optionnels
-    if (trainNumber) {
-      baseMatch.train_number = parseInt(trainNumber);
-    }
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    const data = await Train.aggregate([
-      {
-        $match: baseMatch,
-      },
-      {
-        $group: {
-          _id: null,
-          totalOffers: { $sum: 1 },
-          minPrice: { $min: "$pricing.price" },
-          maxPrice: { $max: "$pricing.price" },
-          avgPrice: { $avg: "$pricing.price" },
-          carriers: { $addToSet: "$carrier" },
-          classes: { $addToSet: "$pricing.travel_class" },
-          discountCards: { $addToSet: "$pricing.discount_card" },
-          trains: { $addToSet: "$train_number" },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          totalOffers: 1,
-          minPrice: 1,
-          maxPrice: 1,
-          avgPrice: { $round: ["$avgPrice", 2] },
-          carriers: 1,
-          classes: 1,
-          discountCards: 1,
-          totalTrains: { $size: "$trains" },
-        },
-      },
-    ]);
-
-    res.json(
-      data[0] || {
-        totalOffers: 0,
-        minPrice: 0,
-        maxPrice: 0,
-        avgPrice: 0,
-        carriers: [],
-        classes: [],
-        discountCards: [],
-        totalTrains: 0,
-      }
-    );
-  } catch (error) {
-    console.error("Erreur lors de l'analyse:", error);
-    res.status(500).json({ error: "Erreur lors de l'analyse." });
   }
 });
 

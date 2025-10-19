@@ -6,14 +6,7 @@ import {
   translateDiscountCard,
   translateTravelClass,
 } from "@/utils/translations";
-import {
-  ArrowRightLeft,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  Filter,
-  Train,
-} from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, Filter, Train } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UnifiedFiltersProps {
@@ -115,15 +108,36 @@ const UnifiedFilters = ({
   loading = false,
   filterLoading = false,
 }: UnifiedFiltersProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isDateSectionExpanded, setIsDateSectionExpanded] = useState(true);
-  const [isCarrierSectionExpanded, setIsCarrierSectionExpanded] =
-    useState(true);
-  const [isClassSectionExpanded, setIsClassSectionExpanded] = useState(true);
-  const [isDiscountCardSectionExpanded, setIsDiscountCardSectionExpanded] =
-    useState(true);
-  const [isTrainSectionExpanded, setIsTrainSectionExpanded] = useState(true);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // États pour les sections collapsibles avec persistance
+  const [isDateSectionExpanded, setIsDateSectionExpanded] = useState(() => {
+    const saved = localStorage.getItem("filter-section-date");
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const [isCarrierSectionExpanded, setIsCarrierSectionExpanded] = useState(
+    () => {
+      const saved = localStorage.getItem("filter-section-carrier");
+      return saved ? JSON.parse(saved) : true;
+    }
+  );
+
+  const [isClassSectionExpanded, setIsClassSectionExpanded] = useState(() => {
+    const saved = localStorage.getItem("filter-section-class");
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const [isDiscountCardSectionExpanded, setIsDiscountCardSectionExpanded] =
+    useState(() => {
+      const saved = localStorage.getItem("filter-section-discount");
+      return saved ? JSON.parse(saved) : true;
+    });
+
+  const [isTrainSectionExpanded, setIsTrainSectionExpanded] = useState(() => {
+    const saved = localStorage.getItem("filter-section-train");
+    return saved ? JSON.parse(saved) : true;
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -142,6 +156,37 @@ const UnifiedFilters = ({
     return timeString.substring(0, 5); // HH:MM
   };
 
+  // Fonctions pour gérer le toggle avec persistance
+  const toggleDateSection = useCallback(() => {
+    const newState = !isDateSectionExpanded;
+    setIsDateSectionExpanded(newState);
+    localStorage.setItem("filter-section-date", JSON.stringify(newState));
+  }, [isDateSectionExpanded]);
+
+  const toggleCarrierSection = useCallback(() => {
+    const newState = !isCarrierSectionExpanded;
+    setIsCarrierSectionExpanded(newState);
+    localStorage.setItem("filter-section-carrier", JSON.stringify(newState));
+  }, [isCarrierSectionExpanded]);
+
+  const toggleClassSection = useCallback(() => {
+    const newState = !isClassSectionExpanded;
+    setIsClassSectionExpanded(newState);
+    localStorage.setItem("filter-section-class", JSON.stringify(newState));
+  }, [isClassSectionExpanded]);
+
+  const toggleDiscountCardSection = useCallback(() => {
+    const newState = !isDiscountCardSectionExpanded;
+    setIsDiscountCardSectionExpanded(newState);
+    localStorage.setItem("filter-section-discount", JSON.stringify(newState));
+  }, [isDiscountCardSectionExpanded]);
+
+  const toggleTrainSection = useCallback(() => {
+    const newState = !isTrainSectionExpanded;
+    setIsTrainSectionExpanded(newState);
+    localStorage.setItem("filter-section-train", JSON.stringify(newState));
+  }, [isTrainSectionExpanded]);
+
   // Fonction pour déclencher l'analyse avec debounce
   const triggerAnalysis = useCallback(() => {
     if (debounceTimeoutRef.current) {
@@ -151,13 +196,7 @@ const UnifiedFilters = ({
     debounceTimeoutRef.current = setTimeout(() => {
       // Ici on pourrait appeler une fonction de callback pour déclencher l'analyse
     }, 400);
-  }, [
-    selectedDate,
-    selectedTrain,
-    selectedCarriers,
-    selectedClasses,
-    selectedDiscountCards,
-  ]);
+  }, []);
 
   // Déclencher l'analyse quand les filtres changent
   useEffect(() => {
@@ -176,227 +215,187 @@ const UnifiedFilters = ({
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
-              <Filter className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-semibold text-gray-900">
-                Filtres
-              </CardTitle>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+            <Filter className="w-4 h-4 text-white" />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            {isExpanded ? "Réduire" : "Développer"}
-          </Button>
+          <div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              Filtres
+            </CardTitle>
+          </div>
         </div>
       </CardHeader>
 
-      {isExpanded && (
-        <CardContent className="space-y-6">
-          {/* Inverser le sens */}
-          <div className="space-y-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onInvertJourney}
-              className="w-full flex items-center gap-2"
-            >
-              <ArrowRightLeft className="w-4 h-4" />
-              Inverser le sens du trajet
-            </Button>
-          </div>
-          {/* Sélection de date */}
-          <CollapsibleSection
-            title="Date de voyage"
-            icon={Calendar}
-            isExpanded={isDateSectionExpanded}
-            onToggle={() => setIsDateSectionExpanded(!isDateSectionExpanded)}
-          >
-            {availableDates.length === 0 ? (
-              <p className="text-sm text-gray-500">Aucune date disponible</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-2">
+      <CardContent className="space-y-6">
+        {/* Sélection de date */}
+        <CollapsibleSection
+          title="Date de voyage"
+          icon={Calendar}
+          isExpanded={isDateSectionExpanded}
+          onToggle={toggleDateSection}
+        >
+          {availableDates.length === 0 ? (
+            <p className="text-sm text-gray-500">Aucune date disponible</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                variant={selectedDate === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => onDateSelect(null)}
+                className="justify-start"
+              >
+                Toutes les dates
+              </Button>
+              {availableDates.map((date) => (
                 <Button
-                  variant={selectedDate === null ? "default" : "outline"}
+                  key={date}
+                  variant={selectedDate === date ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onDateSelect(null)}
+                  onClick={() => onDateSelect(date)}
                   className="justify-start"
                 >
-                  Toutes les dates
+                  {formatDate(date)}
                 </Button>
-                {availableDates.map((date) => (
-                  <Button
-                    key={date}
-                    variant={selectedDate === date ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onDateSelect(date)}
-                    className="justify-start"
-                  >
-                    {formatDate(date)}
-                  </Button>
-                ))}
-              </div>
-            )}
-          </CollapsibleSection>
-          {/* Compagnies ferroviaires */}
-          {availableCarriers.length > 0 && (
-            <CollapsibleSection
-              title="Compagnies ferroviaires"
-              icon={Train}
-              isExpanded={isCarrierSectionExpanded}
-              onToggle={() =>
-                setIsCarrierSectionExpanded(!isCarrierSectionExpanded)
-              }
-            >
-              <div className="space-y-2">
-                {availableCarriers.map((carrier) => (
-                  <div key={carrier} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`carrier-${carrier}`}
-                      checked={selectedCarriers.includes(carrier)}
-                      onCheckedChange={() => onCarrierToggle(carrier)}
-                    />
-                    <label
-                      htmlFor={`carrier-${carrier}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {translateCarrier(carrier)}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-          {/* Classes de voyage */}
-          {availableClasses.length > 0 && (
-            <CollapsibleSection
-              title="Classes de voyage"
-              icon={Filter}
-              isExpanded={isClassSectionExpanded}
-              onToggle={() =>
-                setIsClassSectionExpanded(!isClassSectionExpanded)
-              }
-            >
-              <div className="space-y-2">
-                {availableClasses.map((travelClass) => (
-                  <div
-                    key={travelClass}
-                    className="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      id={`class-${travelClass}`}
-                      checked={selectedClasses.includes(travelClass)}
-                      onCheckedChange={() => onClassToggle(travelClass)}
-                    />
-                    <label
-                      htmlFor={`class-${travelClass}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {translateTravelClass(travelClass)}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-          {/* Cartes de réduction */}
-          {availableDiscountCards.length > 0 && (
-            <CollapsibleSection
-              title="Cartes de réduction"
-              icon={Filter}
-              isExpanded={isDiscountCardSectionExpanded}
-              onToggle={() =>
-                setIsDiscountCardSectionExpanded(!isDiscountCardSectionExpanded)
-              }
-            >
-              <div className="space-y-2">
-                {availableDiscountCards.map((discountCard) => (
-                  <div
-                    key={discountCard}
-                    className="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      id={`discount-${discountCard}`}
-                      checked={selectedDiscountCards.includes(discountCard)}
-                      onCheckedChange={() => onDiscountCardToggle(discountCard)}
-                    />
-                    <label
-                      htmlFor={`discount-${discountCard}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {translateDiscountCard(discountCard)}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-          {/* Sélection de train */}
-          {selectedDate && availableTrains.length > 0 && (
-            <CollapsibleSection
-              title="Train spécifique"
-              icon={Train}
-              isExpanded={isTrainSectionExpanded}
-              onToggle={() =>
-                setIsTrainSectionExpanded(!isTrainSectionExpanded)
-              }
-            >
-              <div className="grid grid-cols-1 gap-2">
-                <Button
-                  variant={selectedTrain === null ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onTrainSelect(null)}
-                  className="justify-start"
-                >
-                  Tous les trains
-                </Button>
-                {availableTrains.map((train) => (
-                  <Button
-                    key={train.trainNumber}
-                    variant={
-                      selectedTrain === train.trainNumber
-                        ? "default"
-                        : "outline"
-                    }
-                    size="sm"
-                    onClick={() => onTrainSelect(train.trainNumber)}
-                    className="justify-start"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <span>Train {train.trainNumber}</span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {translateCarrier(train.carrier)}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {formatTime(train.departureTime)} -{" "}
-                        {formatTime(train.arrivalTime)}
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </CollapsibleSection>
-          )}
-          {/* Indicateur de chargement */}
-          {filterLoading && (
-            <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-sm text-gray-500">
-                Analyse en cours...
-              </span>
+              ))}
             </div>
           )}
-        </CardContent>
-      )}
+        </CollapsibleSection>
+        {/* Compagnies ferroviaires */}
+        {availableCarriers.length > 0 && (
+          <CollapsibleSection
+            title="Compagnies ferroviaires"
+            icon={Train}
+            isExpanded={isCarrierSectionExpanded}
+            onToggle={toggleCarrierSection}
+          >
+            <div className="space-y-2">
+              {availableCarriers.map((carrier) => (
+                <div key={carrier} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`carrier-${carrier}`}
+                    checked={selectedCarriers.includes(carrier)}
+                    onCheckedChange={() => onCarrierToggle(carrier)}
+                  />
+                  <label
+                    htmlFor={`carrier-${carrier}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {translateCarrier(carrier)}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+        {/* Classes de voyage */}
+        {availableClasses.length > 0 && (
+          <CollapsibleSection
+            title="Classes de voyage"
+            icon={Filter}
+            isExpanded={isClassSectionExpanded}
+            onToggle={toggleClassSection}
+          >
+            <div className="space-y-2">
+              {availableClasses.map((travelClass) => (
+                <div key={travelClass} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`class-${travelClass}`}
+                    checked={selectedClasses.includes(travelClass)}
+                    onCheckedChange={() => onClassToggle(travelClass)}
+                  />
+                  <label
+                    htmlFor={`class-${travelClass}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {translateTravelClass(travelClass)}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+        {/* Cartes de réduction */}
+        {availableDiscountCards.length > 0 && (
+          <CollapsibleSection
+            title="Cartes de réduction"
+            icon={Filter}
+            isExpanded={isDiscountCardSectionExpanded}
+            onToggle={toggleDiscountCardSection}
+          >
+            <div className="space-y-2">
+              {availableDiscountCards.map((discountCard) => (
+                <div key={discountCard} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`discount-${discountCard}`}
+                    checked={selectedDiscountCards.includes(discountCard)}
+                    onCheckedChange={() => onDiscountCardToggle(discountCard)}
+                  />
+                  <label
+                    htmlFor={`discount-${discountCard}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {translateDiscountCard(discountCard)}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+        {/* Sélection de train */}
+        {availableTrains.length > 0 && (
+          <CollapsibleSection
+            title="Train spécifique"
+            icon={Train}
+            isExpanded={isTrainSectionExpanded}
+            onToggle={toggleTrainSection}
+          >
+            <div className="grid grid-cols-1 gap-2">
+              <Button
+                variant={selectedTrain === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => onTrainSelect(null)}
+                className="justify-start"
+              >
+                Tous les trains
+              </Button>
+              {availableTrains.map((train) => (
+                <Button
+                  key={train.trainNumber}
+                  variant={
+                    selectedTrain === train.trainNumber ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => onTrainSelect(train.trainNumber)}
+                  className="justify-start"
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <span>Train {train.trainNumber}</span>
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {translateCarrier(train.carrier)}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {formatTime(train.departureTime)} -{" "}
+                      {formatTime(train.arrivalTime)}
+                    </div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+        {/* Indicateur de chargement */}
+        {filterLoading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-sm text-gray-500">
+              Analyse en cours...
+            </span>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 };

@@ -89,7 +89,6 @@ const PriceTable = ({
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Prix</TableHead>
-                  <TableHead>Variation</TableHead>
                   <TableHead>Classe</TableHead>
                   <TableHead>Carte de réduction</TableHead>
                 </TableRow>
@@ -101,27 +100,7 @@ const PriceTable = ({
                       {item.formattedDate}
                     </TableCell>
                     <TableCell>{truncatePrice(item.price)}€</TableCell>
-                    <TableCell className="flex items-center gap-1">
-                      {item.priceChange !== 0 && (
-                        <>
-                          {item.priceChange > 0 ? (
-                            <TrendingUp className="h-4 w-4 text-red-500" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4 text-green-500" />
-                          )}
-                          <span
-                            className={
-                              item.priceChange > 0
-                                ? "text-red-500"
-                                : "text-green-500"
-                            }
-                          >
-                            {item.priceChange > 0 ? "+" : ""}
-                            {truncatePrice(item.priceChange)}€
-                          </span>
-                        </>
-                      )}
-                    </TableCell>
+
                     <TableCell>{item.class}</TableCell>
                     <TableCell>{item.discount}</TableCell>
                   </TableRow>
