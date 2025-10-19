@@ -354,7 +354,7 @@ export const useJourneyDetails = (
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de l'analyse: ${response.status}`);
+        throw new Error(`Erreur lors de l'analyse : ${response.status}`);
       }
 
       const responseData = await response.json();
@@ -452,6 +452,34 @@ export const useJourneyDetails = (
     [departureStationId, arrivalStationId]
   );
 
+  // Fonction pour récupérer les données de statistiques
+  const fetchStatisticsData = useCallback(async () => {
+    try {
+      setFilterLoading(true);
+
+      const requestBody = getAnalysisRequest();
+      const response = await fetch("/api/trains/statistics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur lors de l'analyse : ${response.status}`);
+      }
+
+      const statisticsData = await response.json();
+      setDetailedOffers(statisticsData);
+    } catch (err) {
+      console.error("❌ Erreur statistiques:", err);
+      setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
+    } finally {
+      setFilterLoading(false);
+    }
+  }, [getAnalysisRequest]);
+
   // Fonction pour déclencher l'analyse avec les filtres actuels
   const triggerAnalysis = useCallback(async () => {
     try {
@@ -475,9 +503,11 @@ export const useJourneyDetails = (
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
+      // Déclencher à la fois l'analyse des prix et les statistiques
       triggerAnalysis();
+      fetchStatisticsData();
     }, 450);
-  }, [triggerAnalysis]);
+  }, [triggerAnalysis, fetchStatisticsData]);
 
   // Fonction pour récupérer tous les trains distincts pour ce trajet
   const fetchAllTrainsForJourney = useCallback(async () => {

@@ -4,14 +4,15 @@ import {
   ArrowRightLeft,
   Calendar,
   ChartLine,
-  Train,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PriceEvolutionChart from "../components/PriceEvolutionChart";
 import StatCard from "../components/StatCard";
+import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
 import UnifiedFilters from "../components/UnifiedFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
@@ -33,7 +34,6 @@ const JourneyDetails = () => {
   const navigate = useNavigate();
 
   const {
-    journey,
     detailedOffers,
     loading,
     filterLoading,
@@ -63,7 +63,20 @@ const JourneyDetails = () => {
 
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
 
-  // Logs de débogage
+  // Calculer les statistiques à partir des données filtrées pour la cohérence
+  const calculatedStats = useMemo(() => {
+    if (!filteredOffers || filteredOffers.length === 0) {
+      return { minPrice: 0, avgPrice: 0, maxPrice: 0 };
+    }
+
+    const prices = filteredOffers.map((offer) => offer.minPrice);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const avgPrice =
+      prices.reduce((sum, price) => sum + price, 0) / prices.length;
+
+    return { minPrice, avgPrice, maxPrice };
+  }, [filteredOffers]);
 
   const handleInvertJourney = () => {
     // Construire la nouvelle URL avec les stations inversées
@@ -189,7 +202,8 @@ const JourneyDetails = () => {
             </h2>
             <p className="text-gray-500 mb-8">
               {error} <br />
-              Attention à la réouverture des portes en réessayant{" "}
+              Certainement une panne de signalisation, rafraîchissez la page
+              pour ne pas louper vos correspondanes{" "}
             </p>
             <Button onClick={() => globalThis.location.reload()}>
               Réessayer
@@ -271,21 +285,21 @@ const JourneyDetails = () => {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <StatCard
                     title="Prix Minimum"
-                    value={`${truncatePrice(journey?.minPrice || 0)}€`}
+                    value={`${truncatePrice(calculatedStats.minPrice)}€`}
                     description="Le tarif le plus bas observé"
                     icon={TrendingDown}
                     color="green"
                   />
                   <StatCard
                     title="Prix Moyen"
-                    value={`${truncatePrice(journey?.avgPrice || 0)}€`}
+                    value={`${truncatePrice(calculatedStats.avgPrice)}€`}
                     description="Prix moyen des offres disponibles"
                     icon={ChartLine}
                     color="blue"
                   />
                   <StatCard
                     title="Prix Maximum"
-                    value={`${truncatePrice(journey?.maxPrice || 0)}€`}
+                    value={`${truncatePrice(calculatedStats.maxPrice)}€`}
                     description="Le tarif le plus élevé observé"
                     icon={TrendingUp}
                     color="orange"
@@ -293,38 +307,20 @@ const JourneyDetails = () => {
                 </div>
               </div>
 
-              {/* Contenu conditionnel selon la sélection */}
-              {!selectedDate && (
-                <div className="text-center py-16">
-                  <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-8">
-                    Sélectionnez une date pour affiner l'analyse.
-                  </p>
-                </div>
-              )}
-              {selectedDate && !selectedTrain && (
-                <div className="text-center py-16">
-                  <Train className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-8">
-                    Sélectionnez un train pour affiner l'analyse.
-                  </p>
-                </div>
-              )}
+              {/* Statistiques graphiques - toujours affichées */}
+              <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
+                <StatisticsChart
+                  offers={filteredOffers}
+                  selectedDate={selectedDate}
+                  selectedTrain={selectedTrain}
+                  loading={filterLoading}
+                />
+              </div>
 
+              {/* Graphique d'évolution des prix - affiché seulement si date et train sélectionnés */}
               {selectedDate && selectedTrain && (
                 <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
-                  <PriceEvolutionChart
-                    offers={filteredOffers}
-                    globalStats={
-                      journey
-                        ? {
-                            minPrice: journey.minPrice,
-                            avgPrice: journey.avgPrice,
-                            maxPrice: journey.maxPrice,
-                          }
-                        : null
-                    }
-                  />
+                  <PriceEvolutionChart offers={filteredOffers} />
                 </div>
               )}
             </div>

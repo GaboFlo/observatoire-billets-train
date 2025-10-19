@@ -20,6 +20,11 @@ const envToNumber = (key: string, defaultValue = 0): number => {
   return res;
 };
 
+const envToBoolean = (key: string, defaultValue = false): boolean => {
+  const envVar = getEnvVar(key, defaultValue.toString());
+  return envVar === "true";
+};
+
 export const env = Object.freeze({
   MONGO: {
     URL: getEnvVar("MONGO_URL", "mongodb://localhost:27017/train"),
@@ -30,5 +35,6 @@ export const env = Object.freeze({
       5000
     ),
     SOCKET_TIMEOUT: envToNumber("MONGO_SOCKET_TIMEOUT", 45000),
+    DEBUG: envToBoolean("MONGO_DEBUG", false),
   },
 });
