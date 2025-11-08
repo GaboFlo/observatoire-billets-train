@@ -93,9 +93,6 @@ const StatisticsChart = ({
     if (name === "avgPrice") return [`${truncatePrice(value)}€`, "Prix moyen"];
     if (name === "maxPrice")
       return [`${truncatePrice(value)}€`, "Prix maximum"];
-    if (name === "availableTrains") return [value, "Trains disponibles"];
-    if (name === "soldOutTrains") return [value, "Trains complets"];
-    if (name === "totalTrains") return [value, "Total trains"];
     return [value, name];
   };
 

@@ -125,23 +125,49 @@ const JourneysTab = ({
   };
 
   const [sortField, setSortField] = useState<string>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirections, setSortDirections] = useState<
+    Record<string, "asc" | "desc">
+  >({
+    name: "asc",
+    arrival: "asc",
+    minPrice: "asc",
+    avgPrice: "asc",
+    maxPrice: "asc",
+  });
 
   const handleSort = (field: string) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+    const currentDirection = sortDirections[field] || "asc";
+    const newDirection =
+      sortField === field
+        ? currentDirection === "asc"
+          ? "desc"
+          : "asc"
+        : "asc";
+
+    setSortDirections({
+      ...sortDirections,
+      [field]: newDirection,
+    });
+
+    setSortField(field);
   };
 
   const getSortIcon = (field: string) => {
-    if (sortField !== field) return null;
-    return sortDirection === "asc" ? (
-      <ChevronUp className="w-4 h-4" />
+    const direction = sortDirections[field] || "asc";
+    const isActive = sortField === field;
+
+    if (isActive) {
+      return direction === "asc" ? (
+        <ChevronUp className="w-5 h-5 text-blue-600 font-bold bg-blue-100 rounded-full p-1" />
+      ) : (
+        <ChevronDown className="w-5 h-5 text-blue-600 font-bold bg-blue-100 rounded-full p-1" />
+      );
+    }
+
+    return direction === "asc" ? (
+      <ChevronUp className="w-4 h-4 text-gray-400" />
     ) : (
-      <ChevronDown className="w-4 h-4" />
+      <ChevronDown className="w-4 h-4 text-gray-400" />
     );
   };
 
@@ -178,7 +204,8 @@ const JourneysTab = ({
         return 0;
     }
 
-    if (sortDirection === "asc") {
+    const direction = sortDirections[sortField] || "asc";
+    if (direction === "asc") {
       return aValue > bValue ? 1 : -1;
     } else {
       return aValue < bValue ? 1 : -1;

@@ -1,32 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import datesData from "../data/dates.json";
+import { GroupedJourney } from "../types/journey";
 
-export interface Journey {
-  id: string;
-  name: string;
-  departureStation: string;
-  arrivalStation: string;
-  departureStationId: number;
-  arrivalStationId: number;
-  minPrice: number;
-  avgPrice: number;
-  maxPrice: number;
-  carriers: string[];
-  classes: string[];
-  discountCards: string[];
-  offers: Array<{
-    departureStation: string;
-    departureStationId: number;
-    arrivalStation: string;
-    arrivalStationId: number;
-    minPrice: number;
-    avgPrice: number;
-    maxPrice: number;
-    carriers: string[];
-    classes: string[];
-    discountCards: string[];
-  }>;
-}
+export interface Journey extends GroupedJourney {}
 
 export const useJourneyData = () => {
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -102,24 +78,28 @@ export const useJourneyData = () => {
             carriers: string[];
             classes: string[];
             discountCards: string[];
+            flexibilities: string[];
           }) => {
             const journeyId = `${item.departureStation}-${item.arrivalStation}`;
 
             // Créer des offres factices pour maintenir la compatibilité avec l'interface Journey
             const dummyOffers = item.carriers.flatMap((carrier) =>
               item.classes.flatMap((travelClass) =>
-                item.discountCards.map((discountCard) => ({
-                  departureStation: item.departureStation,
-                  departureStationId: item.departureStationId,
-                  arrivalStation: item.arrivalStation,
-                  arrivalStationId: item.arrivalStationId,
-                  minPrice: item.minPrice,
-                  avgPrice: item.avgPrice,
-                  maxPrice: item.maxPrice,
-                  carriers: [carrier],
-                  classes: [travelClass],
-                  discountCards: [discountCard],
-                }))
+                item.discountCards.flatMap((discountCard) =>
+                  (item.flexibilities || []).map((flexibility) => ({
+                    departureStation: item.departureStation,
+                    departureStationId: item.departureStationId,
+                    arrivalStation: item.arrivalStation,
+                    arrivalStationId: item.arrivalStationId,
+                    minPrice: item.minPrice,
+                    avgPrice: item.avgPrice,
+                    maxPrice: item.maxPrice,
+                    carriers: [carrier],
+                    classes: [travelClass],
+                    discountCards: [discountCard],
+                    flexibilities: [flexibility],
+                  }))
+                )
               )
             );
 
