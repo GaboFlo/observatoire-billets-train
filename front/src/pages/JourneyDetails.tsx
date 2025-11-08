@@ -8,6 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import LoadingAnimation from "../components/LoadingAnimation";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
@@ -204,111 +205,106 @@ const JourneyDetails = () => {
   const monthlyChange = 0; // À remplacer par un calcul réel quand l'historique sera disponible
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 py-8 mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button variant="outline" size="sm" asChild className="mr-4">
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Retour
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation
-                    ? translateStation(departureStation)
-                    : "Station de départ"}{" "}
-                  ⟶{" "}
-                  {arrivalStation
-                    ? translateStation(arrivalStation)
-                    : "Station d'arrivée"}
-                </h1>
-                <p className="text-gray-500 text-sm"></p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleInvertJourney}
-              className="flex items-center gap-2"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-              Inverser le trajet
+    <div className="min-h-screen bg-gray-50">
+      <div className="container px-4 py-8 mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <Button variant="outline" size="sm" asChild className="mr-4">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour
+              </Link>
             </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                {departureStation
+                  ? translateStation(departureStation)
+                  : "Station de départ"}{" "}
+                ⟶{" "}
+                {arrivalStation
+                  ? translateStation(arrivalStation)
+                  : "Station d'arrivée"}
+              </h1>
+              <p className="text-gray-500 text-sm"></p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleInvertJourney}
+            className="flex items-center gap-2"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            Inverser le trajet
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1 space-y-6">
+            {/* Filtres unifiés */}
+            <UnifiedFilters
+              availableDates={analysisDates}
+              availableTrains={availableTrains}
+              availableCarriers={availableCarriers}
+              availableClasses={availableClasses}
+              availableDiscountCards={availableDiscountCards}
+              availableFlexibilities={availableFlexibilities}
+              selectedDate={selectedDate}
+              selectedTrain={selectedTrain}
+              selectedCarriers={selectedCarriers}
+              selectedClasses={selectedClasses}
+              selectedDiscountCards={selectedDiscountCards}
+              selectedFlexibilities={selectedFlexibilities}
+              onDateSelect={handleDateSelect}
+              onTrainSelect={(train) => handleTrainSelect(train || "")}
+              onCarrierToggle={handleCarrierToggle}
+              onClassToggle={handleClassToggle}
+              onDiscountCardToggle={handleDiscountCardToggle}
+              onFlexibilityToggle={handleFlexibilityToggle}
+              onInvertJourney={handleInvertJourney}
+              loading={loading}
+              filterLoading={filterLoading}
+            />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-              {/* Filtres unifiés */}
-              <UnifiedFilters
-                availableDates={analysisDates}
-                availableTrains={availableTrains}
-                availableCarriers={availableCarriers}
-                availableClasses={availableClasses}
-                availableDiscountCards={availableDiscountCards}
-                availableFlexibilities={availableFlexibilities}
-                selectedDate={selectedDate}
-                selectedTrain={selectedTrain}
-                selectedCarriers={selectedCarriers}
-                selectedClasses={selectedClasses}
-                selectedDiscountCards={selectedDiscountCards}
-                selectedFlexibilities={selectedFlexibilities}
-                onDateSelect={handleDateSelect}
-                onTrainSelect={(train) => handleTrainSelect(train || "")}
-                onCarrierToggle={handleCarrierToggle}
-                onClassToggle={handleClassToggle}
-                onDiscountCardToggle={handleDiscountCardToggle}
-                onFlexibilityToggle={handleFlexibilityToggle}
-                onInvertJourney={handleInvertJourney}
-                loading={loading}
-                filterLoading={filterLoading}
-              />
-            </div>
-
-            <div className="lg:col-span-2 space-y-8">
-              {/* KPIs et statistiques - Sticky sur PC */}
-              <div className="lg:sticky lg:top-4 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  <StatCard
-                    title="Prix Minimum"
-                    value={`${truncatePrice(calculatedStats.minPrice)}€`}
-                    description="Le tarif le plus bas observé"
-                    icon={TrendingDown}
-                    color="green"
-                  />
-                  <StatCard
-                    title="Prix Moyen"
-                    value={`${truncatePrice(calculatedStats.avgPrice)}€`}
-                    description="Prix moyen des offres disponibles"
-                    icon={ChartLine}
-                    color="blue"
-                  />
-                  <StatCard
-                    title="Prix Maximum"
-                    value={`${truncatePrice(calculatedStats.maxPrice)}€`}
-                    description="Le tarif le plus élevé observé"
-                    icon={TrendingUp}
-                    color="orange"
-                  />
-                </div>
-              </div>
-
-              {/* Statistiques graphiques - toujours affichées */}
-              <div className="lg:sticky lg:top-80 z-10 bg-gray-50 p-4 rounded-lg shadow-sm border -mt-4">
-                <StatisticsChart
-                  offers={filteredOffers}
-                  selectedDate={selectedDate}
-                  selectedTrain={selectedTrain}
-                  loading={filterLoading}
+          <div className="lg:col-span-2 space-y-8 sticky top-4 z-10 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <div className="bg-gray-50 rounded-lg">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <StatCard
+                  title="Prix Minimum"
+                  value={`${truncatePrice(calculatedStats.minPrice)}€`}
+                  description="Le tarif le plus bas observé"
+                  icon={TrendingDown}
+                  color="green"
+                />
+                <StatCard
+                  title="Prix Moyen"
+                  value={`${truncatePrice(calculatedStats.avgPrice)}€`}
+                  description="Prix moyen des offres disponibles"
+                  icon={ChartLine}
+                  color="blue"
+                />
+                <StatCard
+                  title="Prix Maximum"
+                  value={`${truncatePrice(calculatedStats.maxPrice)}€`}
+                  description="Le tarif le plus élevé observé"
+                  icon={TrendingUp}
+                  color="orange"
                 />
               </div>
+            </div>
+            <div className="bg-gray-50 rounded-lg">
+              <StatisticsChart
+                offers={filteredOffers}
+                selectedDate={selectedDate}
+                selectedTrain={selectedTrain}
+                loading={filterLoading}
+              />
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

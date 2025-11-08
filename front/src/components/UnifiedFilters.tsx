@@ -64,17 +64,10 @@ const CollapsibleSection = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-3">
-    <div
-      className="flex items-center justify-between cursor-pointer"
+    <button
+      type="button"
+      className="flex items-center justify-between cursor-pointer w-full"
       onClick={onToggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onToggle();
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
       <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
         <Icon className="w-4 h-4" />
@@ -87,7 +80,7 @@ const CollapsibleSection = ({
           <ChevronDown className="w-4 h-4" />
         )}
       </Button>
-    </div>
+    </button>
     {isExpanded && children}
   </div>
 );
@@ -296,10 +289,7 @@ const UnifiedFilters = ({
                 <div key={carrier} className="flex items-center space-x-2">
                   <Checkbox
                     id={`carrier-${carrier}`}
-                    checked={
-                      selectedCarriers.length === 0 ||
-                      selectedCarriers.includes(carrier)
-                    }
+                    checked={selectedCarriers.includes(carrier)}
                     onCheckedChange={() => onCarrierToggle(carrier)}
                   />
                   <label
@@ -331,10 +321,7 @@ const UnifiedFilters = ({
                   >
                     <Checkbox
                       id={`class-${travelClass}`}
-                      checked={
-                        selectedClasses.length === 0 ||
-                        selectedClasses.includes(travelClass)
-                      }
+                      checked={selectedClasses.includes(travelClass)}
                       onCheckedChange={() => onClassToggle(travelClass)}
                     />
                     <label
@@ -361,10 +348,7 @@ const UnifiedFilters = ({
                 <div key={discountCard} className="flex items-center space-x-2">
                   <Checkbox
                     id={`discount-${discountCard}`}
-                    checked={
-                      selectedDiscountCards.length === 0 ||
-                      selectedDiscountCards.includes(discountCard)
-                    }
+                    checked={selectedDiscountCards.includes(discountCard)}
                     onCheckedChange={() => onDiscountCardToggle(discountCard)}
                   />
                   <label
@@ -391,10 +375,7 @@ const UnifiedFilters = ({
                 <div key={flexibility} className="flex items-center space-x-2">
                   <Checkbox
                     id={`flexibility-${flexibility}`}
-                    checked={
-                      selectedFlexibilities.length === 0 ||
-                      selectedFlexibilities.includes(flexibility)
-                    }
+                    checked={selectedFlexibilities.includes(flexibility)}
                     onCheckedChange={() => onFlexibilityToggle(flexibility)}
                   />
                   <label

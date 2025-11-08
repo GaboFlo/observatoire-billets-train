@@ -10,8 +10,6 @@ import { DetailedPricingResult } from "@/types/journey";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -224,48 +222,6 @@ const StatisticsChart = ({
               />
             </LineChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Graphique en barres pour les trains disponibles/complets */}
-        <div className="mt-6">
-          <CardDescription>Disponibilité des trains</CardDescription>
-          <div className="h-60 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 15 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="daysBeforeDeparture"
-                  label={{
-                    value: "Jours avant le départ",
-                    position: "insideBottom",
-                    offset: -10,
-                  }}
-                />
-                <YAxis
-                  label={{
-                    value: "Nombre de trains",
-                    angle: -90,
-                  }}
-                />
-                <Tooltip formatter={formatTooltip} />
-                <Bar
-                  name="Trains disponibles"
-                  dataKey="availableTrains"
-                  fill="#10b981"
-                  stackId="trains"
-                />
-                <Bar
-                  name="Trains complets"
-                  dataKey="soldOutTrains"
-                  fill="#ef4444"
-                  stackId="trains"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </CardContent>
     </Card>
