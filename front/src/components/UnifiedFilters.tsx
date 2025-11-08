@@ -322,24 +322,29 @@ const UnifiedFilters = ({
             onToggle={toggleClassSection}
           >
             <div className="space-y-2">
-              {availableClasses.map((travelClass) => (
-                <div key={travelClass} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`class-${travelClass}`}
-                    checked={
-                      selectedClasses.length === 0 ||
-                      selectedClasses.includes(travelClass)
-                    }
-                    onCheckedChange={() => onClassToggle(travelClass)}
-                  />
-                  <label
-                    htmlFor={`class-${travelClass}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              {availableClasses
+                .filter((travelClass) => travelClass !== null)
+                .map((travelClass) => (
+                  <div
+                    key={travelClass}
+                    className="flex items-center space-x-2"
                   >
-                    {translateTravelClass(travelClass)}
-                  </label>
-                </div>
-              ))}
+                    <Checkbox
+                      id={`class-${travelClass}`}
+                      checked={
+                        selectedClasses.length === 0 ||
+                        selectedClasses.includes(travelClass)
+                      }
+                      onCheckedChange={() => onClassToggle(travelClass)}
+                    />
+                    <label
+                      htmlFor={`class-${travelClass}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {translateTravelClass(travelClass)}
+                    </label>
+                  </div>
+                ))}
             </div>
           </CollapsibleSection>
         )}

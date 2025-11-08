@@ -228,9 +228,7 @@ const StatisticsChart = ({
 
         {/* Graphique en barres pour les trains disponibles/complets */}
         <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">
-            Disponibilité des trains
-          </h4>
+          <CardDescription>Disponibilité des trains</CardDescription>
           <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -250,7 +248,6 @@ const StatisticsChart = ({
                   label={{
                     value: "Nombre de trains",
                     angle: -90,
-                    position: "insideLeft",
                   }}
                 />
                 <Tooltip formatter={formatTooltip} />

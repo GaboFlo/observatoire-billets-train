@@ -32,6 +32,7 @@ interface TrainDocument extends Document {
   departure_station: Station;
   arrival_station: Station;
   pricing: Pricing;
+  is_error: boolean;
 }
 
 interface AggregatedPricingResult {
@@ -100,6 +101,7 @@ const pricingSchema = new Schema({
 
 const trainSchema = new Schema<TrainDocument>({
   created_at: { type: Date, required: true },
+  is_error: { type: Boolean, required: false, default: false },
   departure_date: { type: Date, required: true },
   arrival_date: { type: Date, required: true },
   daysBeforeDeparture: { type: Number, required: true },
@@ -214,9 +216,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = {
-      "pricing.unsellable_reason": null,
-    };
+    const baseMatch: any = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {
@@ -687,9 +687,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = {
-      "pricing.unsellable_reason": null,
-    };
+    const baseMatch: any = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {
@@ -890,9 +888,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = {
-      "pricing.unsellable_reason": null,
-    };
+    const baseMatch: any = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {
