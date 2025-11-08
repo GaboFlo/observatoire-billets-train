@@ -57,7 +57,7 @@ export const useJourneyDetails = (
   const [availableTrains, setAvailableTrains] = useState<TrainInfo[]>([]);
   const [selectedTrain, setSelectedTrain] = useState<string | null>(null);
   const [selectedCarriers, setSelectedCarriers] = useState<string[]>([]);
-  const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
+  const [selectedClasses, setSelectedClasses] = useState<string[]>(["economy"]);
   const [selectedDiscountCards, setSelectedDiscountCards] = useState<string[]>(
     []
   );
@@ -83,7 +83,7 @@ export const useJourneyDetails = (
   >(["nonflexi", "flexi", "semiflexi"]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
-    classes: [],
+    classes: ["economy"],
     discountCards: [],
     selectedDates: [],
     departureStationId,
@@ -200,6 +200,7 @@ export const useJourneyDetails = (
       setSelectedDate(null);
       setAvailableTrains([]);
       setSelectedTrain(null);
+      setSelectedClasses(["economy"]);
       setDetailedOffers([]);
       setError(null);
 
@@ -339,13 +340,11 @@ export const useJourneyDetails = (
   const handleClassToggle = useCallback(
     (travelClass: string) => {
       const newSelectedClasses = selectedClasses.includes(travelClass)
-        ? selectedClasses.filter((c) => c !== travelClass)
-        : [...selectedClasses, travelClass];
+        ? []
+        : [travelClass];
 
       setSelectedClasses(newSelectedClasses);
 
-      // Déclencher un appel API avec les nouveaux filtres
-      // Maintenant on passe directement les classes sélectionnées
       applyFilters({
         classes: newSelectedClasses,
       });
