@@ -10,6 +10,7 @@ interface JourneyDetailsFilters {
   carriers: string[];
   classes: string[];
   discountCards: string[];
+  flexibilities?: string[];
   selectedDates?: string[];
   departureStationId?: number;
   arrivalStationId?: number;
@@ -599,6 +600,7 @@ export const useJourneyDetails = (
     selectedCarriers,
     selectedClasses,
     selectedDiscountCards,
+    selectedFlexibilities,
     departureStationId,
     arrivalStationId,
   ]);
