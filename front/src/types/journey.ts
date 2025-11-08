@@ -37,6 +37,7 @@ export interface ChartDataResult {
   price: number;
   is_sellable: boolean;
   daysBeforeDeparture: number;
+  discountCard?: string;
 }
 
 export interface ChartStatsResult {

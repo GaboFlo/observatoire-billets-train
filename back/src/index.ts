@@ -73,6 +73,7 @@ interface ChartDataResult {
   price: number;
   is_sellable: boolean;
   daysBeforeDeparture: number;
+  discountCard?: string;
 }
 
 interface ChartStatsResult {
@@ -848,6 +849,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
         price: item.minPrice,
         is_sellable: item.is_sellable,
         daysBeforeDeparture: item.daysBeforeDeparture,
+        discountCard: item.discountCard || "NONE",
       }));
 
       // Calculer les statistiques depuis le cache
@@ -964,6 +966,53 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
           price: "$pricing.price",
           is_sellable: "$pricing.is_sellable",
           daysBeforeDeparture: 1,
+          discountCard: "$pricing.discount_card",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            daysBeforeDeparture: "$daysBeforeDeparture",
+            discountCard: "$discountCard",
+          },
+          prices: { $push: "$price" },
+          is_sellable: { $push: "$is_sellable" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          daysBeforeDeparture: "$_id.daysBeforeDeparture",
+          discountCard: "$_id.discountCard",
+          validPrices: {
+            $filter: {
+              input: "$prices",
+              as: "p",
+              cond: {
+                $and: [
+                  { $ne: ["$$p", null] },
+                  { $ne: ["$$p", NaN] },
+                  { $gte: ["$$p", 0] },
+                ],
+              },
+            },
+          },
+          is_sellable: { $anyElementTrue: "$is_sellable" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          daysBeforeDeparture: 1,
+          discountCard: 1,
+          price: {
+            $cond: {
+              if: { $gt: [{ $size: "$validPrices" }, 0] },
+              then: { $avg: "$validPrices" },
+              else: 0,
+            },
+          },
+          is_sellable: 1,
         },
       },
     ]);
@@ -1009,7 +1058,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
       arrivalStation: "",
       arrivalStationId: 0,
       travelClass: "",
-      discountCard: "",
+      discountCard: item.discountCard || "NONE",
       trainName: "",
       carrier: "",
       minPrice: item.price,

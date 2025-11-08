@@ -538,11 +538,11 @@ export const useJourneyDetails = (
         departureStationId: 0,
         arrivalStation: "",
         arrivalStationId: 0,
-        travelClass: "economy", // Valeur par défaut pour éviter les filtres
-        discountCard: "",
-        flexibility: "nonflexi", // Valeur par défaut pour éviter les filtres
+        travelClass: "economy",
+        discountCard: item.discountCard || "NONE",
+        flexibility: "nonflexi",
         trainName: "",
-        carrier: "sncf", // Valeur par défaut pour éviter les filtres
+        carrier: "sncf",
         minPrice: item.price,
         avgPrice: item.price,
         maxPrice: item.price,

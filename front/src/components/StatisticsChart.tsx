@@ -59,64 +59,92 @@ const StatisticsChart = ({
   const chartData = useMemo(() => {
     if (!offers || offers.length === 0) return [];
 
-    // Grouper les données par jours avant le départ
-    const groupedByDays = offers.reduce(
+    const groupedByDaysAndCard = offers.reduce(
       (acc, offer) => {
         const days = offer.daysBeforeDeparture || 0;
-        if (!acc[days]) {
-          acc[days] = {
+        const card = offer.discountCard || "NONE";
+        const key = `${days}-${card}`;
+
+        if (!acc[key]) {
+          acc[key] = {
             daysBeforeDeparture: days,
+            discountCard: card,
             prices: [],
-            availableTrains: 0,
-            soldOutTrains: 0,
           };
         }
 
-        // Utiliser le prix réel de l'offre (qui est stocké dans minPrice)
-        acc[days].prices.push(truncatePrice(offer.minPrice));
-
-        if (offer.is_sellable) {
-          acc[days].availableTrains++;
-        } else {
-          acc[days].soldOutTrains++;
-        }
+        acc[key].prices.push(truncatePrice(offer.minPrice));
 
         return acc;
       },
       {} as Record<
-        number,
+        string,
         {
           daysBeforeDeparture: number;
+          discountCard: string;
           prices: number[];
-          availableTrains: number;
-          soldOutTrains: number;
         }
       >
     );
 
-    // Convertir en format pour le graphique
-    return Object.values(groupedByDays)
-      .map((group) => ({
-        daysBeforeDeparture: -group.daysBeforeDeparture,
-        minPrice: truncatePrice(Math.min(...group.prices)),
-        avgPrice: truncatePrice(
-          group.prices.reduce((sum: number, price: number) => sum + price, 0) /
-            group.prices.length
-        ),
-        maxPrice: truncatePrice(Math.max(...group.prices)),
-        availableTrains: group.availableTrains,
-        soldOutTrains: group.soldOutTrains,
-        totalTrains: group.availableTrains + group.soldOutTrains,
-      }))
-      .sort((a, b) => a.daysBeforeDeparture - b.daysBeforeDeparture);
+    const allDays = new Set<number>();
+    const allCards = new Set<string>();
+
+    Object.values(groupedByDaysAndCard).forEach((group) => {
+      allDays.add(group.daysBeforeDeparture);
+      allCards.add(group.discountCard);
+    });
+
+    const sortedDays = Array.from(allDays).sort((a, b) => b - a);
+
+    const result = sortedDays.map((days) => {
+      const dataPoint: Record<string, number | string | null> = {
+        daysBeforeDeparture: -days,
+      };
+
+      allCards.forEach((card) => {
+        const key = `${days}-${card}`;
+        const group = groupedByDaysAndCard[key];
+        if (group && group.prices.length > 0) {
+          const avgPrice = truncatePrice(
+            group.prices.reduce((sum, price) => sum + price, 0) /
+              group.prices.length
+          );
+          dataPoint[card] = avgPrice;
+        } else {
+          dataPoint[card] = null;
+        }
+      });
+
+      return dataPoint;
+    });
+
+    return result;
   }, [offers]);
 
+  const discountCards = useMemo(() => {
+    const cards = new Set<string>();
+    offers.forEach((offer) => {
+      cards.add(offer.discountCard || "NONE");
+    });
+    return Array.from(cards).sort();
+  }, [offers]);
+
+  const cardColors = [
+    "#3b82f6",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#84cc16",
+  ];
+
   const formatTooltip = (value: number, name: string) => {
-    if (name === "minPrice")
-      return [`${truncatePrice(value)}€`, "Prix minimum"];
-    if (name === "avgPrice") return [`${truncatePrice(value)}€`, "Prix moyen"];
-    if (name === "maxPrice")
-      return [`${truncatePrice(value)}€`, "Prix maximum"];
+    if (typeof value === "number" && !Number.isNaN(value)) {
+      return [`${truncatePrice(value)}€`, translateDiscountCard(name)];
+    }
     return [value, name];
   };
 
@@ -322,30 +350,18 @@ const StatisticsChart = ({
                 }}
               />
               <Tooltip formatter={formatTooltip} />
-              <Line
-                type="monotone"
-                name="Prix minimum"
-                dataKey="minPrice"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={{ fill: "#10b981", strokeWidth: 2, r: 1 }}
-              />
-              <Line
-                type="monotone"
-                name="Prix moyen"
-                dataKey="avgPrice"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: "#3b82f6", strokeWidth: 2, r: 1 }}
-              />
-              <Line
-                type="monotone"
-                name="Prix maximum"
-                dataKey="maxPrice"
-                stroke="#ef4444"
-                strokeWidth={2}
-                dot={{ fill: "#ef4444", strokeWidth: 2, r: 1 }}
-              />
+              {discountCards.map((card, index) => (
+                <Line
+                  key={card}
+                  type="monotone"
+                  name={card}
+                  dataKey={card}
+                  stroke={cardColors[index % cardColors.length]}
+                  strokeWidth={2}
+                  dot={{ fill: cardColors[index % cardColors.length], strokeWidth: 2, r: 1 }}
+                  connectNulls={true}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
