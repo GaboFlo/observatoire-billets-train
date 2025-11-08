@@ -65,12 +65,11 @@ export const useJourneyDetails = (
     []
   );
   const [availableCarriers, setAvailableCarriers] = useState<string[]>([
-    "SNCF",
-    "db",
-    "ouigo",
     "sncf",
-    "eurostar",
+    "ouigo",
     "trenitalia_france",
+    "db",
+    "eurostar",
   ]);
   const [availableClasses, setAvailableClasses] = useState<string[]>([
     "economy",
@@ -544,7 +543,7 @@ export const useJourneyDetails = (
         discountCard: "",
         flexibility: "nonflexi", // Valeur par défaut pour éviter les filtres
         trainName: "",
-        carrier: "SNCF", // Valeur par défaut pour éviter les filtres
+        carrier: "sncf", // Valeur par défaut pour éviter les filtres
         minPrice: item.price,
         avgPrice: item.price,
         maxPrice: item.price,

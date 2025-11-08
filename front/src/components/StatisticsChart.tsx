@@ -7,6 +7,12 @@ import {
 } from "@/components/ui/card";
 import { truncatePrice } from "@/lib/utils";
 import { DetailedPricingResult } from "@/types/journey";
+import {
+  translateCarrier,
+  translateDiscountCard,
+  translateFlexibility,
+  translateTravelClass,
+} from "@/utils/translations";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import {
@@ -19,10 +25,23 @@ import {
   YAxis,
 } from "recharts";
 
+interface TrainInfo {
+  trainNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  carrier: string;
+  minPrice: number;
+}
+
 interface StatisticsChartProps {
   offers: DetailedPricingResult[];
   selectedDate: string | null;
   selectedTrain: string | null;
+  selectedCarriers?: string[];
+  selectedClasses?: string[];
+  selectedDiscountCards?: string[];
+  selectedFlexibilities?: string[];
+  availableTrains?: TrainInfo[];
   loading?: boolean;
 }
 
@@ -30,6 +49,11 @@ const StatisticsChart = ({
   offers,
   selectedDate,
   selectedTrain,
+  selectedCarriers = [],
+  selectedClasses = [],
+  selectedDiscountCards = [],
+  selectedFlexibilities = [],
+  availableTrains = [],
   loading = false,
 }: StatisticsChartProps) => {
   const chartData = useMemo(() => {
@@ -109,17 +133,122 @@ const StatisticsChart = ({
     return "Évolution des prix selon les jours avant départ";
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    return timeString.substring(0, 5);
+  };
+
   const getChartDescription = () => {
-    if (selectedDate && selectedTrain) {
-      return "Analyse des prix pour le train sélectionné à la date choisie";
+    const parts: (string | JSX.Element)[] = [];
+    const highlightStyle = "text-blue-600 font-bold";
+
+    const datePart = selectedDate
+      ? [
+          "Trajet du ",
+          <span key="date" className={highlightStyle}>
+            {formatDate(selectedDate)}
+          </span>,
+        ]
+      : [
+          "Trajet sur ",
+          <span key="all-dates" className={highlightStyle}>
+            toutes les dates
+          </span>,
+        ];
+    parts.push(...datePart);
+
+    if (selectedCarriers.length > 0) {
+      const carriersText = selectedCarriers
+        .map((c) => translateCarrier(c))
+        .join(", ");
+      parts.push(
+        " avec ",
+        <span key="carriers" className={highlightStyle}>
+          {carriersText}
+        </span>
+      );
     }
-    if (selectedDate && !selectedTrain) {
-      return "Analyse des prix pour tous les trains de cette date";
+
+    if (selectedClasses.length > 0) {
+      const classesText = selectedClasses
+        .map((c) => translateTravelClass(c))
+        .join(", ");
+      parts.push(
+        " en  ",
+        <span key="classes" className={highlightStyle}>
+          {classesText}
+        </span>,
+        " classe "
+      );
     }
-    if (!selectedDate && selectedTrain) {
-      return "Analyse des prix pour ce train sur toutes les dates";
+
+    if (selectedDiscountCards.length > 0) {
+      const cardsText = selectedDiscountCards
+        .map((c) => translateDiscountCard(c))
+        .join(", ");
+      parts.push(
+        " avec carte ",
+        <span key="cards" className={highlightStyle}>
+          {cardsText}
+        </span>
+      );
     }
-    return "Analyse des prix pour tous les trains et toutes les dates";
+
+    if (selectedFlexibilities.length > 0) {
+      const flexText = selectedFlexibilities
+        .map((f) => translateFlexibility(f))
+        .join(", ");
+      parts.push(
+        " en flexibilité ",
+        <span key="flex" className={highlightStyle}>
+          {flexText}
+        </span>
+      );
+    }
+
+    if (selectedTrain) {
+      const trainInfo = availableTrains.find(
+        (t) => t.trainNumber === selectedTrain
+      );
+      if (trainInfo) {
+        parts.push(
+          " sur le train numéro ",
+          <span key="train-number" className={highlightStyle}>
+            {selectedTrain}
+          </span>,
+          " (",
+          <span key="train-time" className={highlightStyle}>
+            {formatTime(trainInfo.departureTime)} →{" "}
+            {formatTime(trainInfo.arrivalTime)}
+          </span>,
+          ")"
+        );
+      } else {
+        parts.push(
+          " sur le train numéro ",
+          <span key="train-number" className={highlightStyle}>
+            {selectedTrain}
+          </span>
+        );
+      }
+    } else {
+      parts.push(
+        " sur ",
+        <span key="all-trains" className={highlightStyle}>
+          tous les trains
+        </span>
+      );
+    }
+
+    return <>{parts}</>;
   };
 
   if (loading) {

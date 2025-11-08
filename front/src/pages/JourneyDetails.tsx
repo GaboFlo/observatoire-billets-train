@@ -298,6 +298,11 @@ const JourneyDetails = () => {
                 offers={filteredOffers}
                 selectedDate={selectedDate}
                 selectedTrain={selectedTrain}
+                selectedCarriers={selectedCarriers}
+                selectedClasses={selectedClasses}
+                selectedDiscountCards={selectedDiscountCards}
+                selectedFlexibilities={selectedFlexibilities}
+                availableTrains={availableTrains}
                 loading={filterLoading}
               />
             </div>

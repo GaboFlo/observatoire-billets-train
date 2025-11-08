@@ -11,6 +11,7 @@ import {
 import { truncatePrice } from "../lib/utils";
 import { getRouteData, RouteData } from "../services/routeService";
 import { GroupedJourney } from "../types/journey";
+import { translateStation } from "../utils/translations";
 
 interface TrainMapProps {
   journeys: GroupedJourney[];
@@ -66,15 +67,14 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
       // Créer un Set des routes uniques à charger (éviter les doublons aller/retour)
       const routesToLoad = new Set<string>();
 
-      filteredJourneys.forEach((journey) => {
+      for (const journey of filteredJourneys) {
         const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
         const reverseKey = `${journey.arrivalStationId}-${journey.departureStationId}`;
 
-        // Si ni la route directe ni la route inverse ne sont chargées, ajouter la route directe
         if (!routeData[key] && !routeData[reverseKey]) {
           routesToLoad.add(key);
         }
-      });
+      }
 
       const promises = Array.from(routesToLoad).map(async (routeKey) => {
         const [depId, arrId] = routeKey.split("-").map(Number);
@@ -102,7 +102,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   // Calcul sécurisé des prix min/max basé sur les données filtrées
   const priceStats = useMemo(() => {
     const validJourneys = filteredJourneys.filter(
-      (j) => typeof j.avgPrice === "number" && !isNaN(j.avgPrice)
+      (j) => typeof j.avgPrice === "number" && !Number.isNaN(j.avgPrice)
     );
 
     if (validJourneys.length === 0) {
@@ -135,11 +135,10 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
   const routeLines = useMemo(() => {
     const lines: RouteLine[] = [];
 
-    filteredJourneys.forEach((journey) => {
+    for (const journey of filteredJourneys) {
       const key = `${journey.departureStationId}-${journey.arrivalStationId}`;
       const reverseKey = `${journey.arrivalStationId}-${journey.departureStationId}`;
 
-      // Chercher la route dans les deux sens
       let route = routeData[key];
       let isReversed = false;
 
@@ -157,7 +156,7 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
           features = [route as GeoJSONFeature];
         }
 
-        features.forEach((feature, featureIndex) => {
+        for (const [featureIndex, feature] of features.entries()) {
           if (feature?.geometry?.coordinates) {
             let coordinates: [number, number][] = [];
 
@@ -200,30 +199,93 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
               });
             }
           }
-        });
+        }
       }
-    });
+    }
 
     return lines;
   }, [filteredJourneys, getColor, routeData]);
 
   const handleRouteClick = (routeKey: string, journeyIds: string[]) => {
     if (selectedRouteKey === routeKey) {
-      // Désélectionner si déjà sélectionné
       setSelectedRouteKey(null);
       onRouteSelect?.([]);
     } else {
-      // Sélectionner la nouvelle route
       setSelectedRouteKey(routeKey);
       onRouteSelect?.(journeyIds);
     }
   };
 
-  // Calculer le centre de la carte basé sur les routes disponibles
+  const getStationPriceRange = React.useCallback(
+    (stationId: number): { minPrice: number; maxPrice: number } | null => {
+      const stationJourneys = filteredJourneys.filter(
+        (j) =>
+          j.departureStationId === stationId || j.arrivalStationId === stationId
+      );
+
+      if (stationJourneys.length === 0) {
+        return null;
+      }
+
+      const allMinPrices = stationJourneys
+        .map((j) => j.minPrice)
+        .filter((price) => typeof price === "number" && !Number.isNaN(price));
+      const allMaxPrices = stationJourneys
+        .map((j) => j.maxPrice)
+        .filter((price) => typeof price === "number" && !Number.isNaN(price));
+
+      if (allMinPrices.length === 0 || allMaxPrices.length === 0) {
+        return null;
+      }
+
+      return {
+        minPrice: Math.min(...allMinPrices),
+        maxPrice: Math.max(...allMaxPrices),
+      };
+    },
+    [filteredJourneys]
+  );
+
+  const uniqueStations = useMemo(() => {
+    const stationMap = new Map<
+      number,
+      {
+        id: number;
+        name: string;
+        position: [number, number];
+      }
+    >();
+
+    for (const line of routeLines) {
+      if (line.coordinates.length > 0) {
+        const depKey = line.departureStationId;
+        if (!stationMap.has(depKey)) {
+          stationMap.set(depKey, {
+            id: depKey,
+            name: line.departureStation,
+            position: line.coordinates[0],
+          });
+        }
+      }
+
+      if (line.coordinates.length > 1) {
+        const arrKey = line.arrivalStationId;
+        if (!stationMap.has(arrKey)) {
+          stationMap.set(arrKey, {
+            id: arrKey,
+            name: line.arrivalStation,
+            position: line.coordinates.at(-1) || line.coordinates[0],
+          });
+        }
+      }
+    }
+
+    return Array.from(stationMap.values());
+  }, [routeLines]);
+
   const mapCenter = useMemo(() => {
-    // Centre entre Londres et Barcelone pour couvrir toute l'Europe de l'Ouest
-    return [47.0, 2.0]; // Centre approximatif entre Londres (51.5, -0.1) et Barcelone (41.4, 2.2)
-  }, []); // Dépendances vides pour éviter les recalcules
+    return [47, 2];
+  }, []);
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden">
@@ -258,7 +320,17 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                 <Polyline
                   positions={line.coordinates}
                   color={isSelected ? "#ff6b35" : line.color}
-                  weight={isSelected ? 5 : 3}
+                  weight={isSelected ? 8 : 6}
+                  opacity={0}
+                  eventHandlers={{
+                    click: () => handleRouteClick(routeKey, journeyIds),
+                  }}
+                  style={{ cursor: "pointer" }}
+                />
+                <Polyline
+                  positions={line.coordinates}
+                  color={isSelected ? "#ff6b35" : line.color}
+                  weight={isSelected ? 7 : 5}
                   opacity={isSelected ? 1 : 0.8}
                   eventHandlers={{
                     click: () => handleRouteClick(routeKey, journeyIds),
@@ -268,7 +340,6 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                   <Popup>
                     <div className="p-2">
                       {(() => {
-                        // Trouver les journeys correspondant à chaque sens
                         const forwardJourneys = filteredJourneys.filter(
                           (j) =>
                             j.departureStationId === line.departureStationId &&
@@ -284,38 +355,42 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                           <>
                             {forwardJourneys.length > 0 && (
                               <div className="mb-3">
-                                <div className="text-xs text-gray-600 mb-1">
-                                  {line.departureStation} ⟷{" "}
-                                  {line.arrivalStation}
+                                <div className="text-sm font-semibold text-gray-900 mb-2">
+                                  {translateStation(line.departureStation)} ⟷{" "}
+                                  {translateStation(line.arrivalStation)}
                                 </div>
-                                <div className="text-sm font-semibold text-blue-600">
-                                  Prix moyen :{" "}
-                                  {truncatePrice(forwardJourneys[0].avgPrice)}€
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  Prix min :{" "}
-                                  {truncatePrice(forwardJourneys[0].minPrice)}€
-                                  | Prix max :{" "}
-                                  {truncatePrice(forwardJourneys[0].maxPrice)}€
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">De</span>
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                    {truncatePrice(forwardJourneys[0].minPrice)}
+                                    €
+                                  </span>
+                                  <span className="text-sm">à</span>
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                    {truncatePrice(forwardJourneys[0].maxPrice)}
+                                    €
+                                  </span>
                                 </div>
                               </div>
                             )}
 
                             {reverseJourneys.length > 0 && (
                               <div>
-                                <div className="text-xs text-gray-600 mb-1">
-                                  {line.arrivalStation} ⟷{" "}
-                                  {line.departureStation}
+                                <div className="text-sm font-semibold text-gray-900 mb-2">
+                                  {translateStation(line.arrivalStation)} ⟷{" "}
+                                  {translateStation(line.departureStation)}
                                 </div>
-                                <div className="text-sm font-semibold text-blue-600">
-                                  Prix moyen :{" "}
-                                  {truncatePrice(reverseJourneys[0].avgPrice)}€
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  Prix min :{" "}
-                                  {truncatePrice(reverseJourneys[0].minPrice)}€
-                                  | Prix max :{" "}
-                                  {truncatePrice(reverseJourneys[0].maxPrice)}€
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm">De</span>
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                                    {truncatePrice(reverseJourneys[0].minPrice)}
+                                    €
+                                  </span>
+                                  <span className="text-sm">à</span>
+                                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                                    {truncatePrice(reverseJourneys[0].maxPrice)}
+                                    €
+                                  </span>
                                 </div>
                               </div>
                             )}
@@ -325,40 +400,41 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                     </div>
                   </Popup>
                 </Polyline>
-
-                {/* Marqueurs sur les gares (début et fin) */}
-                {line.coordinates.length > 0 && (
-                  <Marker
-                    position={line.coordinates[0]}
-                    icon={createCustomIcon("#6b7280")}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <div className="text-xs text-gray-600">
-                          {line.departureStation}
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )}
-
-                {line.coordinates.length > 1 && (
-                  <Marker
-                    position={line.coordinates[line.coordinates.length - 1]}
-                    icon={createCustomIcon("#6b7280")}
-                  >
-                    <Popup>
-                      <div className="p-2">
-                        <div className="text-xs text-gray-600">
-                          {line.arrivalStation}
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                )}
               </React.Fragment>
             );
           })}
+
+          {uniqueStations.map((station) => (
+            <Marker
+              key={station.id}
+              position={station.position}
+              icon={createCustomIcon("#6b7280")}
+            >
+              <Popup>
+                <div className="p-2">
+                  <div className="text-sm font-semibold text-gray-900 mb-2">
+                    {translateStation(station.name)}
+                  </div>
+                  {(() => {
+                    const priceRange = getStationPriceRange(station.id);
+                    if (priceRange === null) {
+                      return null;
+                    }
+                    return (
+                      <div className="flex gap-2">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                          {truncatePrice(priceRange.minPrice)}€
+                        </span>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                          {truncatePrice(priceRange.maxPrice)}€
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </div>
     </div>
