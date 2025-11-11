@@ -8,12 +8,24 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
   isFilterLoading = false,
 }) => {
   if (isFilterLoading) {
-    // Barre de chargement discrète pour les filtres
+    // Barre de chargement plus visible pour les filtres
     return (
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-pulse relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+      <div className="fixed top-0 left-0 right-0 z-50 shadow-md">
+        <div className="h-1.5 bg-gray-100 relative overflow-hidden">
+          <div className="h-full w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-[shimmer_1.5s_ease-in-out_infinite]"></div>
+          </div>
         </div>
+        <style>{`
+          @keyframes shimmer {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(200%);
+            }
+          }
+        `}</style>
       </div>
     );
   }

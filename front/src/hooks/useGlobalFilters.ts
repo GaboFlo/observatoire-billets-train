@@ -8,11 +8,12 @@ export interface GlobalFilters {
 }
 
 export const ALL_DISCOUNT_CARDS = ["NONE", "AVANTAGE_JEUNE", "MAX"];
+export const ALL_TRAVEL_CLASSES = ["economy", "first"];
 // Filtres par défaut centralisés
 export const DEFAULT_FILTERS: GlobalFilters = {
   carriers: ["sncf", "db", "ouigo", "eurostar", "trenitalia_france"],
-  classes: ["economy", "first"],
-  discountCards: ["NONE", "AVANTAGE_JEUNE"],
+  classes: ["economy"],
+  discountCards: ["NONE"],
 };
 
 export const useGlobalFilters = (
@@ -126,11 +127,19 @@ export const useGlobalFilters = (
 
   const handleClassFilter = (travelClass: string) => {
     const currentClasses = filters.classes || [];
+    const availableClasses = ["economy", "first"];
+    let newClasses: string[];
+
+    if (currentClasses.includes(travelClass)) {
+      const otherClass = availableClasses.find((c) => c !== travelClass);
+      newClasses = otherClass ? [otherClass] : [];
+    } else {
+      newClasses = [travelClass];
+    }
+
     const newFilters = {
       ...filters,
-      classes: currentClasses.includes(travelClass)
-        ? currentClasses.filter((c) => c !== travelClass)
-        : [...currentClasses, travelClass],
+      classes: newClasses,
     };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
@@ -138,11 +147,21 @@ export const useGlobalFilters = (
 
   const handleDiscountCardFilter = (discountCard: string) => {
     const currentDiscountCards = filters.discountCards || [];
+    const availableDiscountCards = availableOptions.discountCards;
+    let newDiscountCards: string[];
+
+    // Mode exclusif : une seule carte peut être sélectionnée à la fois
+    if (currentDiscountCards.includes(discountCard)) {
+      // Si on désélectionne la carte actuelle, on sélectionne NONE par défaut
+      newDiscountCards = ["NONE"];
+    } else {
+      // Sinon, on sélectionne uniquement la nouvelle carte
+      newDiscountCards = [discountCard];
+    }
+
     const newFilters = {
       ...filters,
-      discountCards: currentDiscountCards.includes(discountCard)
-        ? currentDiscountCards.filter((c) => c !== discountCard)
-        : [...currentDiscountCards, discountCard],
+      discountCards: newDiscountCards,
     };
     setFilters(newFilters);
     onFiltersChange?.(newFilters);
@@ -159,10 +178,7 @@ export const useGlobalFilters = (
         availableOptions.classes.length > 0
           ? availableOptions.classes
           : DEFAULT_FILTERS.classes,
-      discountCards:
-        availableOptions.discountCards.length > 0
-          ? availableOptions.discountCards
-          : DEFAULT_FILTERS.discountCards, // Inclure MAX
+      discountCards: ["NONE"], // Toujours réinitialiser à NONE
     };
     setFilters(allFilters);
     onFiltersChange?.(allFilters);

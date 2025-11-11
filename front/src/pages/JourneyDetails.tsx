@@ -4,16 +4,19 @@ import {
   ArrowRightLeft,
   Calendar,
   ChartLine,
+  ChevronRight,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Filters from "../components/Filters";
 import Footer from "../components/Footer";
 import LoadingAnimation from "../components/LoadingAnimation";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
-import UnifiedFilters from "../components/UnifiedFilters";
+import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
 import { truncatePrice } from "../lib/utils";
@@ -71,6 +74,72 @@ const JourneyDetails = () => {
     const newUrl = `/journey/${arrivalStation}/${departureStation}/${arrivalStationId}/${departureStationId}`;
     navigate(newUrl);
   };
+
+  // Fonction pour reset les filtres
+  const handleResetFilters = () => {
+    // Réinitialiser aux valeurs par défaut
+    // Pour les carriers, sélectionner uniquement ceux par défaut
+    DEFAULT_FILTERS.carriers.forEach((carrier) => {
+      if (!selectedCarriers.includes(carrier)) {
+        handleCarrierToggle(carrier);
+      }
+    });
+    // Désélectionner les carriers non par défaut
+    selectedCarriers.forEach((carrier) => {
+      if (!DEFAULT_FILTERS.carriers.includes(carrier)) {
+        handleCarrierToggle(carrier);
+      }
+    });
+
+    // Pour les classes, sélectionner economy si ce n'est pas déjà fait
+    if (!selectedClasses.includes("economy")) {
+      handleClassToggle("economy");
+    }
+
+    // Pour les discountCards, sélectionner NONE si ce n'est pas déjà fait
+    if (!selectedDiscountCards.includes("NONE")) {
+      handleDiscountCardToggle("NONE");
+    }
+    // Désélectionner les autres discountCards
+    selectedDiscountCards.forEach((card) => {
+      if (card !== "NONE") {
+        handleDiscountCardToggle(card);
+      }
+    });
+
+    // Réinitialiser flexibilities, dates et train
+    selectedFlexibilities.forEach((flex) => {
+      if (selectedFlexibilities.includes(flex)) {
+        handleFlexibilityToggle(flex);
+      }
+    });
+    handleDateSelect(null);
+    handleTrainSelect("");
+  };
+
+  // Vérifier si les filtres sont collapsés
+  const [filtersCollapsed, setFiltersCollapsed] = useState(() => {
+    const saved = localStorage.getItem("filters-collapsed");
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  // Écouter les changements de collapse depuis localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem("filters-collapsed");
+      const newState = saved ? JSON.parse(saved) : false;
+      if (newState !== filtersCollapsed) {
+        setFiltersCollapsed(newState);
+      }
+    };
+    globalThis.addEventListener("storage", handleStorageChange);
+    // Écouter aussi les changements dans le même onglet avec un délai plus long
+    const interval = setInterval(handleStorageChange, 300);
+    return () => {
+      globalThis.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [filtersCollapsed]);
 
   if (loading) {
     return <LoadingAnimation />;
@@ -207,17 +276,30 @@ const JourneyDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="container px-4 py-8 mx-auto flex-1">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Button variant="outline" size="sm" asChild className="mr-4">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+      <div className="w-full pt-6 pb-4">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="mb-4 relative min-h-[60px] flex items-center">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Retour
+                </Link>
+              </Button>
+            </div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleInvertJourney}
+                className="flex items-center gap-2"
+              >
+                <ArrowRightLeft className="h-4 w-4" />
+                Inverser le trajet
+              </Button>
+            </div>
+            <div className="text-center w-full">
+              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 {departureStation
                   ? translateStation(departureStation)
                   : "Station de départ"}{" "}
@@ -226,24 +308,46 @@ const JourneyDetails = () => {
                   ? translateStation(arrivalStation)
                   : "Station d'arrivée"}
               </h1>
-              <p className="text-gray-500 text-sm"></p>
+              <p className="text-sm text-gray-500 mb-0"></p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleInvertJourney}
-            className="flex items-center gap-2"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-            Inverser le trajet
-          </Button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
-            {/* Filtres unifiés */}
-            <UnifiedFilters
+      <div className="w-full px-4 pb-8">
+        <div className="flex flex-col lg:flex-row gap-6 relative">
+          {/* Bouton pour réafficher les filtres quand ils sont collapsés */}
+          {filtersCollapsed && (
+            <Button
+              onClick={() => {
+                const newState = false;
+                setFiltersCollapsed(newState);
+                localStorage.setItem(
+                  "filters-collapsed",
+                  JSON.stringify(newState)
+                );
+              }}
+              variant="outline"
+              size="sm"
+              className="fixed left-0 top-1/2 -translate-y-1/2 z-40 rounded-r-lg rounded-l-none shadow-lg bg-white hover:bg-gray-50"
+              aria-label="Afficher les filtres"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
+          {/* Sidebar de filtres - max 1/3 sur desktop */}
+          <div
+            className={`transition-all duration-300 ease-in-out ${
+              filtersCollapsed
+                ? "lg:w-0 lg:max-w-0 lg:overflow-hidden lg:opacity-0 lg:pointer-events-none"
+                : "lg:w-1/3 lg:max-w-md lg:opacity-100 lg:pointer-events-auto"
+            } lg:sticky lg:top-4 lg:self-start`}
+            style={{
+              willChange: "opacity, width",
+            }}
+          >
+            {/* Filtres */}
+            <Filters
               availableDates={analysisDates}
               availableTrains={availableTrains}
               availableCarriers={availableCarriers}
@@ -263,12 +367,19 @@ const JourneyDetails = () => {
               onDiscountCardToggle={handleDiscountCardToggle}
               onFlexibilityToggle={handleFlexibilityToggle}
               onInvertJourney={handleInvertJourney}
+              onResetFilters={handleResetFilters}
               loading={loading}
               filterLoading={filterLoading}
             />
           </div>
 
-          <div className="lg:col-span-2 space-y-8 sticky top-4 z-10 max-h-[calc(100vh-2rem)] overflow-y-auto">
+          {/* Contenu principal - prend toute la largeur si filtres collapsés */}
+          <div
+            className={`flex-1 space-y-8 sticky top-4 z-10 max-h-[calc(100vh-2rem)] overflow-y-auto`}
+            style={{
+              willChange: "width",
+            }}
+          >
             <div className="bg-gray-50 rounded-lg">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard
@@ -304,6 +415,9 @@ const JourneyDetails = () => {
                 selectedDiscountCards={selectedDiscountCards}
                 selectedFlexibilities={selectedFlexibilities}
                 availableTrains={availableTrains}
+                availableCarriers={availableCarriers}
+                availableClasses={availableClasses}
+                availableDiscountCards={availableDiscountCards}
                 loading={filterLoading}
               />
             </div>

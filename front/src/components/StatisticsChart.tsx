@@ -17,6 +17,7 @@ import { BarChart3, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -42,6 +43,9 @@ interface StatisticsChartProps {
   selectedDiscountCards?: string[];
   selectedFlexibilities?: string[];
   availableTrains?: TrainInfo[];
+  availableCarriers?: string[];
+  availableClasses?: string[];
+  availableDiscountCards?: string[];
   loading?: boolean;
 }
 
@@ -54,6 +58,9 @@ const StatisticsChart = ({
   selectedDiscountCards = [],
   selectedFlexibilities = [],
   availableTrains = [],
+  availableCarriers = [],
+  availableClasses = [],
+  availableDiscountCards = [],
   loading = false,
 }: StatisticsChartProps) => {
   const chartData = useMemo(() => {
@@ -193,8 +200,13 @@ const StatisticsChart = ({
         ];
     parts.push(...datePart);
 
-    if (selectedCarriers.length > 0) {
-      const carriersText = selectedCarriers
+    const filteredCarriers =
+      availableCarriers.length > 0
+        ? selectedCarriers.filter((c) => availableCarriers.includes(c))
+        : selectedCarriers;
+
+    if (filteredCarriers.length > 0) {
+      const carriersText = filteredCarriers
         .map((c) => translateCarrier(c))
         .join(", ");
       parts.push(
@@ -205,8 +217,13 @@ const StatisticsChart = ({
       );
     }
 
-    if (selectedClasses.length > 0) {
-      const classesText = selectedClasses
+    const filteredClasses =
+      availableClasses.length > 0
+        ? selectedClasses.filter((c) => availableClasses.includes(c))
+        : selectedClasses;
+
+    if (filteredClasses.length > 0) {
+      const classesText = filteredClasses
         .map((c) => translateTravelClass(c))
         .join(", ");
       parts.push(
@@ -218,8 +235,15 @@ const StatisticsChart = ({
       );
     }
 
-    if (selectedDiscountCards.length > 0) {
-      const cardsText = selectedDiscountCards
+    const filteredDiscountCards =
+      availableDiscountCards.length > 0
+        ? selectedDiscountCards.filter((c) =>
+            availableDiscountCards.includes(c)
+          )
+        : selectedDiscountCards;
+
+    if (filteredDiscountCards.length > 0) {
+      const cardsText = filteredDiscountCards
         .map((c) => translateDiscountCard(c))
         .join(", ");
       parts.push(
@@ -350,6 +374,10 @@ const StatisticsChart = ({
                 }}
               />
               <Tooltip formatter={formatTooltip} />
+              <Legend
+                formatter={(value) => translateDiscountCard(value)}
+                wrapperStyle={{ paddingTop: "20px" }}
+              />
               {discountCards.map((card, index) => (
                 <Line
                   key={card}

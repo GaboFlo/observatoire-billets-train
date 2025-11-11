@@ -22,15 +22,18 @@ const Index = () => {
     currentFilters,
   } = useJourneyData();
 
-  // Charger les données initiales au démarrage
+  // Charger les données initiales au démarrage uniquement si on n'a pas déjà de données
   useEffect(() => {
-    fetchJourneys({
-      ...DEFAULT_FILTERS,
-      selectedDates: [], // Toutes les dates disponibles
-    });
-  }, [fetchJourneys]);
+    if (allJourneys.length === 0 && journeys.length === 0) {
+      fetchJourneys({
+        ...DEFAULT_FILTERS,
+        flexibilities: [],
+        selectedDates: [], // Toutes les dates disponibles
+      });
+    }
+  }, [fetchJourneys, allJourneys.length, journeys.length]);
 
-  if (loading && journeys.length === 0) {
+  if (loading && journeys.length === 0 && allJourneys.length === 0) {
     return <LoadingAnimation />;
   }
 
@@ -45,20 +48,22 @@ const Index = () => {
         <LoadingAnimation isFilterLoading={true} />
       )}
 
-      <div className="container px-4 py-8 mx-auto max-w-7xl flex-1">
-        <PageHeader />
-
-        <div className="space-y-6">
-          <JourneysTab
-            journeys={journeys}
-            allJourneys={allJourneys}
-            analysisDates={analysisDates}
-            selectedDates={selectedDates}
-            onDateSelect={handleDateSelect}
-            applyFilters={applyFilters}
-            currentFilters={currentFilters}
-          />
+      <div className="w-full pt-6 pb-4">
+        <div className="max-w-7xl mx-auto px-4">
+          <PageHeader />
         </div>
+      </div>
+
+      <div className="w-full px-4 pb-8">
+        <JourneysTab
+          journeys={journeys}
+          allJourneys={allJourneys}
+          analysisDates={analysisDates}
+          selectedDates={selectedDates}
+          onDateSelect={handleDateSelect}
+          applyFilters={applyFilters}
+          currentFilters={currentFilters}
+        />
       </div>
       <Footer />
     </div>

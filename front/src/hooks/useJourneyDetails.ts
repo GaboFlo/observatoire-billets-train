@@ -5,6 +5,7 @@ import {
   GroupedJourney,
 } from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { loadFilters } from "../utils/filterStorage";
 
 interface JourneyDetailsFilters {
   carriers: string[];
@@ -92,6 +93,7 @@ export const useJourneyDetails = (
 
   // Ref pour le debounce
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const filtersAppliedRef = useRef(false);
 
   // Fonction pour récupérer les dates disponibles
   const fetchAvailableDates = useCallback(async () => {
@@ -193,14 +195,56 @@ export const useJourneyDetails = (
     [currentFilters]
   );
 
+  // Charger les filtres sauvegardés au démarrage
+  useEffect(() => {
+    const saved = loadFilters();
+    if (saved) {
+      if (saved.classes && saved.classes.length > 0) {
+        setSelectedClasses([saved.classes[0]]);
+      }
+      if (saved.carriers && saved.carriers.length > 0) {
+        setSelectedCarriers(saved.carriers);
+      }
+      if (saved.discountCards && saved.discountCards.length > 0) {
+        setSelectedDiscountCards(saved.discountCards);
+      }
+      if (saved.flexibilities && saved.flexibilities.length > 0) {
+        setSelectedFlexibilities(saved.flexibilities);
+      }
+      setCurrentFilters((prev) => ({
+        ...prev,
+        carriers: saved.carriers || [],
+        classes:
+          saved.classes.length > 0 ? [saved.classes[0]] : ["economy"],
+        discountCards: saved.discountCards || [],
+        flexibilities: saved.flexibilities || [],
+        selectedDates: saved.selectedDates || [],
+      }));
+    }
+  }, []);
+
+  // Appliquer les dates sauvegardées une fois que les dates disponibles sont chargées
+  useEffect(() => {
+    if (analysisDates.length > 0) {
+      const saved = loadFilters();
+      if (saved?.selectedDates && saved.selectedDates.length > 0) {
+        const firstSavedDate = saved.selectedDates[0];
+        if (analysisDates.includes(firstSavedDate)) {
+          setSelectedDate(firstSavedDate);
+        }
+      }
+    }
+  }, [analysisDates]);
+
   // Chargement initial - récupérer les dates disponibles
   useEffect(() => {
     if (departureStation && arrivalStation) {
+      // Réinitialiser le flag de filtres appliqués
+      filtersAppliedRef.current = false;
       // Réinitialiser l'état
       setSelectedDate(null);
       setAvailableTrains([]);
       setSelectedTrain(null);
-      setSelectedClasses(["economy"]);
       setDetailedOffers([]);
       setError(null);
 
@@ -300,6 +344,69 @@ export const useJourneyDetails = (
       fetchAvailableOptions();
     }
   }, [departureStation, arrivalStation, fetchAvailableOptions]);
+
+  // Filtrer les filtres sauvegardés selon les options disponibles (une seule fois)
+  useEffect(() => {
+    if (
+      !filtersAppliedRef.current &&
+      (availableCarriers.length > 0 ||
+        availableClasses.length > 0 ||
+        availableDiscountCards.length > 0)
+    ) {
+      const saved = loadFilters();
+      if (saved) {
+        const filteredCarriers =
+          saved.carriers?.filter((carrier) =>
+            availableCarriers.includes(carrier)
+          ) || [];
+        const filteredClasses =
+          saved.classes?.filter((travelClass) =>
+            availableClasses.includes(travelClass)
+          ) || [];
+        const filteredDiscountCards =
+          saved.discountCards?.filter((discountCard) =>
+            availableDiscountCards.includes(discountCard)
+          ) || [];
+
+        if (filteredCarriers.length > 0) {
+          setSelectedCarriers(filteredCarriers);
+        }
+        const finalClasses =
+          filteredClasses.length > 0
+            ? [filteredClasses[0]]
+            : availableClasses.length > 0
+              ? [availableClasses[0]]
+              : ["economy"];
+        setSelectedClasses(finalClasses);
+        if (filteredDiscountCards.length > 0) {
+          setSelectedDiscountCards(filteredDiscountCards);
+        }
+        const filteredFlexibilities =
+          saved.flexibilities?.filter((flexibility) =>
+            availableFlexibilities.includes(flexibility)
+          ) || [];
+        const finalFlexibilities = filteredFlexibilities;
+        if (finalFlexibilities.length > 0) {
+          setSelectedFlexibilities(finalFlexibilities);
+        }
+
+        setCurrentFilters((prev) => ({
+          ...prev,
+          carriers: filteredCarriers,
+          classes: finalClasses,
+          discountCards: filteredDiscountCards,
+          flexibilities: finalFlexibilities,
+        }));
+
+        filtersAppliedRef.current = true;
+      }
+    }
+  }, [
+    availableCarriers,
+    availableClasses,
+    availableDiscountCards,
+    availableFlexibilities,
+  ]);
 
   // Fonctions de gestion des sélections
   const handleDateSelect = useCallback(
@@ -428,7 +535,13 @@ export const useJourneyDetails = (
       arrivalStationId,
     };
 
-    if (!selectedDate && !selectedTrain) {
+    const datesToUse = selectedDate
+      ? [selectedDate]
+      : currentFilters.selectedDates.length > 0
+        ? currentFilters.selectedDates
+        : [];
+
+    if (!selectedDate && !selectedTrain && datesToUse.length === 0) {
       return { ...baseRequest, selectedDates: [], trainNumber: selectedTrain };
     }
 
@@ -436,21 +549,21 @@ export const useJourneyDetails = (
       return {
         ...baseRequest,
         trainNumber: selectedTrain,
-        selectedDates: [],
+        selectedDates: datesToUse,
       };
     }
 
     if (selectedDate && selectedTrain === null) {
       return {
         ...baseRequest,
-        selectedDates: [selectedDate],
+        selectedDates: datesToUse,
       };
     }
 
     return {
       ...baseRequest,
       trainNumber: selectedTrain,
-      selectedDates: [selectedDate],
+      selectedDates: datesToUse,
     };
   }, [
     selectedDate,
@@ -465,6 +578,7 @@ export const useJourneyDetails = (
     availableClasses,
     availableDiscountCards,
     availableFlexibilities,
+    currentFilters.selectedDates,
   ]);
 
   // Fonction pour traiter le résultat de l'analyse

@@ -421,10 +421,12 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
                       return null;
                     }
                     return (
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">De</span>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
                           {truncatePrice(priceRange.minPrice)}€
                         </span>
+                        <span className="text-sm">à</span>
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
                           {truncatePrice(priceRange.maxPrice)}€
                         </span>

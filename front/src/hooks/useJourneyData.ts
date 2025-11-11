@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import datesData from "../data/dates.json";
 import { GroupedJourney } from "../types/journey";
+import { saveFilters } from "../utils/filterStorage";
 
 export interface Journey extends GroupedJourney {}
 
@@ -17,11 +18,13 @@ export const useJourneyData = () => {
     carriers: string[];
     classes: string[];
     discountCards: string[];
+    flexibilities: string[];
     selectedDates: string[];
   }>({
     carriers: [],
     classes: [],
-    discountCards: [],
+    discountCards: ["NONE"],
+    flexibilities: [],
     selectedDates: [],
   });
 
@@ -33,20 +36,26 @@ export const useJourneyData = () => {
       carriers?: string[];
       classes?: string[];
       discountCards?: string[];
+      flexibilities?: string[];
       selectedDates?: string[];
     }) => {
       try {
-        // Utiliser la barre de chargement discrète pour tous les chargements sauf le premier
-        if (journeys.length > 0 || allJourneys.length > 0) {
+        // Vérifier si on a déjà chargé des données dans cette session
+        const hasLoadedBefore = sessionStorage.getItem("journeys-loaded") === "true";
+        
+        // Utiliser la barre de chargement discrète pour tous les chargements sauf le premier réel
+        if (journeys.length > 0 || allJourneys.length > 0 || hasLoadedBefore) {
           setFilterLoading(true);
         } else {
           setLoading(true);
+          sessionStorage.setItem("journeys-loaded", "true");
         }
 
         const requestBody = {
           carriers: filters?.carriers || [],
           classes: filters?.classes || [],
-          discountCards: filters?.discountCards || [],
+          discountCards: filters?.discountCards || ["NONE"],
+          flexibilities: filters?.flexibilities || [],
           selectedDates: filters?.selectedDates || [],
         };
 
@@ -133,12 +142,15 @@ export const useJourneyData = () => {
           setAllJourneys(processedJourneys);
         }
 
-        setCurrentFilters({
+        const newFilters = {
           carriers: filters?.carriers || [],
           classes: filters?.classes || [],
-          discountCards: filters?.discountCards || [],
+          discountCards: filters?.discountCards || ["NONE"],
+          flexibilities: filters?.flexibilities || [],
           selectedDates: filters?.selectedDates || [],
-        });
+        };
+        setCurrentFilters(newFilters);
+        saveFilters(newFilters);
         setError(null);
       } catch (err) {
         console.error("Erreur lors de la récupération des données:", err);
@@ -171,6 +183,7 @@ export const useJourneyData = () => {
       carriers?: string[];
       classes?: string[];
       discountCards?: string[];
+      flexibilities?: string[];
       selectedDates?: string[];
     }) => {
       // Annuler le timeout précédent
@@ -184,6 +197,7 @@ export const useJourneyData = () => {
         carriers: newFilters.carriers ?? currentFilters.carriers,
         classes: newFilters.classes ?? currentFilters.classes,
         discountCards: newFilters.discountCards ?? currentFilters.discountCards,
+        flexibilities: newFilters.flexibilities ?? currentFilters.flexibilities,
         selectedDates: newFilters.selectedDates ?? currentFilters.selectedDates,
       };
 
