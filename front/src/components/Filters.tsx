@@ -399,7 +399,7 @@ const Filters = ({
 
                   return (
                     <button
-                      key={`date-${date}-${index}`}
+                      key={`date-${date}`}
                       onClick={() => handleDateClick(date)}
                       disabled={filterLoading}
                       className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${selectedColors} ${

@@ -79,11 +79,9 @@ export const useJourneyDetails = (
   const [availableDiscountCards, setAvailableDiscountCards] = useState<
     string[]
   >(["NONE", "AVANTAGE_JEUNE", "MAX"]);
-  const [availableFlexibilities] = useState<string[]>([
-    "nonflexi",
-    "flexi",
-    "semiflexi",
-  ]);
+  const [availableFlexibilities, _setAvailableFlexibilities] = useState<
+    string[]
+  >(["nonflexi", "flexi", "semiflexi"]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
     classes: ["economy"],
@@ -197,32 +195,49 @@ export const useJourneyDetails = (
     [currentFilters]
   );
 
-  // Charger les filtres sauvegardés au démarrage
-  useEffect(() => {
-    const saved = loadFilters();
-    if (saved) {
-      if (saved.classes && saved.classes.length > 0) {
+  const applySavedFilters = useCallback(
+    (saved: {
+      carriers?: string[];
+      classes?: string[];
+      discountCards?: string[];
+      flexibilities?: string[];
+      selectedDates?: string[];
+    }) => {
+      if (saved.classes?.length) {
         setSelectedClasses([saved.classes[0]]);
       }
-      if (saved.carriers && saved.carriers.length > 0) {
+      if (saved.carriers?.length) {
         setSelectedCarriers(saved.carriers);
       }
-      if (saved.discountCards && saved.discountCards.length > 0) {
+      if (saved.discountCards?.length) {
         setSelectedDiscountCards(saved.discountCards);
       }
-      if (saved.flexibilities && saved.flexibilities.length > 0) {
+      if (saved.flexibilities?.length) {
         setSelectedFlexibilities(saved.flexibilities);
       }
+
+      const defaultClasses = saved.classes?.length
+        ? [saved.classes[0]]
+        : ["economy"];
       setCurrentFilters((prev) => ({
         ...prev,
         carriers: saved.carriers ?? [],
-        classes: saved.classes.length > 0 ? [saved.classes[0]] : ["economy"],
+        classes: defaultClasses,
         discountCards: saved.discountCards ?? [],
         flexibilities: saved.flexibilities ?? [],
         selectedDates: saved.selectedDates ?? [],
       }));
+    },
+    []
+  );
+
+  // Charger les filtres sauvegardés au démarrage
+  useEffect(() => {
+    const saved = loadFilters();
+    if (saved) {
+      applySavedFilters(saved);
     }
-  }, []);
+  }, [applySavedFilters]);
 
   // Appliquer les dates sauvegardées une fois que les dates disponibles sont chargées
   useEffect(() => {

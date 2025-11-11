@@ -209,8 +209,8 @@ const JourneyDetails = () => {
     ? parseStationWithId(arrivalStationWithId)
     : null;
 
-  const departureStation = departureParsed?.station || "";
-  const arrivalStation = arrivalParsed?.station || "";
+  const departureStation = departureParsed?.station ?? "";
+  const arrivalStation = arrivalParsed?.station ?? "";
   const departureStationId = departureParsed?.id;
   const arrivalStationId = arrivalParsed?.id;
 
@@ -389,7 +389,7 @@ const JourneyDetails = () => {
               selectedDiscountCards={selectedDiscountCards}
               selectedFlexibilities={selectedFlexibilities}
               onDateSelect={handleDateSelect}
-              onTrainSelect={(train) => handleTrainSelect(train || "")}
+              onTrainSelect={(train) => handleTrainSelect(train ?? "")}
               onCarrierToggle={handleCarrierToggle}
               onClassToggle={handleClassToggle}
               onDiscountCardToggle={handleDiscountCardToggle}
