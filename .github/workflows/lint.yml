@@ -27,7 +27,7 @@ jobs:
 
       - name: Lint front
         working-directory: ./front
-        run: npm run lint
+        run: npm exec eslint .
 
       - name: Type check back
         working-directory: ./back
