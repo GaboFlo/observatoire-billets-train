@@ -1,7 +1,6 @@
 {
   "name": "observatoire-billets-train-back",
   "version": "0.0.0",
-  "type": "module",
   "main": "index.ts",
   "scripts": {
     "start": "node dist/server.ts",
