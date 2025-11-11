@@ -19,21 +19,30 @@ import { Button } from "../components/ui/button";
 import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
-import { truncatePrice } from "../lib/utils";
+import {
+  buildJourneyUrl,
+  parseStationWithId,
+  truncatePrice,
+} from "../lib/utils";
 
 const JourneyDetails = () => {
-  const {
-    departureStation,
-    arrivalStation,
-    departureStationId,
-    arrivalStationId,
-  } = useParams<{
-    departureStation: string;
-    arrivalStation: string;
-    departureStationId: string;
-    arrivalStationId: string;
+  const { departureStationWithId, arrivalStationWithId } = useParams<{
+    departureStationWithId: string;
+    arrivalStationWithId: string;
   }>();
   const navigate = useNavigate();
+
+  const departureParsed = departureStationWithId
+    ? parseStationWithId(departureStationWithId)
+    : null;
+  const arrivalParsed = arrivalStationWithId
+    ? parseStationWithId(arrivalStationWithId)
+    : null;
+
+  const departureStation = departureParsed?.station || "";
+  const arrivalStation = arrivalParsed?.station || "";
+  const departureStationId = departureParsed?.id;
+  const arrivalStationId = arrivalParsed?.id;
 
   const {
     detailedOffers,
@@ -60,19 +69,25 @@ const JourneyDetails = () => {
     handleDiscountCardToggle,
     handleFlexibilityToggle,
   } = useJourneyDetails(
-    departureStation || "",
-    arrivalStation || "",
+    departureStation,
+    arrivalStation,
     [],
-    departureStationId ? Number.parseInt(departureStationId) : undefined,
-    arrivalStationId ? Number.parseInt(arrivalStationId) : undefined
+    departureStationId,
+    arrivalStationId
   );
 
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
 
   const handleInvertJourney = () => {
-    // Construire la nouvelle URL avec les stations inversées
-    const newUrl = `/journey/${arrivalStation}/${departureStation}/${arrivalStationId}/${departureStationId}`;
-    navigate(newUrl);
+    if (arrivalStationId && departureStationId) {
+      const newUrl = buildJourneyUrl(
+        arrivalStation,
+        departureStation,
+        arrivalStationId,
+        departureStationId
+      );
+      navigate(newUrl);
+    }
   };
 
   // Fonction pour reset les filtres

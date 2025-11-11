@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
+import { buildJourneyUrl } from "../lib/utils";
 import { GroupedJourney } from "../types/journey";
 
 interface AnalysisTabProps {
@@ -35,7 +36,12 @@ const AnalysisTab = ({ journeys }: AnalysisTabProps) => {
               className="w-full justify-start"
             >
               <Link
-                to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
+                to={buildJourneyUrl(
+                  journey.departureStation,
+                  journey.arrivalStation,
+                  journey.departureStationId,
+                  journey.arrivalStationId
+                )}
               >
                 <div className="text-left">
                   <p className="font-medium">{journey.name}</p>

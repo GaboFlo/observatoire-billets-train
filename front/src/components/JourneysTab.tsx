@@ -23,6 +23,7 @@ import {
   useGlobalFilters,
 } from "../hooks/useGlobalFilters";
 import { Journey } from "../hooks/useJourneyData";
+import { buildJourneyUrl } from "../lib/utils";
 import { translateStation } from "../utils/translations";
 import Filters from "./Filters";
 import TrainMap from "./TrainMap";
@@ -501,7 +502,12 @@ const JourneysTab = ({
                             className="bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400"
                           >
                             <Link
-                              to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
+                              to={buildJourneyUrl(
+                                journey.departureStation,
+                                journey.arrivalStation,
+                                journey.departureStationId,
+                                journey.arrivalStationId
+                              )}
                             >
                               Analyse détaillée
                             </Link>

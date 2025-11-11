@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { buildJourneyUrl } from "@/lib/utils";
 import { GroupedJourney } from "@/types/journey";
 import { Train } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -49,7 +50,12 @@ const JourneyCard = ({ journey, filteredPrices }: JourneyCardProps) => {
       <CardFooter>
         <Button variant="outline" asChild className="w-full">
           <Link
-            to={`/journey/${journey.departureStation}/${journey.arrivalStation}/${journey.departureStationId}/${journey.arrivalStationId}`}
+            to={buildJourneyUrl(
+              journey.departureStation,
+              journey.arrivalStation,
+              journey.departureStationId,
+              journey.arrivalStationId
+            )}
           >
             Analyse détaillée
           </Link>
