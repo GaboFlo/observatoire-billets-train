@@ -1,7 +1,7 @@
 import { JourneyFilters } from "@/types/journey";
 import { useState } from "react";
 
-export const useJourneyFilters = () => {
+const useJourneyFilters = () => {
   const [journeyFilters, setJourneyFilters] = useState<JourneyFilters>({});
 
   const handleClassFilter = (journeyId: string, travelClass: string) => {

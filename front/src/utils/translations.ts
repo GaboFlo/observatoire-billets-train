@@ -103,15 +103,3 @@ export const formatTranslationKey = (key: string): string => {
     .replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
-export const useTranslations = () => {
-  return {
-    translateTravelClass,
-    translateDiscountCard,
-    translateFlexibility,
-    translateCarrier,
-    translateTrainName,
-    translateStation,
-    translate,
-    formatTranslationKey,
-  };
-};

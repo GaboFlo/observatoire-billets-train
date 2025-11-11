@@ -15,24 +15,6 @@ export const TRANSLATION_CONFIG = {
   ORIGINAL_STYLE: 'font-mono text-xs text-gray-500',
 } as const;
 
-// Fonction pour ajouter facilement de nouvelles traductions
-export const addTranslation = (
-  translationMap: Record<string, string>,
-  key: string,
-  value: string
-) => {
-  translationMap[key] = value;
-  return translationMap;
-};
-
-// Fonction pour ajouter plusieurs traductions en une fois
-export const addTranslations = (
-  translationMap: Record<string, string>,
-  translations: Record<string, string>
-) => {
-  Object.assign(translationMap, translations);
-  return translationMap;
-};
 
 // Fonction pour exporter les traductions manquantes (utile pour le développement)
 export const getMissingTranslations = (

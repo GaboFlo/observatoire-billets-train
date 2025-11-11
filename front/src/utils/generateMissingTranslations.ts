@@ -94,37 +94,3 @@ export const logMissingTranslations = (journeys: GroupedJourney[]) => {
   console.groupEnd();
 };
 
-// Fonction pour copier les traductions manquantes dans le presse-papiers
-export const copyMissingTranslationsToClipboard = async (
-  journeys: GroupedJourney[]
-) => {
-  const missing = analyzeAndGenerateMissingTranslations(journeys);
-
-  let clipboardText = "// Traductions manquantes à ajouter :\n\n";
-
-  if (missing.carriers !== "// Toutes les traductions sont présentes") {
-    clipboardText += "// Compagnies :\n";
-    clipboardText += missing.carriers + "\n\n";
-  }
-
-  if (missing.classes !== "// Toutes les traductions sont présentes") {
-    clipboardText += "// Classes :\n";
-    clipboardText += missing.classes + "\n\n";
-  }
-
-  if (missing.discountCards !== "// Toutes les traductions sont présentes") {
-    clipboardText += "// Cartes de réduction :\n";
-    clipboardText += missing.discountCards + "\n\n";
-  }
-
-  if (missing.trainNames !== "// Toutes les traductions sont présentes") {
-    clipboardText += "// Noms de trains :\n";
-    clipboardText += missing.trainNames + "\n\n";
-  }
-
-  try {
-    await navigator.clipboard.writeText(clipboardText);
-  } catch (error) {
-    console.error("❌ Erreur lors de la copie dans le presse-papiers:", error);
-  }
-};

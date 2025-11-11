@@ -5,7 +5,7 @@ import {
 } from "../types/journey";
 import { logMissingTranslations } from "./generateMissingTranslations";
 
-export const processPricingData = (
+const processPricingData = (
   data: AggregatedPricingResult[]
 ): GroupedJourney[] => {
   // Grouper les données par trajet (departure + arrival)
@@ -70,15 +70,14 @@ export const processPricingData = (
   return groupedJourneys;
 };
 
-export const createDefaultFilters = (
+const createDefaultFilters = (
   groupedJourneys: GroupedJourney[]
 ): JourneyFilters => {
   const defaultFilters: JourneyFilters = {};
-  // Plus d'exclusion par défaut de MAX - toutes les cartes sont incluses par défaut
   return defaultFilters;
 };
 
-export const analyzeMissingTranslations = (
+const analyzeMissingTranslations = (
   groupedJourneys: GroupedJourney[]
 ) => {
   if (process.env.NODE_ENV === "development") {

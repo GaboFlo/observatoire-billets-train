@@ -27,11 +27,3 @@ export const loadFilters = (): SavedFilters | null => {
   }
 };
 
-export const clearFilters = (): void => {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error("Erreur lors de la suppression des filtres:", error);
-  }
-};
-

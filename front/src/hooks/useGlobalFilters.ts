@@ -6,8 +6,6 @@ export interface GlobalFilters {
   classes: string[];
   discountCards: string[];
 }
-
-export const ALL_DISCOUNT_CARDS = ["NONE", "AVANTAGE_JEUNE", "MAX"];
 export const ALL_TRAVEL_CLASSES = ["economy", "first"];
 // Filtres par défaut centralisés
 export const DEFAULT_FILTERS: GlobalFilters = {
