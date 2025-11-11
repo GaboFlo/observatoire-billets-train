@@ -17,12 +17,12 @@ jobs:
           node-version: "20"
           cache: "npm"
       - name: Install back modules
-        run: cd back && npm i
+        run: cd back && npm ci
 
       - name: ESLint back
         run: cd back && npm run lint
       - name: Install front modules
-        run: cd front && npm i
+        run: cd front && npm ci
       - name: ESLint front
         run: cd front && npm run lint
       - name: Type check back
