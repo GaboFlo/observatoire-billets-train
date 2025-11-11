@@ -1,0 +1,57 @@
+name: Vérification des exports et dépendances non utilisés
+
+on:
+  push:
+
+jobs:
+  check-unused:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install front dependencies
+        working-directory: ./front
+        run: npm ci
+
+      - name: Install back dependencies
+        working-directory: ./back
+        run: npm ci
+
+      - name: Check ts-prune front
+        working-directory: ./front
+        run: |
+          OUTPUT=$(npx ts-prune --project tsconfig.app.json)
+          if [ -n "$OUTPUT" ]; then
+            echo "$OUTPUT"
+            exit 1
+          fi
+
+      - name: Check ts-prune back
+        working-directory: ./back
+        run: |
+          OUTPUT=$(npx ts-prune --project tsconfig.json)
+          if [ -n "$OUTPUT" ]; then
+            echo "$OUTPUT"
+            exit 1
+          fi
+
+      - name: Check depcheck front
+        working-directory: ./front
+        run: |
+          npx depcheck --ignores="@types/*,eslint*,@eslint/*,typescript-eslint,autoprefixer,postcss,tailwindcss,tailwindcss-animate,@tailwindcss/*,@vitejs/*,vite,globals"
+
+      - name: Check depcheck back
+        working-directory: ./back
+        run: |
+          npx depcheck --ignores="@types/*,nodemon,ts-node,typescript"
