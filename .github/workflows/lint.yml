@@ -30,7 +30,7 @@ jobs:
 
       - name: Lint front
         working-directory: ./front
-        run: npx eslint .
+        run: ./node_modules/.bin/eslint .
 
       - name: Type check back
         working-directory: ./back
