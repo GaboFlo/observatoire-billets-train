@@ -61,6 +61,52 @@ interface EmptyStateProps {
   onInvertJourney: () => void;
 }
 
+interface JourneyHeaderProps {
+  departureStation: string;
+  arrivalStation: string;
+  onInvertJourney: () => void;
+}
+
+const JourneyHeader = ({
+  departureStation,
+  arrivalStation,
+  onInvertJourney,
+}: JourneyHeaderProps) => {
+  return (
+    <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center">
+        <Button variant="outline" size="sm" asChild className="mr-4">
+          <Link to="/">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">
+            {departureStation
+              ? stationTranslations[departureStation]
+              : "Station de départ"}{" "}
+            ⟶{" "}
+            {arrivalStation
+              ? stationTranslations[arrivalStation]
+              : "Station d'arrivée"}
+          </h1>
+          <p className="text-gray-500 text-sm"></p>
+        </div>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onInvertJourney}
+        className="flex items-center gap-2"
+      >
+        <ArrowRightLeft className="h-4 w-4" />
+        Inverser le trajet
+      </Button>
+    </div>
+  );
+};
+
 const EmptyState = ({
   departureStation,
   arrivalStation,
@@ -69,37 +115,11 @@ const EmptyState = ({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8 mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Button variant="outline" size="sm" asChild className="mr-4">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                {departureStation
-                  ? stationTranslations[departureStation]
-                  : "Station de départ"}{" "}
-                ⟶{" "}
-                {arrivalStation
-                  ? stationTranslations[arrivalStation]
-                  : "Station d'arrivée"}
-              </h1>
-              <p className="text-gray-500 text-sm"></p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onInvertJourney}
-            className="flex items-center gap-2"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-            Inverser le trajet
-          </Button>
-        </div>
+        <JourneyHeader
+          departureStation={departureStation}
+          arrivalStation={arrivalStation}
+          onInvertJourney={onInvertJourney}
+        />
         <div className="text-center py-16">
           <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
@@ -131,37 +151,11 @@ const ErrorState = ({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8 mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Button variant="outline" size="sm" asChild className="mr-4">
-              <Link to="/">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
-              </Link>
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                {departureStation
-                  ? stationTranslations[departureStation]
-                  : "Station de départ"}{" "}
-                ⟶{" "}
-                {arrivalStation
-                  ? stationTranslations[arrivalStation]
-                  : "Station d'arrivée"}
-              </h1>
-              <p className="text-gray-500 text-sm"></p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onInvertJourney}
-            className="flex items-center gap-2"
-          >
-            <ArrowRightLeft className="h-4 w-4" />
-            Inverser le trajet
-          </Button>
-        </div>
+        <JourneyHeader
+          departureStation={departureStation}
+          arrivalStation={arrivalStation}
+          onInvertJourney={onInvertJourney}
+        />
         <div className="text-center py-16">
           <div className="text-red-500 mb-4">
             <svg
