@@ -63,6 +63,7 @@ const Index = () => {
           onDateSelect={handleDateSelect}
           applyFilters={applyFilters}
           currentFilters={currentFilters}
+          filterLoading={filterLoading}
         />
       </div>
       <Footer />

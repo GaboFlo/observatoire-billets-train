@@ -63,6 +63,7 @@ const JourneysTab = ({
   onDateSelect,
   applyFilters: propApplyFilters,
   currentFilters,
+  filterLoading = false,
 }: JourneysTabProps) => {
   const [selectedRouteJourneyIds, setSelectedRouteJourneyIds] = useState<
     string[]
@@ -354,7 +355,7 @@ const JourneysTab = ({
           onDiscountCardToggle={handleDiscountCardFilter}
           onFlexibilityToggle={handleFlexibilityToggle}
           onResetFilters={handleResetFilters}
-          filterLoading={false}
+          filterLoading={filterLoading}
         />
       </div>
 

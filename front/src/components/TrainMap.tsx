@@ -410,31 +410,33 @@ const TrainMap: React.FC<TrainMapProps> = ({ journeys, onRouteSelect }) => {
               position={station.position}
               icon={createCustomIcon("#6b7280")}
             >
-              <Popup>
-                <div className="p-2">
-                  <div className="text-sm font-semibold text-gray-900 mb-2">
-                    {translateStation(station.name)}
+              {station.id !== 4916 && (
+                <Popup>
+                  <div className="p-2">
+                    <div className="text-sm font-semibold text-gray-900 mb-2">
+                      {translateStation(station.name)}
+                    </div>
+                    {(() => {
+                      const priceRange = getStationPriceRange(station.id);
+                      if (priceRange === null) {
+                        return null;
+                      }
+                      return (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">De</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            {truncatePrice(priceRange.minPrice)}€
+                          </span>
+                          <span className="text-sm">à</span>
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
+                            {truncatePrice(priceRange.maxPrice)}€
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
-                  {(() => {
-                    const priceRange = getStationPriceRange(station.id);
-                    if (priceRange === null) {
-                      return null;
-                    }
-                    return (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">De</span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                          {truncatePrice(priceRange.minPrice)}€
-                        </span>
-                        <span className="text-sm">à</span>
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800">
-                          {truncatePrice(priceRange.maxPrice)}€
-                        </span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </Popup>
+                </Popup>
+              )}
             </Marker>
           ))}
         </MapContainer>

@@ -340,6 +340,7 @@ const Filters = ({
                   onClick={onResetFilters}
                   variant="outline"
                   size="sm"
+                  disabled={filterLoading}
                   className="text-xs"
                   title="Réinitialiser les filtres"
                 >
@@ -380,6 +381,7 @@ const Filters = ({
                       onDateSelect(null);
                     }
                   }}
+                  disabled={filterLoading}
                   className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${
                     isMultipleDatesMode
                       ? (selectedDates || []).length === 0
@@ -388,7 +390,7 @@ const Filters = ({
                       : selectedDate === null
                       ? "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300"
                       : "bg-gray-100 text-gray-600 border-gray-200"
-                  }`}
+                  } ${filterLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <div className="text-center font-semibold whitespace-nowrap truncate">
                     Toutes dates
@@ -419,9 +421,10 @@ const Filters = ({
                     <button
                       key={`date-${date}-${index}`}
                       onClick={() => handleDateClick(date)}
+                      disabled={filterLoading}
                       className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${selectedColors} ${
                         isSelected ? "ring-2 ring-blue-300" : ""
-                      }`}
+                      } ${filterLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                       title={fullDate}
                     >
                       <div className="text-center">
@@ -455,6 +458,7 @@ const Filters = ({
                       id={`carrier-${carrier}`}
                       checked={selectedCarriers.includes(carrier)}
                       onCheckedChange={() => onCarrierToggle(carrier)}
+                      disabled={filterLoading}
                     />
                     <label
                       htmlFor={`carrier-${carrier}`}
@@ -487,6 +491,7 @@ const Filters = ({
                         id={`class-${travelClass}`}
                         checked={selectedClasses.includes(travelClass)}
                         onCheckedChange={() => onClassToggle(travelClass)}
+                        disabled={filterLoading}
                       />
                       <label
                         htmlFor={`class-${travelClass}`}
@@ -517,6 +522,7 @@ const Filters = ({
                       id={`discount-${discountCard}`}
                       checked={selectedDiscountCards.includes(discountCard)}
                       onCheckedChange={() => onDiscountCardToggle(discountCard)}
+                      disabled={filterLoading}
                     />
                     <label
                       htmlFor={`discount-${discountCard}`}
@@ -546,6 +552,7 @@ const Filters = ({
                     id={`flexibility-${flexibility}`}
                     checked={selectedFlexibilities.includes(flexibility)}
                     onCheckedChange={() => onFlexibilityToggle(flexibility)}
+                    disabled={filterLoading}
                   />
                   <label
                     htmlFor={`flexibility-${flexibility}`}
@@ -570,6 +577,7 @@ const Filters = ({
                   variant={selectedTrain === null ? "default" : "outline"}
                   size="sm"
                   onClick={() => onTrainSelect(null)}
+                  disabled={filterLoading}
                   className="justify-start"
                 >
                   Tous les trains
@@ -584,6 +592,7 @@ const Filters = ({
                     }
                     size="sm"
                     onClick={() => onTrainSelect(train.trainNumber)}
+                    disabled={filterLoading}
                     className="justify-start"
                   >
                     <div className="flex items-center justify-between w-full">

@@ -5,6 +5,8 @@ import { saveFilters } from "../utils/filterStorage";
 
 export interface Journey extends GroupedJourney {}
 
+const FILTER_DEBOUNCE_DELAY = 300;
+
 export const useJourneyData = () => {
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [allJourneys, setAllJourneys] = useState<Journey[]>([]); // Nouvelles données non filtrées
@@ -157,7 +159,9 @@ export const useJourneyData = () => {
         setError(err instanceof Error ? err.message : "Erreur inconnue");
       } finally {
         setLoading(false);
-        setFilterLoading(false);
+        setTimeout(() => {
+          setFilterLoading(false);
+        }, FILTER_DEBOUNCE_DELAY);
       }
     },
     []
@@ -201,10 +205,13 @@ export const useJourneyData = () => {
         selectedDates: newFilters.selectedDates ?? currentFilters.selectedDates,
       };
 
+      // Activer le chargement immédiatement pour désactiver les filtres
+      setFilterLoading(true);
+
       // Débouncer l'appel à l'API
       debounceTimeoutRef.current = setTimeout(() => {
         fetchJourneys(updatedFilters);
-      }, 400); // 0.4 secondes de debounce
+      }, FILTER_DEBOUNCE_DELAY);
     },
     [currentFilters, fetchJourneys]
   );
