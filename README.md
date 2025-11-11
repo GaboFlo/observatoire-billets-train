@@ -188,7 +188,7 @@ Le frontend utilise une variable d'environnement pour déterminer l'URL du backe
 VITE_API_URL=
 
 # .env.production (production locale)
-VITE_API_URL=https://votre-backend.onrender.com
+VITE_API_URL=https://votre-backend.web.com
 ```
 
 **Important** : Avec Vite, les variables d'environnement sont intégrées au moment du build. Vous devez donc rebuild votre application après avoir modifié `VITE_API_URL`.
