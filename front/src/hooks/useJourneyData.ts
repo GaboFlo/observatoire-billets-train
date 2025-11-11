@@ -3,7 +3,7 @@ import datesData from "../data/dates.json";
 import { GroupedJourney } from "../types/journey";
 import { saveFilters } from "../utils/filterStorage";
 
-export interface Journey extends GroupedJourney {}
+export type Journey = GroupedJourney;
 
 const FILTER_DEBOUNCE_DELAY = 300;
 
@@ -164,7 +164,7 @@ export const useJourneyData = () => {
         }, FILTER_DEBOUNCE_DELAY);
       }
     },
-    []
+    [journeys.length, allJourneys.length]
   );
 
   // Dates d'analyse fixes
