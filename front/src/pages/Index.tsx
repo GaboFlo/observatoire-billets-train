@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import ErrorDisplay from "../components/ErrorDisplay";
+import Footer from "../components/Footer";
 import JourneysTab from "../components/JourneysTab";
 import LoadingAnimation from "../components/LoadingAnimation";
 import PageHeader from "../components/PageHeader";
@@ -38,13 +39,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col">
       {/* Barre de chargement discrète pour tous les chargements */}
       {(loading || filterLoading) && (
         <LoadingAnimation isFilterLoading={true} />
       )}
 
-      <div className="container px-4 py-8 mx-auto max-w-7xl">
+      <div className="container px-4 py-8 mx-auto max-w-7xl flex-1">
         <PageHeader />
 
         <div className="space-y-6">
@@ -59,6 +60,7 @@ const Index = () => {
           />
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

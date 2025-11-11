@@ -8,6 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import Footer from "../components/Footer";
 import LoadingAnimation from "../components/LoadingAnimation";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
@@ -205,8 +206,8 @@ const JourneyDetails = () => {
   const monthlyChange = 0; // À remplacer par un calcul réel quand l'historique sera disponible
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="container px-4 py-8 mx-auto flex-1">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
             <Button variant="outline" size="sm" asChild className="mr-4">
@@ -309,6 +310,7 @@ const JourneyDetails = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
