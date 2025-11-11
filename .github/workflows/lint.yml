@@ -16,19 +16,14 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+      - name: Install back modules
+        run: cd back && npm i
 
-      - name: Install front dependencies
-        working-directory: ./front
-        run: npm ci
-
-      - name: Install back dependencies
-        working-directory: ./back
-        run: npm ci
-
-      - name: Lint front
-        working-directory: ./front
-        run: npm exec eslint .
-
+      - name: ESLint back
+        run: cd back && npm run lint
+      - name: Install front modules
+        run: cd front && npm i
+      - name: ESLint front
+        run: cd front && npm run lint
       - name: Type check back
-        working-directory: ./back
-        run: npx tsc --noEmit
+        run: cd back && npx tsc --noEmit
