@@ -95,11 +95,3 @@ export const translateTrainName = (trainName: string): string => {
 export const translateStation = (stationName: string): string => {
   return translate(stationName, stationTranslations, stationName);
 };
-
-export const formatTranslationKey = (key: string): string => {
-  return key
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase());
-};
-

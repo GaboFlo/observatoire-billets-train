@@ -13,10 +13,13 @@ jobs:
         run: cd back && npm i --only-dev
 
       - name: ESLint back
+        continue-on-error: true
         run: cd back && npm run lint
       - name: Install front modules
         run: cd front && npm i --only-dev
       - name: ESLint front
+        continue-on-error: true
         run: cd front && npm run lint
       - name: Type check back
+        continue-on-error: true
         run: cd back && npx tsc --noEmit

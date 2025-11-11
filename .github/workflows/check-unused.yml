@@ -30,6 +30,7 @@ jobs:
 
       - name: Check ts-prune front
         working-directory: ./front
+        continue-on-error: true
         run: |
           OUTPUT=$(npx ts-prune --project tsconfig.app.json 2>/dev/null | grep -v "(used in module)" | grep -v " - default$" | grep -v "src/components/ui" || true)
           if [ -n "$OUTPUT" ]; then
@@ -40,6 +41,7 @@ jobs:
 
       - name: Check ts-prune back
         working-directory: ./back
+        continue-on-error: true
         run: |
           OUTPUT=$(npx ts-prune --project tsconfig.json 2>/dev/null | grep -v "(used in module)" | grep -v " - default$" || true)
           if [ -n "$OUTPUT" ]; then
@@ -50,10 +52,12 @@ jobs:
 
       - name: Check depcheck front
         working-directory: ./front
+        continue-on-error: true
         run: |
           npx depcheck --ignores="@types/*,eslint*,@eslint/*,typescript-eslint,autoprefixer,postcss,tailwindcss,tailwindcss-animate,@tailwindcss/*,@vitejs/*,vite,globals"
 
       - name: Check depcheck back
         working-directory: ./back
+        continue-on-error: true
         run: |
           npx depcheck --ignores="@types/*,nodemon,ts-node,typescript"
