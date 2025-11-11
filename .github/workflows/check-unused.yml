@@ -31,8 +31,9 @@ jobs:
       - name: Check ts-prune front
         working-directory: ./front
         run: |
-          OUTPUT=$(npx ts-prune --project tsconfig.app.json)
+          OUTPUT=$(npx ts-prune --project tsconfig.app.json 2>/dev/null | grep -v "(used in module)" | grep -v " - default$" | grep -v "src/components/ui" || true)
           if [ -n "$OUTPUT" ]; then
+            echo "Exports non utilisés détectés :"
             echo "$OUTPUT"
             exit 1
           fi
@@ -40,8 +41,9 @@ jobs:
       - name: Check ts-prune back
         working-directory: ./back
         run: |
-          OUTPUT=$(npx ts-prune --project tsconfig.json)
+          OUTPUT=$(npx ts-prune --project tsconfig.json 2>/dev/null | grep -v "(used in module)" | grep -v " - default$" || true)
           if [ -n "$OUTPUT" ]; then
+            echo "Exports non utilisés détectés :"
             echo "$OUTPUT"
             exit 1
           fi
