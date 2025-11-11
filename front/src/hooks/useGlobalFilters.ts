@@ -74,6 +74,11 @@ export const useGlobalFilters = (
       }
     }
 
+    // Toujours inclure toutes les compagnies par défaut pour qu'elles restent disponibles dans les filtres
+    for (const carrier of DEFAULT_FILTERS.carriers) {
+      carriers.add(carrier);
+    }
+
     // S'assurer que MAX, NONE et AVANTAGE_JEUNE sont toujours inclus dans les cartes de réduction
     discountCards.add("MAX");
     discountCards.add("NONE");

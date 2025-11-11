@@ -137,16 +137,14 @@ const StatisticsChart = ({
     return Array.from(cards).sort();
   }, [offers]);
 
-  const cardColors = [
-    "#3b82f6",
-    "#10b981",
-    "#f59e0b",
-    "#ef4444",
-    "#8b5cf6",
-    "#ec4899",
-    "#06b6d4",
-    "#84cc16",
-  ];
+  const getCardColor = (card: string): string => {
+    const colorMap: Record<string, string> = {
+      NONE: "#8b5cf6",
+      AVANTAGE_JEUNE: "#f59e0b",
+      MAX: "#ec4899",
+    };
+    return colorMap[card] || "#6b7280";
+  };
 
   const formatTooltip = (value: number, name: string) => {
     if (typeof value === "number" && !Number.isNaN(value)) {
@@ -378,18 +376,25 @@ const StatisticsChart = ({
                 formatter={(value) => translateDiscountCard(value)}
                 wrapperStyle={{ paddingTop: "20px" }}
               />
-              {discountCards.map((card, index) => (
-                <Line
-                  key={card}
-                  type="monotone"
-                  name={card}
-                  dataKey={card}
-                  stroke={cardColors[index % cardColors.length]}
-                  strokeWidth={2}
-                  dot={{ fill: cardColors[index % cardColors.length], strokeWidth: 2, r: 1 }}
-                  connectNulls={true}
-                />
-              ))}
+              {discountCards.map((card) => {
+                const cardColor = getCardColor(card);
+                return (
+                  <Line
+                    key={card}
+                    type="monotone"
+                    name={card}
+                    dataKey={card}
+                    stroke={cardColor}
+                    strokeWidth={2}
+                    dot={{
+                      fill: cardColor,
+                      strokeWidth: 2,
+                      r: 1,
+                    }}
+                    connectNulls={true}
+                  />
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         </div>

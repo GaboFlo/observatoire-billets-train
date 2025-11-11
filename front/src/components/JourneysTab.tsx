@@ -18,6 +18,11 @@ import {
   TableRow,
 } from "../components/ui/table";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
+import {
   ALL_TRAVEL_CLASSES,
   DEFAULT_FILTERS,
   useGlobalFilters,
@@ -441,11 +446,21 @@ const JourneysTab = ({
                       className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"
                       onClick={() => handleSort("avgPrice")}
                     >
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4" />
-                        Prix moyen
-                        {getSortIcon("avgPrice")}
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-2 cursor-help">
+                            <TrendingUp className="w-4 h-4" />
+                            Prix moyen à J-7
+                            {getSortIcon("avgPrice")}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Si disponible, sinon, moyenne sur toutes les données
+                            filtrées
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700"

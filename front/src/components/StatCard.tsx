@@ -1,11 +1,13 @@
 import { LucideIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  color: "blue" | "green" | "purple" | "orange";
+  color: "blue" | "green" | "purple" | "orange" | "red";
   description?: string;
+  tooltipText?: string;
 }
 
 const StatCard = ({
@@ -14,6 +16,7 @@ const StatCard = ({
   icon: Icon,
   color,
   description,
+  tooltipText,
 }: StatCardProps) => {
   const colorClasses = {
     blue: {
@@ -36,6 +39,11 @@ const StatCard = ({
       text: "text-orange-600",
       iconBg: "bg-orange-500",
     },
+    red: {
+      bg: "bg-red-100",
+      text: "text-red-600",
+      iconBg: "bg-red-500",
+    },
   };
 
   // Vérification robuste pour éviter l'erreur undefined
@@ -48,7 +56,7 @@ const StatCard = ({
     console.warn(
       `Couleur invalide pour StatCard: ${color}, utilisation du bleu par défaut`
     );
-    return (
+    const fallbackCardContent = (
       <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-sm hover-lift">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-blue-100 rounded-lg">
@@ -64,9 +72,24 @@ const StatCard = ({
         </div>
       </div>
     );
+
+    if (tooltipText) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help">{fallbackCardContent}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltipText}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return fallbackCardContent;
   }
 
-  return (
+  const cardContent = (
     <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-sm hover-lift">
       <div className="flex items-center gap-3">
         <div className={`p-2 ${classes.bg} rounded-lg`}>
@@ -82,6 +105,21 @@ const StatCard = ({
       </div>
     </div>
   );
+
+  if (tooltipText) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-help">{cardContent}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{tooltipText}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };
 
 export default StatCard;

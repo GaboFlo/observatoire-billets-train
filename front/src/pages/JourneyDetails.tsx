@@ -398,25 +398,26 @@ const JourneyDetails = () => {
             <div className="bg-gray-50 rounded-lg">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <StatCard
-                  title="Prix Minimum"
+                  title="Prix minimum"
                   value={`${truncatePrice(calculatedStats.minPrice)}€`}
                   description="Le tarif le plus bas observé"
                   icon={TrendingDown}
                   color="green"
                 />
                 <StatCard
-                  title="Prix Moyen"
+                  title="Prix moyen à J-7"
                   value={`${truncatePrice(calculatedStats.avgPrice)}€`}
-                  description="Prix moyen des offres disponibles"
+                  description="Prix moyen des offres disponibles à J-7"
                   icon={ChartLine}
                   color="blue"
+                  tooltipText="Si disponible, sinon, moyenne sur toutes les données filtrées"
                 />
                 <StatCard
-                  title="Prix Maximum"
+                  title="Prix maximum"
                   value={`${truncatePrice(calculatedStats.maxPrice)}€`}
                   description="Le tarif le plus élevé observé"
                   icon={TrendingUp}
-                  color="orange"
+                  color="red"
                 />
               </div>
             </div>

@@ -290,7 +290,6 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
         },
         {
           $addFields: {
-            // Créer une clé de route normalisée pour regrouper les trajets aller-retour
             routeKey: {
               $cond: {
                 if: {
@@ -322,13 +321,34 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             },
             minPrice: { $min: "$pricing.price" },
             avgPrice: { $avg: "$pricing.price" },
+            avgPriceJ7: {
+              $avg: {
+                $cond: [
+                  { $eq: ["$daysBeforeDeparture", 7] },
+                  "$pricing.price",
+                  null,
+                ],
+              },
+            },
+            avgPriceJ1ToJ7: {
+              $avg: {
+                $cond: [
+                  {
+                    $and: [
+                      { $gte: ["$daysBeforeDeparture", 1] },
+                      { $lte: ["$daysBeforeDeparture", 7] },
+                    ],
+                  },
+                  "$pricing.price",
+                  null,
+                ],
+              },
+            },
             maxPrice: { $max: "$pricing.price" },
-            // Collecter seulement les listes uniques
             carriers: { $addToSet: "$carrier" },
             classes: { $addToSet: "$pricing.travel_class" },
             discountCards: { $addToSet: "$pricing.discount_card" },
             flexibilities: { $addToSet: "$pricing.flexibility" },
-            // Garder les informations sur les deux sens
             departureStation: { $first: "$departure_station.name" },
             departureStationId: { $first: "$departure_station.id" },
             arrivalStation: { $first: "$arrival_station.name" },
@@ -343,7 +363,9 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
             arrivalStation: "$arrivalStation",
             arrivalStationId: "$arrivalStationId",
             minPrice: 1,
-            avgPrice: 1,
+            avgPrice: {
+              $ifNull: ["$avgPriceJ7", "$avgPriceJ1ToJ7", "$avgPrice"],
+            },
             maxPrice: 1,
             carriers: 1,
             classes: 1,
@@ -1017,7 +1039,6 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
       },
     ]);
 
-    // Calculer les statistiques côté backend
     const validPrices = data
       .map((item) => item.price)
       .filter(
