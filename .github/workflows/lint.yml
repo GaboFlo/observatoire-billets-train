@@ -17,9 +17,6 @@ jobs:
           node-version: "20"
           cache: "npm"
 
-      - name: Install root dependencies
-        run: npm ci
-
       - name: Install front dependencies
         working-directory: ./front
         run: npm ci
@@ -30,7 +27,7 @@ jobs:
 
       - name: Lint front
         working-directory: ./front
-        run: ./node_modules/.bin/eslint .
+        run: npm run lint
 
       - name: Type check back
         working-directory: ./back
