@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express, { Request, Response } from "express";
 import mongoose, { Document, Schema } from "mongoose";
 import { env } from "./env-loader";
+import { buildBaseMatch } from "./filterUtils";
 
 dotenv.config({ path: `.env.local`, override: true });
 
@@ -216,72 +217,16 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
       return res.json(cachedEntry.data);
     }
 
-    // Construire le match de base
-    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
-
-    // Ajouter les filtres par compagnies (inclusifs)
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-
-    // Ajouter les filtres par classes (inclusifs)
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-
-    // Ajouter les filtres par cartes de réduction (inclusifs)
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    // Ajouter les filtres par flexibilité (inclusifs)
-    if (flexibilities.length > 0) {
-      baseMatch["pricing.flexibility"] = { $in: flexibilities };
-    }
-
-    // Ajouter le filtre par numéro de train si spécifié
-    if (trainNumber) {
-      baseMatch.train_number = Number.parseInt(trainNumber);
-    }
-
-    // Ajouter les filtres par stations si spécifiées
-    if (departureStationId) {
-      baseMatch["departure_station.id"] = departureStationId;
-    }
-    if (arrivalStationId) {
-      baseMatch["arrival_station.id"] = arrivalStationId;
-    }
-
-    // Ajouter le filtre par dates si spécifiées
-    if (selectedDates.length > 0) {
-      // Pour une seule date, utiliser une plage simple
-      if (selectedDates.length === 1) {
-        const date = selectedDates[0];
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        baseMatch.departure_date = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      } else {
-        // Pour plusieurs dates, utiliser $or avec des conditions de plage
-        const orConditions = selectedDates.map((date: string) => {
-          const startDate = new Date(date);
-          startDate.setHours(0, 0, 0, 0);
-          const endDate = new Date(date);
-          endDate.setHours(23, 59, 59, 999);
-          return {
-            departure_date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          };
-        });
-        baseMatch.$or = orConditions;
-      }
-    }
+    const baseMatch = buildBaseMatch({
+      carriers,
+      classes,
+      discountCards,
+      flexibilities,
+      selectedDates,
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
+    });
 
     const data = await Train.aggregate<AggregatedPricingResult>(
       [
@@ -709,72 +654,16 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
       return res.json(cachedEntry.data);
     }
 
-    // Construire le match de base
-    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
-
-    // Ajouter les filtres par compagnies (inclusifs)
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-
-    // Ajouter les filtres par classes (inclusifs)
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-
-    // Ajouter les filtres par cartes de réduction (inclusifs)
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    // Ajouter les filtres par flexibilité (inclusifs)
-    if (flexibilities.length > 0) {
-      baseMatch["pricing.flexibility"] = { $in: flexibilities };
-    }
-
-    // Ajouter le filtre par numéro de train si spécifié
-    if (trainNumber) {
-      baseMatch.train_number = Number.parseInt(trainNumber);
-    }
-
-    // Ajouter les filtres par stations si spécifiées
-    if (departureStationId) {
-      baseMatch["departure_station.id"] = departureStationId;
-    }
-    if (arrivalStationId) {
-      baseMatch["arrival_station.id"] = arrivalStationId;
-    }
-
-    // Ajouter le filtre par dates si spécifiées
-    if (selectedDates.length > 0) {
-      // Pour une seule date, utiliser une plage simple
-      if (selectedDates.length === 1) {
-        const date = selectedDates[0];
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        baseMatch.departure_date = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      } else {
-        // Pour plusieurs dates, utiliser $or avec des conditions de plage
-        const orConditions = selectedDates.map((date: string) => {
-          const startDate = new Date(date);
-          startDate.setHours(0, 0, 0, 0);
-          const endDate = new Date(date);
-          endDate.setHours(23, 59, 59, 999);
-          return {
-            departure_date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          };
-        });
-        baseMatch.$or = orConditions;
-      }
-    }
+    const baseMatch = buildBaseMatch({
+      carriers,
+      classes,
+      discountCards,
+      flexibilities,
+      selectedDates,
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
+    });
 
     const data = await Train.aggregate<DetailedPricingResult>([
       {
@@ -911,72 +800,16 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
       return res.json(result);
     }
 
-    // Construire le match de base
-    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
-
-    // Ajouter les filtres par compagnies (inclusifs)
-    if (carriers.length > 0) {
-      baseMatch.carrier = { $in: carriers };
-    }
-
-    // Ajouter les filtres par classes (inclusifs)
-    if (classes.length > 0) {
-      baseMatch["pricing.travel_class"] = { $in: classes };
-    }
-
-    // Ajouter les filtres par cartes de réduction (inclusifs)
-    if (discountCards.length > 0) {
-      baseMatch["pricing.discount_card"] = { $in: discountCards };
-    }
-
-    // Ajouter les filtres par flexibilité (inclusifs)
-    if (flexibilities.length > 0) {
-      baseMatch["pricing.flexibility"] = { $in: flexibilities };
-    }
-
-    // Ajouter le filtre par numéro de train si spécifié
-    if (trainNumber) {
-      baseMatch.train_number = Number.parseInt(trainNumber);
-    }
-
-    // Ajouter les filtres par stations si spécifiées
-    if (departureStationId) {
-      baseMatch["departure_station.id"] = departureStationId;
-    }
-    if (arrivalStationId) {
-      baseMatch["arrival_station.id"] = arrivalStationId;
-    }
-
-    // Ajouter le filtre par dates si spécifiées
-    if (selectedDates.length > 0) {
-      // Pour une seule date, utiliser une plage simple
-      if (selectedDates.length === 1) {
-        const date = selectedDates[0];
-        const startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        const endDate = new Date(date);
-        endDate.setHours(23, 59, 59, 999);
-        baseMatch.departure_date = {
-          $gte: startDate,
-          $lte: endDate,
-        };
-      } else {
-        // Pour plusieurs dates, utiliser $or avec des conditions de plage
-        const orConditions = selectedDates.map((date: string) => {
-          const startDate = new Date(date);
-          startDate.setHours(0, 0, 0, 0);
-          const endDate = new Date(date);
-          endDate.setHours(23, 59, 59, 999);
-          return {
-            departure_date: {
-              $gte: startDate,
-              $lte: endDate,
-            },
-          };
-        });
-        baseMatch.$or = orConditions;
-      }
-    }
+    const baseMatch = buildBaseMatch({
+      carriers,
+      classes,
+      discountCards,
+      flexibilities,
+      selectedDates,
+      trainNumber,
+      departureStationId,
+      arrivalStationId,
+    });
 
     const data = await Train.aggregate<ChartDataResult>([
       {

@@ -7,6 +7,7 @@ import {
   translateFlexibility,
   translateTravelClass,
 } from "@/utils/translations";
+import { useCollapsibleSection } from "@/hooks/useCollapsibleSection";
 import {
   CalendarDays,
   ChevronDown,
@@ -132,40 +133,21 @@ const Filters = ({
     return saved ? JSON.parse(saved) : false;
   });
 
-  // États pour les sections collapsibles avec persistance
-  const [isDateSectionExpanded, setIsDateSectionExpanded] = useState(() => {
-    const saved = localStorage.getItem("filter-section-date");
-    return saved ? JSON.parse(saved) : true;
-  });
-
-  const [isCarrierSectionExpanded, setIsCarrierSectionExpanded] = useState(
-    () => {
-      const saved = localStorage.getItem("filter-section-carrier");
-      return saved ? JSON.parse(saved) : true;
-    }
+  const isDateSection = useCollapsibleSection("filter-section-date", true);
+  const isCarrierSection = useCollapsibleSection(
+    "filter-section-carrier",
+    true
   );
-
-  const [isClassSectionExpanded, setIsClassSectionExpanded] = useState(() => {
-    const saved = localStorage.getItem("filter-section-class");
-    return saved ? JSON.parse(saved) : true;
-  });
-
-  const [isDiscountCardSectionExpanded, setIsDiscountCardSectionExpanded] =
-    useState(() => {
-      const saved = localStorage.getItem("filter-section-discount");
-      return saved ? JSON.parse(saved) : true;
-    });
-
-  const [isFlexibilitySectionExpanded, setIsFlexibilitySectionExpanded] =
-    useState(() => {
-      const saved = localStorage.getItem("filter-section-flexibility");
-      return saved ? JSON.parse(saved) : true;
-    });
-
-  const [isTrainSectionExpanded, setIsTrainSectionExpanded] = useState(() => {
-    const saved = localStorage.getItem("filter-section-train");
-    return saved ? JSON.parse(saved) : true;
-  });
+  const isClassSection = useCollapsibleSection("filter-section-class", true);
+  const isDiscountCardSection = useCollapsibleSection(
+    "filter-section-discount",
+    true
+  );
+  const isFlexibilitySection = useCollapsibleSection(
+    "filter-section-flexibility",
+    true
+  );
+  const isTrainSection = useCollapsibleSection("filter-section-train", true);
 
   const formatDate = (dateString: string, includeDayOfWeek: boolean = true) => {
     const date = new Date(dateString);
@@ -226,45 +208,29 @@ const Filters = ({
     });
   }, [isCollapsed]);
 
-  // Fonctions pour gérer le toggle avec persistance
   const toggleDateSection = useCallback(() => {
-    const newState = !isDateSectionExpanded;
-    setIsDateSectionExpanded(newState);
-    localStorage.setItem("filter-section-date", JSON.stringify(newState));
-  }, [isDateSectionExpanded]);
+    isDateSection.toggle();
+  }, [isDateSection]);
 
   const toggleCarrierSection = useCallback(() => {
-    const newState = !isCarrierSectionExpanded;
-    setIsCarrierSectionExpanded(newState);
-    localStorage.setItem("filter-section-carrier", JSON.stringify(newState));
-  }, [isCarrierSectionExpanded]);
+    isCarrierSection.toggle();
+  }, [isCarrierSection]);
 
   const toggleClassSection = useCallback(() => {
-    const newState = !isClassSectionExpanded;
-    setIsClassSectionExpanded(newState);
-    localStorage.setItem("filter-section-class", JSON.stringify(newState));
-  }, [isClassSectionExpanded]);
+    isClassSection.toggle();
+  }, [isClassSection]);
 
   const toggleDiscountCardSection = useCallback(() => {
-    const newState = !isDiscountCardSectionExpanded;
-    setIsDiscountCardSectionExpanded(newState);
-    localStorage.setItem("filter-section-discount", JSON.stringify(newState));
-  }, [isDiscountCardSectionExpanded]);
+    isDiscountCardSection.toggle();
+  }, [isDiscountCardSection]);
 
   const toggleFlexibilitySection = useCallback(() => {
-    const newState = !isFlexibilitySectionExpanded;
-    setIsFlexibilitySectionExpanded(newState);
-    localStorage.setItem(
-      "filter-section-flexibility",
-      JSON.stringify(newState)
-    );
-  }, [isFlexibilitySectionExpanded]);
+    isFlexibilitySection.toggle();
+  }, [isFlexibilitySection]);
 
   const toggleTrainSection = useCallback(() => {
-    const newState = !isTrainSectionExpanded;
-    setIsTrainSectionExpanded(newState);
-    localStorage.setItem("filter-section-train", JSON.stringify(newState));
-  }, [isTrainSectionExpanded]);
+    isTrainSection.toggle();
+  }, [isTrainSection]);
 
   // Fonction pour déclencher l'analyse avec debounce
   const triggerAnalysis = useCallback(() => {
@@ -366,7 +332,7 @@ const Filters = ({
           <CollapsibleSection
             title={"Date de voyage"}
             icon={CalendarDays}
-            isExpanded={isDateSectionExpanded}
+            isExpanded={isDateSection.isExpanded}
             onToggle={toggleDateSection}
           >
             {availableDates.length === 0 ? (
@@ -448,7 +414,7 @@ const Filters = ({
             <CollapsibleSection
               title="Compagnies ferroviaires"
               icon={Train}
-              isExpanded={isCarrierSectionExpanded}
+              isExpanded={isCarrierSection.isExpanded}
               onToggle={toggleCarrierSection}
             >
               <div className="space-y-2">
@@ -476,7 +442,7 @@ const Filters = ({
             <CollapsibleSection
               title="Classes de voyage"
               icon={Filter}
-              isExpanded={isClassSectionExpanded}
+              isExpanded={isClassSection.isExpanded}
               onToggle={toggleClassSection}
             >
               <div className="space-y-2">
@@ -509,7 +475,7 @@ const Filters = ({
             <CollapsibleSection
               title="Cartes de réduction"
               icon={Filter}
-              isExpanded={isDiscountCardSectionExpanded}
+              isExpanded={isDiscountCardSection.isExpanded}
               onToggle={toggleDiscountCardSection}
             >
               <div className="space-y-2">
@@ -539,7 +505,7 @@ const Filters = ({
           <CollapsibleSection
             title="Flexibilité"
             icon={Filter}
-            isExpanded={isFlexibilitySectionExpanded}
+            isExpanded={isFlexibilitySection.isExpanded}
             onToggle={toggleFlexibilitySection}
           >
             <div className="space-y-2">
@@ -569,7 +535,7 @@ const Filters = ({
             <CollapsibleSection
               title="Train spécifique"
               icon={Train}
-              isExpanded={isTrainSectionExpanded}
+              isExpanded={isTrainSection.isExpanded}
               onToggle={toggleTrainSection}
             >
               <div className="grid grid-cols-1 gap-2">

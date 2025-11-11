@@ -1,12 +1,12 @@
 import {
   ChevronDown,
-  ChevronRight,
   ChevronUp,
   MapPin,
   TrendingUp,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import FilterCollapseButton from "./FilterCollapseButton";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -27,6 +27,7 @@ import {
   DEFAULT_FILTERS,
   useGlobalFilters,
 } from "../hooks/useGlobalFilters";
+import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { Journey } from "../hooks/useJourneyData";
 import { buildJourneyUrl } from "../lib/utils";
 import { translateStation } from "../utils/translations";
@@ -282,48 +283,11 @@ const JourneysTab = ({
     }
   }, [clearFilters, onDateSelect, applyFilters]);
 
-  // Vérifier si les filtres sont collapsés
-  const [filtersCollapsed, setFiltersCollapsed] = useState(() => {
-    const saved = localStorage.getItem("filters-collapsed");
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  // Écouter les changements de collapse depuis localStorage
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem("filters-collapsed");
-      const newState = saved ? JSON.parse(saved) : false;
-      if (newState !== filtersCollapsed) {
-        setFiltersCollapsed(newState);
-      }
-    };
-    globalThis.addEventListener("storage", handleStorageChange);
-    // Écouter aussi les changements dans le même onglet avec un délai plus long
-    const interval = setInterval(handleStorageChange, 300);
-    return () => {
-      globalThis.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, [filtersCollapsed]);
+  const { filtersCollapsed, expandFilters } = useFiltersCollapsed();
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 relative">
-      {/* Bouton pour réafficher les filtres quand ils sont collapsés */}
-      {filtersCollapsed && (
-        <Button
-          onClick={() => {
-            const newState = false;
-            setFiltersCollapsed(newState);
-            localStorage.setItem("filters-collapsed", JSON.stringify(newState));
-          }}
-          variant="outline"
-          size="sm"
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 rounded-r-lg rounded-l-none shadow-lg bg-white hover:bg-gray-50"
-          aria-label="Afficher les filtres"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </Button>
-      )}
+      {filtersCollapsed && <FilterCollapseButton onExpand={expandFilters} />}
       {/* Sidebar de filtres - max 1/3 sur desktop */}
       <div
         className={`transition-all duration-300 ease-in-out ${
