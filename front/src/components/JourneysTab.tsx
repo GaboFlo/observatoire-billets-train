@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { useGlobalFilters } from "../hooks/useGlobalFilters";
-import { Journey, useJourneyData } from "../hooks/useJourneyData";
+import { Journey } from "../hooks/useJourneyData";
 import { translateStation } from "../utils/translations";
 import GlobalFilters from "./GlobalFilters";
 import TrainMap from "./TrainMap";
@@ -50,11 +50,7 @@ const JourneysTab = ({
     string[]
   >([]);
 
-  // Utiliser le hook useJourneyData pour appliquer les filtres côté serveur
-  const { applyFilters: hookApplyFilters } = useJourneyData();
-
-  // Utiliser la prop si disponible, sinon utiliser celle du hook
-  const applyFilters = propApplyFilters || hookApplyFilters;
+  const applyFilters = propApplyFilters;
 
   // Callback pour appliquer les filtres quand ils changent
   const handleFiltersChange = useCallback(

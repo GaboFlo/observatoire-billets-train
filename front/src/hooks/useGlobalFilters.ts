@@ -96,7 +96,9 @@ export const useGlobalFilters = (
       };
       setFilters(newFilters);
       setInitialized(true);
-      onFiltersChange?.(newFilters);
+      if (!currentFilters) {
+        onFiltersChange?.(newFilters);
+      }
     }
   }, [
     initialized,
@@ -104,6 +106,7 @@ export const useGlobalFilters = (
     currentFilters?.carriers,
     currentFilters?.classes,
     currentFilters?.discountCards,
+    currentFilters,
   ]);
 
   // Les journeys sont déjà filtrées par l'API, pas besoin de filtrage côté client
