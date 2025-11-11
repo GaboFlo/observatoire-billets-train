@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 require("./config");
 
 const getEnvVar = (key: string, defaultValue = "") => {

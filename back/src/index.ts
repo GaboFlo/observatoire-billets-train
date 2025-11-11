@@ -217,7 +217,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = { is_error: { $ne: true } };
+    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {
@@ -469,7 +469,7 @@ app.post(
       } = req.body;
 
       // Construire les conditions de match avec les filtres
-      const matchConditions: any = {
+      const matchConditions: Record<string, unknown> = {
         "departure_station.name": departureStation,
         "arrival_station.name": arrivalStation,
       };
@@ -710,7 +710,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = { is_error: { $ne: true } };
+    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {
@@ -912,7 +912,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
     }
 
     // Construire le match de base
-    const baseMatch: any = { is_error: { $ne: true } };
+    const baseMatch: Record<string, unknown> = { is_error: { $ne: true } };
 
     // Ajouter les filtres par compagnies (inclusifs)
     if (carriers.length > 0) {

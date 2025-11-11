@@ -1,8 +1,6 @@
 name: Vérification du linting
-
 on:
   push:
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -11,18 +9,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
       - name: Install back modules
-        run: cd back && npm ci
+        run: cd back && npm i --only-dev
 
       - name: ESLint back
         run: cd back && npm run lint
       - name: Install front modules
-        run: cd front && npm ci
+        run: cd front && npm i --only-dev
       - name: ESLint front
         run: cd front && npm run lint
       - name: Type check back
