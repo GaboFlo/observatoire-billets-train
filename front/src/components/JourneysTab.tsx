@@ -1,12 +1,6 @@
-import {
-  ChevronDown,
-  ChevronUp,
-  MapPin,
-  TrendingUp,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, TrendingUp } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import FilterCollapseButton from "./FilterCollapseButton";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -22,24 +16,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "../components/ui/tooltip";
+import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import {
   ALL_TRAVEL_CLASSES,
   DEFAULT_FILTERS,
   useGlobalFilters,
 } from "../hooks/useGlobalFilters";
-import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { Journey } from "../hooks/useJourneyData";
 import { buildJourneyUrl } from "../lib/utils";
 import { translateStation } from "../utils/translations";
+import FilterCollapseButton from "./FilterCollapseButton";
 import Filters from "./Filters";
 import TrainMap from "./TrainMap";
 
 interface JourneysTabProps {
   journeys: Journey[];
-  allJourneys?: Journey[]; // Nouvelles données non filtrées
+  allJourneys?: Journey[];
   analysisDates?: string[];
-  selectedDates?: string[]; // Changé pour supporter multiple dates
-  onDateSelect?: (dates: string[]) => void; // Changé pour supporter multiple dates
+  selectedDates?: string[];
+  onDateSelect?: (dates: string[]) => void;
   applyFilters?: (filters: {
     carriers?: string[];
     classes?: string[];
@@ -54,6 +49,7 @@ interface JourneysTabProps {
     flexibilities?: string[];
     selectedDates: string[];
   };
+  filterLoading?: boolean;
 }
 
 const JourneysTab = ({
@@ -91,20 +87,26 @@ const JourneysTab = ({
     [applyFilters]
   );
 
-  // Extraire les flexibilités disponibles depuis allJourneys
+  const extractFlexibilitiesFromJourney = (journey: Journey): string[] => {
+    const flexibilities: string[] = [];
+    if (journey.offers && journey.offers.length > 0) {
+      for (const offer of journey.offers) {
+        if (offer.flexibilities && offer.flexibilities.length > 0) {
+          for (const flexibility of offer.flexibilities) {
+            flexibilities.push(flexibility);
+          }
+        }
+      }
+    }
+    return flexibilities;
+  };
+
   const availableFlexibilities = useMemo(() => {
     const flexibilities = new Set<string>();
     const dataToUse = allJourneys ?? journeys;
     for (const journey of dataToUse) {
-      if (journey.offers && journey.offers.length > 0) {
-        for (const offer of journey.offers) {
-          if (offer.flexibilities && offer.flexibilities.length > 0) {
-            for (const flexibility of offer.flexibilities) {
-              flexibilities.add(flexibility);
-            }
-          }
-        }
-      }
+      const journeyFlexibilities = extractFlexibilitiesFromJourney(journey);
+      journeyFlexibilities.forEach((flex) => flexibilities.add(flex));
     }
     const result = Array.from(flexibilities);
     return result.length > 0 ? result : ["nonflexi", "flexi", "semiflexi"];
@@ -113,7 +115,7 @@ const JourneysTab = ({
   // Gérer le toggle de flexibilité
   const handleFlexibilityToggle = useCallback(
     (flexibility: string) => {
-      const currentFlexibilities = currentFilters?.flexibilities || [];
+      const currentFlexibilities = currentFilters?.flexibilities ?? [];
       const newFlexibilities = currentFlexibilities.includes(flexibility)
         ? currentFlexibilities.filter((f) => f !== flexibility)
         : [...currentFlexibilities, flexibility];
@@ -191,12 +193,16 @@ const JourneysTab = ({
 
   const handleSort = (field: string) => {
     const currentDirection = sortDirections[field] || "asc";
-    const newDirection =
-      sortField === field
-        ? currentDirection === "asc"
-          ? "desc"
-          : "asc"
-        : "asc";
+    let newDirection: "asc" | "desc";
+    if (sortField === field) {
+      if (currentDirection === "asc") {
+        newDirection = "desc";
+      } else {
+        newDirection = "asc";
+      }
+    } else {
+      newDirection = "asc";
+    }
 
     setSortDirections({
       ...sortDirections,
@@ -311,7 +317,7 @@ const JourneysTab = ({
           selectedCarriers={filters.carriers}
           selectedClasses={filters.classes}
           selectedDiscountCards={filters.discountCards}
-          selectedFlexibilities={currentFilters?.flexibilities || []}
+          selectedFlexibilities={currentFilters?.flexibilities ?? []}
           onDatesSelect={onDateSelect}
           onTrainSelect={() => {}}
           onCarrierToggle={handleCarrierFilter}

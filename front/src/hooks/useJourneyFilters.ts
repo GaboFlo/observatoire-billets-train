@@ -6,7 +6,7 @@ const useJourneyFilters = () => {
 
   const handleClassFilter = (journeyId: string, travelClass: string) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
+      const currentFilters = prev[journeyId] ?? {};
       const newSelectedClass =
         currentFilters.selectedClass === travelClass ? undefined : travelClass;
 
@@ -22,8 +22,8 @@ const useJourneyFilters = () => {
 
   const handleSelectedClasses = (journeyId: string, travelClass: string) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
-      const currentSelected = currentFilters.selectedClasses || [];
+      const currentFilters = prev[journeyId] ?? {};
+      const currentSelected = currentFilters.selectedClasses ?? [];
 
       const newSelected = currentSelected.includes(travelClass)
         ? currentSelected.filter((cls) => cls !== travelClass)
@@ -41,7 +41,7 @@ const useJourneyFilters = () => {
 
   const handleCarrierFilter = (journeyId: string, carrier: string) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
+      const currentFilters = prev[journeyId] ?? {};
       const newSelectedCarrier =
         currentFilters.selectedCarrier === carrier ? undefined : carrier;
 
@@ -57,7 +57,7 @@ const useJourneyFilters = () => {
 
   const handleSelectedCarriers = (journeyId: string, carrier: string) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
+      const currentFilters = prev[journeyId] ?? {};
       const currentSelected = currentFilters.selectedCarriers || [];
 
       const newSelected = currentSelected.includes(carrier)
@@ -79,7 +79,7 @@ const useJourneyFilters = () => {
     discountCard: string
   ) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
+      const currentFilters = prev[journeyId] ?? {};
       const newSelectedCard =
         currentFilters.selectedDiscountCard === discountCard
           ? undefined
@@ -100,8 +100,8 @@ const useJourneyFilters = () => {
     discountCard: string
   ) => {
     setJourneyFilters((prev) => {
-      const currentFilters = prev[journeyId] || {};
-      const currentSelected = currentFilters.selectedDiscountCards || [];
+      const currentFilters = prev[journeyId] ?? {};
+      const currentSelected = currentFilters.selectedDiscountCards ?? [];
 
       const newSelected = currentSelected.includes(discountCard)
         ? currentSelected.filter((card) => card !== discountCard)

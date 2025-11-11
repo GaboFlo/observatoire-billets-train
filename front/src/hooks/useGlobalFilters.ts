@@ -14,6 +14,10 @@ export const DEFAULT_FILTERS: GlobalFilters = {
   discountCards: ["NONE"],
 };
 
+const sortStringArray = (set: Set<string>): string[] => {
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+};
+
 export const useGlobalFilters = (
   journeys: GroupedJourney[],
   onFiltersChange?: (filters: GlobalFilters) => void,
@@ -21,10 +25,10 @@ export const useGlobalFilters = (
   allJourneys?: GroupedJourney[] // Nouvelles données non filtrées pour les options
 ) => {
   const [filters, setFilters] = useState<GlobalFilters>({
-    carriers: currentFilters?.carriers || DEFAULT_FILTERS.carriers,
-    classes: currentFilters?.classes || DEFAULT_FILTERS.classes,
+    carriers: currentFilters?.carriers ?? DEFAULT_FILTERS.carriers,
+    classes: currentFilters?.classes ?? DEFAULT_FILTERS.classes,
     discountCards:
-      currentFilters?.discountCards || DEFAULT_FILTERS.discountCards,
+      currentFilters?.discountCards ?? DEFAULT_FILTERS.discountCards,
   });
 
   // Initialiser les filtres avec toutes les options disponibles sauf MAX (une seule fois)
@@ -83,9 +87,9 @@ export const useGlobalFilters = (
     discountCards.add("AVANTAGE_JEUNE");
 
     return {
-      carriers: Array.from(carriers).sort(),
-      classes: Array.from(classes).sort(),
-      discountCards: Array.from(discountCards).sort(),
+      carriers: sortStringArray(carriers),
+      classes: sortStringArray(classes),
+      discountCards: sortStringArray(discountCards),
     };
   }, [allJourneys, journeys]);
 
@@ -93,10 +97,10 @@ export const useGlobalFilters = (
   useEffect(() => {
     if (!initialized) {
       const newFilters = {
-        carriers: currentFilters?.carriers || DEFAULT_FILTERS.carriers,
-        classes: currentFilters?.classes || DEFAULT_FILTERS.classes,
+        carriers: currentFilters?.carriers ?? DEFAULT_FILTERS.carriers,
+        classes: currentFilters?.classes ?? DEFAULT_FILTERS.classes,
         discountCards:
-          currentFilters?.discountCards || DEFAULT_FILTERS.discountCards,
+          currentFilters?.discountCards ?? DEFAULT_FILTERS.discountCards,
       };
       setFilters(newFilters);
       setInitialized(true);
@@ -117,7 +121,7 @@ export const useGlobalFilters = (
   const filteredJourneys = journeys;
 
   const handleCarrierFilter = (carrier: string) => {
-    const currentCarriers = filters.carriers || [];
+    const currentCarriers = filters.carriers ?? [];
     const newFilters = {
       ...filters,
       carriers: currentCarriers.includes(carrier)
@@ -129,7 +133,7 @@ export const useGlobalFilters = (
   };
 
   const handleClassFilter = (travelClass: string) => {
-    const currentClasses = filters.classes || [];
+    const currentClasses = filters.classes ?? [];
     const availableClasses = ["economy", "first"];
     let newClasses: string[];
 
@@ -149,8 +153,7 @@ export const useGlobalFilters = (
   };
 
   const handleDiscountCardFilter = (discountCard: string) => {
-    const currentDiscountCards = filters.discountCards || [];
-    const availableDiscountCards = availableOptions.discountCards;
+    const currentDiscountCards = filters.discountCards ?? [];
     let newDiscountCards: string[];
 
     // Mode exclusif : une seule carte peut être sélectionnée à la fois
@@ -188,7 +191,7 @@ export const useGlobalFilters = (
   };
 
   return {
-    filters: filters || DEFAULT_FILTERS,
+    filters: filters ?? DEFAULT_FILTERS,
     availableOptions,
     filteredJourneys,
     handleCarrierFilter,

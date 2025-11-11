@@ -62,14 +62,14 @@ export const translate = (
   fallback?: string
 ): string => {
   if (value === undefined) {
-    return fallback || "OUPS";
+    return fallback ?? "OUPS";
   }
   const translation = translationMap[value];
   if (translation) {
     return translation;
   }
 
-  return fallback || value;
+  return fallback ?? value;
 };
 
 export const translateTravelClass = (travelClass: string): string => {

@@ -79,9 +79,11 @@ export const useJourneyDetails = (
   const [availableDiscountCards, setAvailableDiscountCards] = useState<
     string[]
   >(["NONE", "AVANTAGE_JEUNE", "MAX"]);
-  const [availableFlexibilities, setAvailableFlexibilities] = useState<
-    string[]
-  >(["nonflexi", "flexi", "semiflexi"]);
+  const [availableFlexibilities] = useState<string[]>([
+    "nonflexi",
+    "flexi",
+    "semiflexi",
+  ]);
   const [currentFilters, setCurrentFilters] = useState<JourneyDetailsFilters>({
     carriers: [],
     classes: ["economy"],
@@ -213,12 +215,11 @@ export const useJourneyDetails = (
       }
       setCurrentFilters((prev) => ({
         ...prev,
-        carriers: saved.carriers || [],
-        classes:
-          saved.classes.length > 0 ? [saved.classes[0]] : ["economy"],
-        discountCards: saved.discountCards || [],
-        flexibilities: saved.flexibilities || [],
-        selectedDates: saved.selectedDates || [],
+        carriers: saved.carriers ?? [],
+        classes: saved.classes.length > 0 ? [saved.classes[0]] : ["economy"],
+        discountCards: saved.discountCards ?? [],
+        flexibilities: saved.flexibilities ?? [],
+        selectedDates: saved.selectedDates ?? [],
       }));
     }
   }, []);
@@ -314,8 +315,8 @@ export const useJourneyDetails = (
           : responseData;
 
         if (stats && typeof stats === "object") {
-          setAvailableCarriers(stats.carriers || []);
-          setAvailableClasses(stats.classes || []);
+          setAvailableCarriers(stats.carriers ?? []);
+          setAvailableClasses(stats.classes ?? []);
         } else {
           setAvailableCarriers([]);
           setAvailableClasses([]);
@@ -323,7 +324,7 @@ export const useJourneyDetails = (
 
         // S'assurer que les cartes de réduction par défaut sont toujours incluses
         const defaultDiscountCards = ["NONE", "AVANTAGE_JEUNE", "MAX"];
-        const apiDiscountCards = stats?.discountCards || [];
+        const apiDiscountCards = stats?.discountCards ?? [];
         const allDiscountCards = [
           ...new Set([...defaultDiscountCards, ...apiDiscountCards]),
         ];
@@ -345,6 +346,107 @@ export const useJourneyDetails = (
     }
   }, [departureStation, arrivalStation, fetchAvailableOptions]);
 
+  const filterSavedItems = useCallback(
+    <T extends string>(
+      savedItems: T[] | undefined,
+      availableItems: T[]
+    ): T[] => {
+      if (!savedItems) return [];
+      return savedItems.filter((item) => availableItems.includes(item));
+    },
+    []
+  );
+
+  const applyFilteredCarriers = useCallback((filteredCarriers: string[]) => {
+    if (filteredCarriers.length > 0) {
+      setSelectedCarriers(filteredCarriers);
+    }
+  }, []);
+
+  const applyFilteredDiscountCards = useCallback(
+    (filteredDiscountCards: string[]) => {
+      if (filteredDiscountCards.length > 0) {
+        setSelectedDiscountCards(filteredDiscountCards);
+      }
+    },
+    []
+  );
+
+  const applyFilteredFlexibilities = useCallback(
+    (filteredFlexibilities: string[]) => {
+      if (filteredFlexibilities.length > 0) {
+        setSelectedFlexibilities(filteredFlexibilities);
+      }
+    },
+    []
+  );
+
+  const determineFinalClasses = useCallback(
+    (filteredClasses: string[], availableClasses: string[]): string[] => {
+      if (filteredClasses.length > 0) {
+        return [filteredClasses[0]];
+      }
+      if (availableClasses.length > 0) {
+        return [availableClasses[0]];
+      }
+      return ["economy"];
+    },
+    []
+  );
+
+  const applyFilteredSavedFilters = useCallback(
+    (
+      saved: {
+        carriers?: string[];
+        classes?: string[];
+        discountCards?: string[];
+        flexibilities?: string[];
+      },
+      availableCarriers: string[],
+      availableClasses: string[],
+      availableDiscountCards: string[],
+      availableFlexibilities: string[]
+    ) => {
+      const filteredCarriers = filterSavedItems(
+        saved.carriers,
+        availableCarriers
+      );
+      const filteredClasses = filterSavedItems(saved.classes, availableClasses);
+      const filteredDiscountCards = filterSavedItems(
+        saved.discountCards,
+        availableDiscountCards
+      );
+      const filteredFlexibilities = filterSavedItems(
+        saved.flexibilities,
+        availableFlexibilities
+      );
+
+      applyFilteredCarriers(filteredCarriers);
+      const finalClasses = determineFinalClasses(
+        filteredClasses,
+        availableClasses
+      );
+      setSelectedClasses(finalClasses);
+      applyFilteredDiscountCards(filteredDiscountCards);
+      applyFilteredFlexibilities(filteredFlexibilities);
+
+      setCurrentFilters((prev) => ({
+        ...prev,
+        carriers: filteredCarriers,
+        classes: finalClasses,
+        discountCards: filteredDiscountCards,
+        flexibilities: filteredFlexibilities,
+      }));
+    },
+    [
+      filterSavedItems,
+      applyFilteredCarriers,
+      determineFinalClasses,
+      applyFilteredDiscountCards,
+      applyFilteredFlexibilities,
+    ]
+  );
+
   // Filtrer les filtres sauvegardés selon les options disponibles (une seule fois)
   useEffect(() => {
     if (
@@ -355,49 +457,13 @@ export const useJourneyDetails = (
     ) {
       const saved = loadFilters();
       if (saved) {
-        const filteredCarriers =
-          saved.carriers?.filter((carrier) =>
-            availableCarriers.includes(carrier)
-          ) || [];
-        const filteredClasses =
-          saved.classes?.filter((travelClass) =>
-            availableClasses.includes(travelClass)
-          ) || [];
-        const filteredDiscountCards =
-          saved.discountCards?.filter((discountCard) =>
-            availableDiscountCards.includes(discountCard)
-          ) || [];
-
-        if (filteredCarriers.length > 0) {
-          setSelectedCarriers(filteredCarriers);
-        }
-        const finalClasses =
-          filteredClasses.length > 0
-            ? [filteredClasses[0]]
-            : availableClasses.length > 0
-              ? [availableClasses[0]]
-              : ["economy"];
-        setSelectedClasses(finalClasses);
-        if (filteredDiscountCards.length > 0) {
-          setSelectedDiscountCards(filteredDiscountCards);
-        }
-        const filteredFlexibilities =
-          saved.flexibilities?.filter((flexibility) =>
-            availableFlexibilities.includes(flexibility)
-          ) || [];
-        const finalFlexibilities = filteredFlexibilities;
-        if (finalFlexibilities.length > 0) {
-          setSelectedFlexibilities(finalFlexibilities);
-        }
-
-        setCurrentFilters((prev) => ({
-          ...prev,
-          carriers: filteredCarriers,
-          classes: finalClasses,
-          discountCards: filteredDiscountCards,
-          flexibilities: finalFlexibilities,
-        }));
-
+        applyFilteredSavedFilters(
+          saved,
+          availableCarriers,
+          availableClasses,
+          availableDiscountCards,
+          availableFlexibilities
+        );
         filtersAppliedRef.current = true;
       }
     }
@@ -406,6 +472,7 @@ export const useJourneyDetails = (
     availableClasses,
     availableDiscountCards,
     availableFlexibilities,
+    applyFilteredSavedFilters,
   ]);
 
   // Fonctions de gestion des sélections
@@ -517,7 +584,17 @@ export const useJourneyDetails = (
     []
   );
 
-  // Fonction pour déterminer le type d'analyse et construire le body de la requête
+  const getDatesToUse = useCallback((): string[] => {
+    if (selectedDate) {
+      return [selectedDate];
+    }
+    const savedDates = currentFilters.selectedDates;
+    if (savedDates && savedDates.length > 0) {
+      return savedDates;
+    }
+    return [];
+  }, [selectedDate, currentFilters.selectedDates]);
+
   const getAnalysisRequest = useCallback(() => {
     const baseRequest = {
       carriers:
@@ -535,11 +612,7 @@ export const useJourneyDetails = (
       arrivalStationId,
     };
 
-    const datesToUse = selectedDate
-      ? [selectedDate]
-      : currentFilters.selectedDates.length > 0
-        ? currentFilters.selectedDates
-        : [];
+    const datesToUse = getDatesToUse();
 
     if (!selectedDate && !selectedTrain && datesToUse.length === 0) {
       return { ...baseRequest, selectedDates: [], trainNumber: selectedTrain };
@@ -578,7 +651,7 @@ export const useJourneyDetails = (
     availableClasses,
     availableDiscountCards,
     availableFlexibilities,
-    currentFilters.selectedDates,
+    getDatesToUse,
   ]);
 
   // Fonction pour traiter le résultat de l'analyse
@@ -653,7 +726,7 @@ export const useJourneyDetails = (
         arrivalStation: "",
         arrivalStationId: 0,
         travelClass: "economy",
-        discountCard: item.discountCard || "NONE",
+        discountCard: item.discountCard ?? "NONE",
         flexibility: "nonflexi",
         trainName: "",
         carrier: "sncf",

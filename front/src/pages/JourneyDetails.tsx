@@ -25,6 +25,176 @@ import {
   truncatePrice,
 } from "../lib/utils";
 
+const resetCarriers = (
+  selectedCarriers: string[],
+  handleCarrierToggle: (carrier: string) => void
+) => {
+  DEFAULT_FILTERS.carriers.forEach((carrier) => {
+    if (!selectedCarriers.includes(carrier)) {
+      handleCarrierToggle(carrier);
+    }
+  });
+  selectedCarriers.forEach((carrier) => {
+    if (!DEFAULT_FILTERS.carriers.includes(carrier)) {
+      handleCarrierToggle(carrier);
+    }
+  });
+};
+
+const resetDiscountCards = (
+  selectedDiscountCards: string[],
+  handleDiscountCardToggle: (card: string) => void
+) => {
+  if (!selectedDiscountCards.includes("NONE")) {
+    handleDiscountCardToggle("NONE");
+  }
+  selectedDiscountCards.forEach((card) => {
+    if (card !== "NONE") {
+      handleDiscountCardToggle(card);
+    }
+  });
+};
+
+interface EmptyStateProps {
+  departureStation: string;
+  arrivalStation: string;
+  onInvertJourney: () => void;
+}
+
+const EmptyState = ({
+  departureStation,
+  arrivalStation,
+  onInvertJourney,
+}: EmptyStateProps) => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container px-4 py-8 mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <Button variant="outline" size="sm" asChild className="mr-4">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                {departureStation
+                  ? stationTranslations[departureStation]
+                  : "Station de départ"}{" "}
+                ⟶{" "}
+                {arrivalStation
+                  ? stationTranslations[arrivalStation]
+                  : "Station d'arrivée"}
+              </h1>
+              <p className="text-gray-500 text-sm"></p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onInvertJourney}
+            className="flex items-center gap-2"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            Inverser le trajet
+          </Button>
+        </div>
+        <div className="text-center py-16">
+          <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+            Aucune date disponible
+          </h2>
+          <p className="text-gray-500 mb-8">
+            Aucune date n'a été trouvée pour ce trajet. Vérifiez les paramètres
+            ou essayez un autre trajet.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface ErrorStateProps {
+  departureStation: string;
+  arrivalStation: string;
+  error: string;
+  onInvertJourney: () => void;
+}
+
+const ErrorState = ({
+  departureStation,
+  arrivalStation,
+  error,
+  onInvertJourney,
+}: ErrorStateProps) => {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container px-4 py-8 mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <Button variant="outline" size="sm" asChild className="mr-4">
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Retour
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                {departureStation
+                  ? stationTranslations[departureStation]
+                  : "Station de départ"}{" "}
+                ⟶{" "}
+                {arrivalStation
+                  ? stationTranslations[arrivalStation]
+                  : "Station d'arrivée"}
+              </h1>
+              <p className="text-gray-500 text-sm"></p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onInvertJourney}
+            className="flex items-center gap-2"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            Inverser le trajet
+          </Button>
+        </div>
+        <div className="text-center py-16">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="mx-auto h-16 w-16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+            Erreur de chargement
+          </h2>
+          <p className="text-gray-500 mb-8">
+            {error} <br />
+            Certainement une panne de signalisation, rafraîchissez la page pour
+            ne pas louper vos correspondances{" "}
+          </p>
+          <Button onClick={() => globalThis.location.reload()}>
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const JourneyDetails = () => {
   const { departureStationWithId, arrivalStationWithId } = useParams<{
     departureStationWithId: string;
@@ -80,11 +250,15 @@ const JourneyDetails = () => {
 
   const handleInvertJourney = () => {
     if (arrivalStationId && departureStationId) {
+      const newDepartureStation = arrivalStation;
+      const newArrivalStation = departureStation;
+      const newDepartureStationId = arrivalStationId;
+      const newArrivalStationId = departureStationId;
       const newUrl = buildJourneyUrl(
-        arrivalStation,
-        departureStation,
-        arrivalStationId,
-        departureStationId
+        newDepartureStation,
+        newArrivalStation,
+        newDepartureStationId,
+        newArrivalStationId
       );
       navigate(newUrl);
     }
@@ -92,37 +266,11 @@ const JourneyDetails = () => {
 
   // Fonction pour reset les filtres
   const handleResetFilters = () => {
-    // Réinitialiser aux valeurs par défaut
-    // Pour les carriers, sélectionner uniquement ceux par défaut
-    DEFAULT_FILTERS.carriers.forEach((carrier) => {
-      if (!selectedCarriers.includes(carrier)) {
-        handleCarrierToggle(carrier);
-      }
-    });
-    // Désélectionner les carriers non par défaut
-    selectedCarriers.forEach((carrier) => {
-      if (!DEFAULT_FILTERS.carriers.includes(carrier)) {
-        handleCarrierToggle(carrier);
-      }
-    });
-
-    // Pour les classes, sélectionner economy si ce n'est pas déjà fait
+    resetCarriers(selectedCarriers, handleCarrierToggle);
     if (!selectedClasses.includes("economy")) {
       handleClassToggle("economy");
     }
-
-    // Pour les discountCards, sélectionner NONE si ce n'est pas déjà fait
-    if (!selectedDiscountCards.includes("NONE")) {
-      handleDiscountCardToggle("NONE");
-    }
-    // Désélectionner les autres discountCards
-    selectedDiscountCards.forEach((card) => {
-      if (card !== "NONE") {
-        handleDiscountCardToggle(card);
-      }
-    });
-
-    // Réinitialiser flexibilities, dates et train
+    resetDiscountCards(selectedDiscountCards, handleDiscountCardToggle);
     selectedFlexibilities.forEach((flex) => {
       if (selectedFlexibilities.includes(flex)) {
         handleFlexibilityToggle(flex);
@@ -138,129 +286,32 @@ const JourneyDetails = () => {
     return <LoadingAnimation />;
   }
 
-  // Afficher un message si aucune date n'est disponible
-  if (
+  const isEmptyState =
     analysisDates.length === 0 &&
     !loading &&
     !error &&
     !filterLoading &&
     departureStation &&
-    arrivalStation
-  ) {
+    arrivalStation;
+
+  if (isEmptyState) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 py-8 mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button variant="outline" size="sm" asChild className="mr-4">
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Retour
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation
-                    ? stationTranslations[departureStation]
-                    : "Station de départ"}{" "}
-                  ⟶{" "}
-                  {arrivalStation
-                    ? stationTranslations[arrivalStation]
-                    : "Station d'arrivée"}
-                </h1>
-                <p className="text-gray-500 text-sm"></p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleInvertJourney}
-              className="flex items-center gap-2"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-              Inverser le trajet
-            </Button>
-          </div>
-          <div className="text-center py-16">
-            <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Aucune date disponible
-            </h2>
-            <p className="text-gray-500 mb-8">
-              Aucune date n'a été trouvée pour ce trajet. Vérifiez les
-              paramètres ou essayez un autre trajet.
-            </p>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        departureStation={departureStation}
+        arrivalStation={arrivalStation}
+        onInvertJourney={handleInvertJourney}
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 py-8 mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center">
-              <Button variant="outline" size="sm" asChild className="mr-4">
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Retour
-                </Link>
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                  {departureStation
-                    ? stationTranslations[departureStation]
-                    : "Station de départ"}{" "}
-                  ⟶{" "}
-                  {arrivalStation
-                    ? stationTranslations[arrivalStation]
-                    : "Station d'arrivée"}
-                </h1>
-                <p className="text-gray-500 text-sm"></p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleInvertJourney}
-              className="flex items-center gap-2"
-            >
-              <ArrowRightLeft className="h-4 w-4" />
-              Inverser le trajet
-            </Button>
-          </div>
-          <div className="text-center py-16">
-            <div className="text-red-500 mb-4">
-              <svg
-                className="mx-auto h-16 w-16"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Erreur de chargement
-            </h2>
-            <p className="text-gray-500 mb-8">
-              {error} <br />
-              Certainement une panne de signalisation, rafraîchissez la page
-              pour ne pas louper vos correspondances{" "}
-            </p>
-            <Button onClick={() => globalThis.location.reload()}>
-              Réessayer
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ErrorState
+        departureStation={departureStation}
+        arrivalStation={arrivalStation}
+        error={error}
+        onInvertJourney={handleInvertJourney}
+      />
     );
   }
 

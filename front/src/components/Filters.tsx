@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCollapsibleSection } from "@/hooks/useCollapsibleSection";
 import {
   translateCarrier,
   translateDiscountCard,
   translateFlexibility,
   translateTravelClass,
 } from "@/utils/translations";
-import { useCollapsibleSection } from "@/hooks/useCollapsibleSection";
 import {
   CalendarDays,
   ChevronDown,
@@ -182,7 +182,7 @@ const Filters = ({
 
   const handleDateClick = (date: string) => {
     if (isMultipleDatesMode && onDatesSelect) {
-      const currentDates = selectedDates || [];
+      const currentDates = selectedDates ?? [];
       const isSelected = currentDates.includes(date);
       if (isSelected) {
         onDatesSelect(currentDates.filter((d) => d !== date));
@@ -339,33 +339,47 @@ const Filters = ({
               <p className="text-sm text-gray-500">Aucune date disponible</p>
             ) : (
               <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => {
-                    if (isMultipleDatesMode && onDatesSelect) {
-                      onDatesSelect([]);
-                    } else if (onDateSelect) {
-                      onDateSelect(null);
-                    }
-                  }}
-                  disabled={filterLoading}
-                  className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${
-                    isMultipleDatesMode
-                      ? (selectedDates || []).length === 0
-                        ? "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300"
-                        : "bg-gray-100 text-gray-600 border-gray-200"
-                      : selectedDate === null
-                      ? "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300"
-                      : "bg-gray-100 text-gray-600 border-gray-200"
-                  } ${filterLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                >
-                  <div className="text-center font-semibold whitespace-nowrap truncate">
-                    Toutes dates
-                  </div>
-                </button>
+                {(() => {
+                  let isAllDatesSelected: boolean;
+                  if (isMultipleDatesMode) {
+                    isAllDatesSelected = (selectedDates ?? []).length === 0;
+                  } else {
+                    isAllDatesSelected = selectedDate === null;
+                  }
+
+                  let allDatesButtonClass: string;
+                  if (isAllDatesSelected) {
+                    allDatesButtonClass =
+                      "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300";
+                  } else {
+                    allDatesButtonClass =
+                      "bg-gray-100 text-gray-600 border-gray-200";
+                  }
+
+                  return (
+                    <button
+                      onClick={() => {
+                        if (isMultipleDatesMode && onDatesSelect) {
+                          onDatesSelect([]);
+                        } else if (onDateSelect) {
+                          onDateSelect(null);
+                        }
+                      }}
+                      disabled={filterLoading}
+                      className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${allDatesButtonClass} ${
+                        filterLoading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <div className="text-center font-semibold whitespace-nowrap truncate">
+                        Toutes dates
+                      </div>
+                    </button>
+                  );
+                })()}
                 {availableDates.map((date, index) => {
                   const status = getDateStatus(date);
                   const isSelected = isMultipleDatesMode
-                    ? (selectedDates || []).includes(date)
+                    ? (selectedDates ?? []).includes(date)
                     : selectedDate === date;
 
                   const statusColors = {
@@ -390,7 +404,9 @@ const Filters = ({
                       disabled={filterLoading}
                       className={`p-3 rounded-lg border text-xs font-medium transition-all hover:shadow-md ${selectedColors} ${
                         isSelected ? "ring-2 ring-blue-300" : ""
-                      } ${filterLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                      } ${
+                        filterLoading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                       title={fullDate}
                     >
                       <div className="text-center">

@@ -760,7 +760,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
         price: item.minPrice,
         is_sellable: item.is_sellable,
         daysBeforeDeparture: item.daysBeforeDeparture,
-        discountCard: item.discountCard || "NONE",
+        discountCard: item.discountCard ?? "NONE",
       }));
 
       // Calculer les statistiques depuis le cache
