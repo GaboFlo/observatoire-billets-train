@@ -20,7 +20,7 @@ jobs:
         run: |
           cd front
           rm -rf node_modules package-lock.json
-          npm install --force
+          npm install --include=optional
 
       - name: Build frontend
         run: cd front && npm run build
