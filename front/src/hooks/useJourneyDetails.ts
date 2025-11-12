@@ -5,6 +5,7 @@ import {
   GroupedJourney,
 } from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { buildApiUrl } from "../config/api";
 import { loadFilters } from "../utils/filterStorage";
 
 interface JourneyDetailsFilters {
@@ -100,7 +101,7 @@ export const useJourneyDetails = (
     try {
       setLoading(true);
 
-      const response = await fetch("/api/trains/available-dates", {
+      const response = await fetch(buildApiUrl("/api/trains/available-dates"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -139,7 +140,7 @@ export const useJourneyDetails = (
       try {
         setFilterLoading(true);
 
-        const response = await fetch("/api/trains/trains-for-date", {
+        const response = await fetch(buildApiUrl("/api/trains/trains-for-date"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -302,7 +303,7 @@ export const useJourneyDetails = (
         const targetDate =
           date || analysisDates[0] || new Date().toISOString().split("T")[0];
 
-        const response = await fetch("/api/trains/pricing", {
+        const response = await fetch(buildApiUrl("/api/trains/pricing"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -581,7 +582,7 @@ export const useJourneyDetails = (
   // Fonction pour faire une requête pricing
   const makePricingRequest = useCallback(
     async (requestBody: Record<string, unknown>) => {
-      const response = await fetch("/api/trains/pricing", {
+      const response = await fetch(buildApiUrl("/api/trains/pricing"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -717,7 +718,7 @@ export const useJourneyDetails = (
       setChartDataLoaded(false);
 
       const requestBody = getAnalysisRequest();
-      const response = await fetch("/api/trains/chart-data", {
+      const response = await fetch(buildApiUrl("/api/trains/chart-data"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -814,7 +815,7 @@ export const useJourneyDetails = (
       const targetDate =
         analysisDates[0] || new Date().toISOString().split("T")[0];
 
-      const response = await fetch("/api/trains/trains-for-date", {
+      const response = await fetch(buildApiUrl("/api/trains/trains-for-date"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

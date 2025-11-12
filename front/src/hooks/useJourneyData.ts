@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { buildApiUrl } from "../config/api";
 import datesData from "../data/dates.json";
 import { GroupedJourney } from "../types/journey";
 import { saveFilters } from "../utils/filterStorage";
@@ -139,7 +140,7 @@ export const useJourneyData = () => {
         }
 
         const requestBody = buildRequestBody(filters);
-        const response = await fetch("/api/trains/pricing", {
+        const response = await fetch(buildApiUrl("/api/trains/pricing"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

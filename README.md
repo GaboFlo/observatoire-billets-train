@@ -174,6 +174,25 @@ MONGO_DEBUG=false
 - **Tailwind CSS** : Styles
 - **Recharts** : Graphiques
 
+### Configuration de l'API
+
+Le frontend utilise une variable d'environnement pour déterminer l'URL du backend :
+
+- **En développement** : Le proxy Vite redirige automatiquement `/api` vers `http://localhost:3000`
+- **En production** : Définir la variable `VITE_API_URL` avec l'URL complète du backend
+
+**Exemple de configuration locale** :
+
+```env
+# .env.local (développement) - peut être laissé vide pour utiliser le proxy
+VITE_API_URL=
+
+# .env.production (production locale)
+VITE_API_URL=https://votre-backend.web.com
+```
+
+**Important** : Avec Vite, les variables d'environnement sont intégrées au moment du build. Vous devez donc rebuild votre application après avoir modifié `VITE_API_URL`.
+
 ### Pages principales
 
 - **Index** : Vue d'ensemble avec carte des trajets et filtres globaux
