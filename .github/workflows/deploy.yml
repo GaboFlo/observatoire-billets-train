@@ -34,8 +34,10 @@ jobs:
       - name: Clean and install dependencies
         run: |
           cd front
-          rm -rf node_modules
-          npm ci --include=optional || npm install --include=optional
+          rm -rf node_modules package-lock.json
+          npm install
+          npm install @rollup/rollup-linux-x64-gnu --save-optional --force
+          npm rebuild rollup || true
 
       - name: Build frontend
         env:
