@@ -32,7 +32,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: cd front && npm ci
+        run: cd front && npm install
 
       - name: Build frontend
         env:
