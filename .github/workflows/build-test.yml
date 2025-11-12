@@ -1,0 +1,34 @@
+name: Test du build
+
+on:
+  push:
+
+jobs:
+  build-front:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Clean and install dependencies
+        run: |
+          cd front
+          rm -rf node_modules package-lock.json
+          npm install --legacy-peer-deps
+          cd node_modules/rollup
+          npm install @rollup/rollup-linux-x64-gnu --save-optional --force || true
+          cd ../..
+          cd node_modules/@swc/core
+          npm install @swc/core-linux-x64-gnu --save-optional --force || true
+          cd ../../..
+
+      - name: Build frontend
+        run: cd front && npm run build
