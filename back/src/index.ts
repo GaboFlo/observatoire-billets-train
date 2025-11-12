@@ -186,6 +186,11 @@ mongoose
   .then(() => console.log("✅ Connecté à MongoDB"))
   .catch((err) => console.error("❌ Erreur de connexion à MongoDB:", err));
 
+app.get("/api/health", async (req: Request, res: Response) => {
+  const isConnected = mongoose.connection.readyState === 1;
+  res.json({ connected: isConnected });
+});
+
 app.post("/api/trains/pricing", async (req: Request, res: Response) => {
   try {
     const {
@@ -214,7 +219,7 @@ app.post("/api/trains/pricing", async (req: Request, res: Response) => {
     const cachedEntry = pricingCache.get(cacheKey);
     if (cachedEntry && isCacheValid(cachedEntry)) {
       console.log("Cache hit pour /api/trains/pricing");
-      return res.json(cachedEntry.data);
+      return res.status(200).setHeader("X-Cache", "HIT").json(cachedEntry.data);
     }
 
     const baseMatch = buildBaseMatch({
@@ -651,7 +656,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
     const cachedEntry = journeyDetailsCache.get(cacheKey);
     if (cachedEntry && isJourneyDetailsCacheValid(cachedEntry)) {
       console.log("Cache hit pour /api/trains/statistics");
-      return res.json(cachedEntry.data);
+      return res.status(200).setHeader("X-Cache", "HIT").json(cachedEntry.data);
     }
 
     const baseMatch = buildBaseMatch({
@@ -797,7 +802,7 @@ app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
         stats,
       };
 
-      return res.json(result);
+      return res.status(200).setHeader("X-Cache", "HIT").json(result);
     }
 
     const baseMatch = buildBaseMatch({
