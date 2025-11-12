@@ -31,13 +31,17 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Clean and install dependencies
         run: |
           cd front
           rm -rf node_modules package-lock.json
-          npm install
-          npm install @rollup/rollup-linux-x64-gnu --save-optional --force
-          npm rebuild rollup || true
+          npm install --legacy-peer-deps
+          cd node_modules/rollup
+          npm install @rollup/rollup-linux-x64-gnu --save-optional --force || true
+          cd ../..
 
       - name: Build frontend
         env:
