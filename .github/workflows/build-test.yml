@@ -19,8 +19,8 @@ jobs:
       - name: Clean and install dependencies
         run: |
           cd front
-          rm -rf node_modules package-lock.json
-          npm install --include=optional
+          rm -rf node_modules
+          npm ci --include=optional || npm install --include=optional
 
       - name: Build frontend
         run: cd front && npm run build
