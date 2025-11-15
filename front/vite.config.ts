@@ -14,11 +14,19 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  preview: {
+    port: 4173,
+    host: true,
+  },
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: ["react", "react-dom"],
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom"],
   },
   build: {
     rollupOptions: {
@@ -34,9 +42,6 @@ export default defineConfig(({ mode }) => ({
             if (id.includes("@tanstack")) {
               return "vendor-query";
             }
-            if (id.includes("react") || id.includes("react-dom")) {
-              return "vendor-react";
-            }
             if (id.includes("leaflet") || id.includes("react-leaflet")) {
               return "vendor-maps";
             }
@@ -49,5 +54,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
     chunkSizeWarningLimit: 1000,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
 }));
