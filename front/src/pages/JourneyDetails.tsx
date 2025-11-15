@@ -23,6 +23,7 @@ import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
+import { useSEO } from "../hooks/useSEO";
 import {
   buildJourneyUrl,
   parseStationWithId,
@@ -251,6 +252,86 @@ const JourneyDetails = () => {
   );
 
   const { filteredOffers } = useJourneyDetailsFilters(detailedOffers);
+
+  const departureStationName = departureStation
+    ? translateStation(departureStation)
+    : "Station de départ";
+  const arrivalStationName = arrivalStation
+    ? translateStation(arrivalStation)
+    : "Station d'arrivée";
+  const journeyTitle = `${departureStationName} ⟶ ${arrivalStationName}`;
+  const minPrice =
+    calculatedStats.minPrice > 0 ? truncatePrice(calculatedStats.minPrice) : 0;
+  const avgPrice =
+    calculatedStats.avgPrice > 0 ? truncatePrice(calculatedStats.avgPrice) : 0;
+  const maxPrice =
+    calculatedStats.maxPrice > 0 ? truncatePrice(calculatedStats.maxPrice) : 0;
+  const journeyDescription =
+    minPrice > 0
+      ? `Analyse des prix des billets de train pour le trajet ${departureStationName} - ${arrivalStationName}. Prix minimum : ${minPrice}€, prix moyen : ${avgPrice}€, prix maximum : ${maxPrice}€. Comparez les tarifs SNCF, TGV, OUIGO, Trenitalia et Eurostar avec statistiques détaillées et graphiques d'évolution.`
+      : `Analyse des prix des billets de train pour le trajet ${departureStationName} - ${arrivalStationName}. Comparez les tarifs SNCF, TGV, OUIGO, Trenitalia et Eurostar avec statistiques détaillées et graphiques d'évolution.`;
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  useSEO({
+    title: `${journeyTitle} - Observatoire des billets de train`,
+    description: journeyDescription,
+    keywords: `billets train ${departureStationName} ${arrivalStationName}, prix SNCF ${departureStationName} ${arrivalStationName}, tarifs TGV ${departureStationName} ${arrivalStationName}, trajet ${departureStationName} ${arrivalStationName}`,
+    ogTitle: `${journeyTitle} - Analyse des prix des billets de train`,
+    ogDescription:
+      minPrice > 0
+        ? `Analyse des prix des billets de train pour ${departureStationName} - ${arrivalStationName}. Prix de ${minPrice}€ à ${maxPrice}€.`
+        : `Analyse des prix des billets de train pour ${departureStationName} - ${arrivalStationName}.`,
+    ogUrl: currentUrl,
+    twitterTitle: `${journeyTitle} - Prix des billets de train`,
+    twitterDescription:
+      minPrice > 0
+        ? `Prix des billets de train ${departureStationName} - ${arrivalStationName} : de ${minPrice}€ à ${maxPrice}€`
+        : `Prix des billets de train ${departureStationName} - ${arrivalStationName}`,
+    canonicalUrl: currentUrl,
+    jsonLd:
+      minPrice > 0
+        ? {
+            "@context": "https://schema.org",
+            "@type": "TravelAction",
+            name: journeyTitle,
+            description: journeyDescription,
+            object: {
+              "@type": "TrainTrip",
+              departureStation: {
+                "@type": "TrainStation",
+                name: departureStationName,
+              },
+              arrivalStation: {
+                "@type": "TrainStation",
+                name: arrivalStationName,
+              },
+              offers: {
+                "@type": "AggregateOffer",
+                priceCurrency: "EUR",
+                lowPrice: minPrice.toString(),
+                highPrice: maxPrice.toString(),
+                offerCount: filteredOffers.length.toString(),
+              },
+            },
+          }
+        : {
+            "@context": "https://schema.org",
+            "@type": "TravelAction",
+            name: journeyTitle,
+            description: journeyDescription,
+            object: {
+              "@type": "TrainTrip",
+              departureStation: {
+                "@type": "TrainStation",
+                name: departureStationName,
+              },
+              arrivalStation: {
+                "@type": "TrainStation",
+                name: arrivalStationName,
+              },
+            },
+          },
+  });
 
   const handleInvertJourney = () => {
     if (arrivalStationId && departureStationId) {
