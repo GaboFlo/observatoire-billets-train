@@ -6,6 +6,7 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import PageHeader from "../components/PageHeader";
 import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyData } from "../hooks/useJourneyData";
+import { useSEO } from "../hooks/useSEO";
 
 const Index = () => {
   const {
@@ -22,13 +23,25 @@ const Index = () => {
     currentFilters,
   } = useJourneyData();
 
-  // Charger les données initiales au démarrage uniquement si on n'a pas déjà de données
+  useSEO({
+    title: "Observatoire des billets de train",
+    description:
+      "Analysez et visualisez les prix des billets de train grandes distances. Comparez les tarifs SNCF, TGV, OUIGO, Trenitalia et Eurostar sur différentes routes à origine ou destination de Paris. Statistiques détaillées, graphiques d'évolution des prix et filtres avancés.",
+    keywords:
+      "billets train, prix SNCF, tarifs TGV, observatoire prix train, comparaison prix train, billets OUIGO, Trenitalia,  Eurostar, statistiques prix train, analyse tarifs ferroviaires",
+    ogTitle: "Observatoire des billets de train",
+    ogDescription:
+      "Analysez et visualisez les prix des billets de train grandes distances. Comparez les tarifs SNCF, TGV, OUIGO, Trenitalia et Eurostar sur différentes routes avec statistiques détaillées et graphiques d'évolution.",
+    ogUrl: typeof window !== "undefined" ? window.location.href : "",
+    canonicalUrl: typeof window !== "undefined" ? window.location.origin : "",
+  });
+
   useEffect(() => {
     if (allJourneys.length === 0 && journeys.length === 0) {
       fetchJourneys({
         ...DEFAULT_FILTERS,
         flexibilities: [],
-        selectedDates: [], // Toutes les dates disponibles
+        selectedDates: [],
       });
     }
   }, [fetchJourneys, allJourneys.length, journeys.length]);
