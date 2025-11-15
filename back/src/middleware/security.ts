@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 
 const MAX_REQ_SIZE = 1024 * 100;
 
@@ -15,7 +15,10 @@ export const securityHeaders = (
     "Permissions-Policy",
     "geolocation=(), microphone=(), camera=()"
   );
-  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  res.setHeader(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains"
+  );
   next();
 };
 
@@ -26,7 +29,7 @@ export const validateContentType = (
 ): void => {
   if (req.method === "POST" || req.method === "PUT") {
     const contentType = req.headers["content-type"];
-    if (!contentType || !contentType.includes("application/json")) {
+    if (!contentType?.includes("application/json")) {
       res.status(400).json({ error: "Content-Type must be application/json" });
       return;
     }
@@ -47,71 +50,80 @@ export const limitPayloadSize = (
   next();
 };
 
+const sanitizeString = (str: string): string => {
+  return str.replace(/[<>]/g, "").trim().substring(0, 200);
+};
+
+const sanitizeArray = (arr: unknown[]): string[] => {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter((item): item is string => typeof item === "string")
+    .map(sanitizeString)
+    .slice(0, 50);
+};
+
+const sanitizeNumber = (value: number): number => {
+  return Math.abs(Math.floor(value));
+};
+
+const sanitizeBody = (body: Record<string, unknown>): void => {
+  const arrayFields = [
+    "carriers",
+    "classes",
+    "discountCards",
+    "flexibilities",
+    "selectedDates",
+  ];
+
+  arrayFields.forEach((field) => {
+    if (body[field]) {
+      body[field] = sanitizeArray(body[field] as unknown[]);
+    }
+  });
+
+  const numberFields = [
+    "departureStationId",
+    "arrivalStationId",
+    "trainNumber",
+  ];
+
+  numberFields.forEach((field) => {
+    const value = body[field];
+    if (typeof value === "number") {
+      body[field] = sanitizeNumber(value);
+    }
+  });
+
+  const stringFields = ["date", "selectedDate"];
+
+  stringFields.forEach((field) => {
+    const value = body[field];
+    if (typeof value === "string") {
+      body[field] = sanitizeString(value);
+    }
+  });
+};
+
+const sanitizeParams = (params: Record<string, string>): void => {
+  Object.keys(params).forEach((key) => {
+    if (typeof params[key] === "string") {
+      params[key] = sanitizeString(params[key]);
+    }
+  });
+};
+
 export const sanitizeInput = (
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  const sanitizeString = (str: string): string => {
-    return str
-      .replace(/[<>]/g, "")
-      .trim()
-      .substring(0, 200);
-  };
-
-  const sanitizeArray = (arr: unknown[]): string[] => {
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .filter((item): item is string => typeof item === "string")
-      .map(sanitizeString)
-      .slice(0, 50);
-  };
-
   if (req.body) {
-    if (req.body.carriers) {
-      req.body.carriers = sanitizeArray(req.body.carriers);
-    }
-    if (req.body.classes) {
-      req.body.classes = sanitizeArray(req.body.classes);
-    }
-    if (req.body.discountCards) {
-      req.body.discountCards = sanitizeArray(req.body.discountCards);
-    }
-    if (req.body.flexibilities) {
-      req.body.flexibilities = sanitizeArray(req.body.flexibilities);
-    }
-    if (req.body.selectedDates) {
-      req.body.selectedDates = sanitizeArray(req.body.selectedDates);
-    }
-    if (typeof req.body.departureStationId === "number") {
-      req.body.departureStationId = Math.abs(
-        Math.floor(req.body.departureStationId)
-      );
-    }
-    if (typeof req.body.arrivalStationId === "number") {
-      req.body.arrivalStationId = Math.abs(
-        Math.floor(req.body.arrivalStationId)
-      );
-    }
-    if (typeof req.body.trainNumber === "number") {
-      req.body.trainNumber = Math.abs(Math.floor(req.body.trainNumber));
-    }
-    if (typeof req.body.date === "string") {
-      req.body.date = sanitizeString(req.body.date);
-    }
-    if (typeof req.body.selectedDate === "string") {
-      req.body.selectedDate = sanitizeString(req.body.selectedDate);
-    }
+    sanitizeBody(req.body);
   }
 
   if (req.params) {
-    Object.keys(req.params).forEach((key) => {
-      if (typeof req.params[key] === "string") {
-        req.params[key] = sanitizeString(req.params[key]);
-      }
-    });
+    sanitizeParams(req.params);
   }
 
   next();
 };
-
