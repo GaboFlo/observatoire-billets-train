@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import { useIsMobile } from "../hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface StatCardProps {
@@ -18,6 +19,7 @@ const StatCard = ({
   description,
   tooltipText,
 }: StatCardProps) => {
+  const isMobile = useIsMobile();
   const colorClasses = {
     blue: {
       bg: "bg-blue-100",
@@ -57,16 +59,16 @@ const StatCard = ({
       `Couleur invalide pour StatCard: ${color}, utilisation du bleu par défaut`
     );
     const fallbackCardContent = (
-      <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-sm hover-lift">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Icon className="w-5 h-5 text-blue-600" />
+      <div className={`bg-white/70 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm hover-lift ${isMobile ? "p-3" : "p-6"}`}>
+        <div className={`flex items-center ${isMobile ? "gap-2" : "gap-3"}`}>
+          <div className={`${isMobile ? "p-1.5" : "p-2"} bg-blue-100 rounded-lg`}>
+            <Icon className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-blue-600`} />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value}</p>
+            <p className={`${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-600`}>{title}</p>
+            <p className={`${isMobile ? "text-xl" : "text-2xl"} font-bold text-gray-900`}>{value}</p>
             {description && (
-              <p className="text-xs text-gray-500 mt-1">{description}</p>
+              <p className={`${isMobile ? "text-[10px]" : "text-xs"} text-gray-500 ${isMobile ? "mt-0.5" : "mt-1"}`}>{description}</p>
             )}
           </div>
         </div>
@@ -90,16 +92,16 @@ const StatCard = ({
   }
 
   const cardContent = (
-    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 border border-white/20 shadow-sm hover-lift">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 ${classes.bg} rounded-lg`}>
-          <Icon className={`w-5 h-5 ${classes.text}`} />
+    <div className={`bg-white/70 backdrop-blur-sm rounded-xl border border-white/20 shadow-sm hover-lift ${isMobile ? "p-3" : "p-6"}`}>
+      <div className={`flex items-center ${isMobile ? "gap-2" : "gap-3"}`}>
+        <div className={`${isMobile ? "p-1.5" : "p-2"} ${classes.bg} rounded-lg`}>
+          <Icon className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} ${classes.text}`} />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+          <p className={`${isMobile ? "text-xs" : "text-sm"} font-medium text-gray-600`}>{title}</p>
+          <p className={`${isMobile ? "text-xl" : "text-2xl"} font-bold text-gray-900`}>{value}</p>
           {description && (
-            <p className="text-xs text-gray-500 mt-1">{description}</p>
+            <p className={`${isMobile ? "text-[10px]" : "text-xs"} text-gray-500 ${isMobile ? "mt-0.5" : "mt-1"}`}>{description}</p>
           )}
         </div>
       </div>
