@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { buildJourneyUrl } from "@/lib/utils";
 import { GroupedJourney } from "@/types/journey";
+import { trackJourneyClick } from "@/utils/matomoTracking";
 import { Train } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PriceDisplay } from "./PriceDisplay";
@@ -48,7 +49,14 @@ const JourneyCard = ({ journey, filteredPrices }: JourneyCardProps) => {
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" asChild className="w-full">
+        <Button
+          variant="outline"
+          asChild
+          className="w-full"
+          onClick={() =>
+            trackJourneyClick(journey.departureStation, journey.arrivalStation)
+          }
+        >
           <Link
             to={buildJourneyUrl(
               journey.departureStation,
