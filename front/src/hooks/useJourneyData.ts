@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { buildApiUrl } from "../config/api";
 import datesData from "../data/dates.json";
 import { GroupedJourney } from "../types/journey";
+import { ApiError, handleApiError } from "../utils/apiErrorHandler";
 import { saveFilters } from "../utils/filterStorage";
 
 export type Journey = GroupedJourney;
@@ -149,7 +150,7 @@ export const useJourneyData = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          await handleApiError(response);
         }
 
         const data: ApiResponseItem[] = await response.json();
@@ -168,7 +169,11 @@ export const useJourneyData = () => {
         setError(null);
       } catch (err) {
         console.error("Erreur lors de la récupération des données:", err);
-        setError(err instanceof Error ? err.message : "Erreur inconnue");
+        if (err instanceof ApiError && err.status === 429) {
+          setError(err.message);
+        } else {
+          setError(err instanceof Error ? err.message : "Erreur inconnue");
+        }
       } finally {
         setLoading(false);
         if (filterLoadingTimeoutRef.current) {

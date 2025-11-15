@@ -1,8 +1,5 @@
+import { trackBackToHome, trackJourneyInversion } from "@/utils/matomoTracking";
 import { stationTranslations, translateStation } from "@/utils/translations";
-import {
-  trackBackToHome,
-  trackJourneyInversion,
-} from "@/utils/matomoTracking";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,8 +17,8 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
-import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { useIsMobile } from "../hooks/use-mobile";
+import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
 import { useJourneyDetailsFilters } from "../hooks/useJourneyDetailsFilters";
@@ -229,6 +226,8 @@ const ErrorState = ({
   onInvertJourney,
 }: ErrorStateProps) => {
   const isMobile = useIsMobile();
+  const isRateLimitError = error.includes("Trop de requêtes");
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {isMobile ? (
@@ -264,12 +263,30 @@ const ErrorState = ({
             </svg>
           </div>
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            Erreur de chargement
+            {isRateLimitError ? "Trop de requêtes" : "Erreur de chargement"}
           </h2>
           <p className="text-gray-500 mb-8">
-            {error} <br />
-            Certainement une panne de signalisation, rafraîchissez la page pour
-            ne pas louper vos correspondances{" "}
+            {isRateLimitError ? (
+              <>
+                Trop de requêtes, votre train est en attente de signalisation.
+                <br />
+                Veuillez patienter quelques instants avant de réessayer.
+                <br />
+                <span className="text-sm text-gray-400 mt-2 block">
+                  {error}
+                </span>
+                <span className="text-sm text-gray-400 mt-1 block">
+                  Cette limitation permet de garantir la disponibilité du
+                  service pour tous les utilisateurs.
+                </span>
+              </>
+            ) : (
+              <>
+                {error} <br />
+                Certainement une panne de signalisation, rafraîchissez la page
+                pour ne pas louper vos correspondances{" "}
+              </>
+            )}
           </p>
           <Button onClick={() => globalThis.location.reload()}>
             Réessayer
@@ -578,13 +595,23 @@ const JourneyDetails = () => {
 
           {/* Contenu principal - prend toute la largeur si filtres collapsés */}
           <div
-            className={`flex-1 ${isMobile ? "space-y-4" : "space-y-8"} ${isMobile ? "" : "sticky top-4"} z-10 ${isMobile ? "" : "max-h-[calc(100vh-2rem)] overflow-y-auto"}`}
+            className={`flex-1 ${isMobile ? "space-y-4" : "space-y-8"} ${
+              isMobile ? "" : "sticky top-4"
+            } z-10 ${
+              isMobile ? "" : "max-h-[calc(100vh-2rem)] overflow-y-auto"
+            }`}
             style={{
               willChange: "width",
             }}
           >
             <div className={`bg-gray-50 rounded-lg ${isMobile ? "p-2" : ""}`}>
-              <div className={`grid ${isMobile ? "gap-2 grid-cols-1" : "gap-4 md:grid-cols-2 lg:grid-cols-3"}`}>
+              <div
+                className={`grid ${
+                  isMobile
+                    ? "gap-2 grid-cols-1"
+                    : "gap-4 md:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
                 <StatCard
                   title="Prix minimum"
                   value={`${truncatePrice(calculatedStats.minPrice)}€`}
