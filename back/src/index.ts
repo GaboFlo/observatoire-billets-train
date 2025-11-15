@@ -4,6 +4,13 @@ import express, { Request, Response } from "express";
 import mongoose, { Document, Schema } from "mongoose";
 import { env } from "./env-loader";
 import { buildBaseMatch } from "./filterUtils";
+import {
+  limitPayloadSize,
+  sanitizeInput,
+  securityHeaders,
+  validateContentType,
+} from "./middleware/security";
+import { rateLimiter, strictRateLimiter } from "./middleware/rateLimiter";
 
 dotenv.config({ path: `.env.local`, override: true });
 
@@ -172,8 +179,13 @@ const isJourneyDetailsCacheValid = (
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(securityHeaders);
+app.use(limitPayloadSize);
+app.use(rateLimiter());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
+app.use(validateContentType);
+app.use(sanitizeInput);
 
 mongoose.set("debug", env.MONGO.DEBUG);
 
@@ -191,7 +203,7 @@ app.get("/api/health", async (req: Request, res: Response) => {
   res.json({ connected: isConnected });
 });
 
-app.post("/api/trains/pricing", async (req: Request, res: Response) => {
+app.post("/api/trains/pricing", strictRateLimiter, async (req: Request, res: Response) => {
   try {
     const {
       carriers = [],
@@ -628,7 +640,7 @@ app.post("/api/trains/trains-for-date", async (req: Request, res: Response) => {
 });
 
 // Endpoint pour l'analyse des statistiques avec filtres
-app.post("/api/trains/statistics", async (req: Request, res: Response) => {
+app.post("/api/trains/statistics", strictRateLimiter, async (req: Request, res: Response) => {
   try {
     const {
       carriers = [],
@@ -732,7 +744,7 @@ app.post("/api/trains/statistics", async (req: Request, res: Response) => {
 });
 
 // Endpoint spécialisé pour les données de graphiques
-app.post("/api/trains/chart-data", async (req: Request, res: Response) => {
+app.post("/api/trains/chart-data", strictRateLimiter, async (req: Request, res: Response) => {
   try {
     const {
       carriers = [],
