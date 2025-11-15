@@ -72,7 +72,6 @@ interface TrainInfo {
   minPrice: number;
 }
 
-// Composant pour les sections collapsibles
 const CollapsibleSection = ({
   title,
   icon: Icon,
@@ -91,20 +90,27 @@ const CollapsibleSection = ({
       type="button"
       className="flex items-center justify-between cursor-pointer w-full"
       onClick={onToggle}
+      aria-expanded={isExpanded}
+      aria-label={`${isExpanded ? "Réduire" : "Développer"} la section ${title}`}
     >
       <h3 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-        <Icon className="w-4 h-4" />
+        <Icon className="w-4 h-4" aria-hidden="true" />
         {title}
       </h3>
-      <Button variant="ghost" size="sm" className="p-1 h-6 w-6">
-        {isExpanded ? (
-          <ChevronUp className="w-4 h-4" />
-        ) : (
-          <ChevronDown className="w-4 h-4" />
-        )}
-      </Button>
+      {isExpanded ? (
+        <ChevronUp className="w-4 h-4" aria-hidden="true" />
+      ) : (
+        <ChevronDown className="w-4 h-4" aria-hidden="true" />
+      )}
     </button>
-    {isExpanded && children}
+    <div
+      className={`overflow-hidden transition-all duration-200 ease-in-out ${
+        isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+      }`}
+      style={{ willChange: "max-height, opacity" }}
+    >
+      {children}
+    </div>
   </div>
 );
 
@@ -417,10 +423,10 @@ const Filters = ({
                   let allDatesButtonClass: string;
                   if (isAllDatesSelected) {
                     allDatesButtonClass =
-                      "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300";
+                      "bg-blue-600 text-white border-blue-700 ring-2 ring-blue-400";
                   } else {
                     allDatesButtonClass =
-                      "bg-gray-100 text-gray-600 border-gray-200";
+                      "bg-gray-100 text-gray-700 border-gray-300";
                   }
 
                   return (
@@ -450,13 +456,13 @@ const Filters = ({
                     : selectedDate === date;
 
                   const statusColors = {
-                    past: "bg-gray-100 text-gray-600 border-gray-200",
-                    today: "bg-green-100 text-green-700 border-green-300",
-                    future: "bg-blue-100 text-blue-700 border-blue-300",
+                    past: "bg-gray-100 text-gray-700 border-gray-300",
+                    today: "bg-green-100 text-green-800 border-green-400",
+                    future: "bg-blue-100 text-blue-800 border-blue-400",
                   };
 
                   const selectedColors = isSelected
-                    ? "bg-blue-500 text-white border-blue-600"
+                    ? "bg-blue-600 text-white border-blue-700"
                     : statusColors[status];
 
                   // Format complet avec jour de la semaine pour le title
@@ -493,13 +499,25 @@ const Filters = ({
             )}
           </CollapsibleSection>
           {/* Compagnies ferroviaires */}
-          {availableCarriers.length > 0 && (
-            <CollapsibleSection
-              title="Compagnies ferroviaires"
-              icon={Train}
-              isExpanded={isCarrierSection.isExpanded}
-              onToggle={toggleCarrierSection}
-            >
+          <CollapsibleSection
+            title="Compagnies ferroviaires"
+            icon={Train}
+            isExpanded={isCarrierSection.isExpanded}
+            onToggle={toggleCarrierSection}
+          >
+            {availableCarriers.length === 0 ? (
+              <div className="space-y-2 min-h-[120px]">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center space-x-2 animate-pulse"
+                  >
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div className="space-y-2">
                 {availableCarriers.map((carrier) => (
                   <div key={carrier} className="flex items-center space-x-2">
@@ -518,16 +536,28 @@ const Filters = ({
                   </div>
                 ))}
               </div>
-            </CollapsibleSection>
-          )}
+            )}
+          </CollapsibleSection>
           {/* Classes de voyage */}
-          {availableClasses.length > 0 && (
-            <CollapsibleSection
-              title="Classes de voyage"
-              icon={Filter}
-              isExpanded={isClassSection.isExpanded}
-              onToggle={toggleClassSection}
-            >
+          <CollapsibleSection
+            title="Classes de voyage"
+            icon={Filter}
+            isExpanded={isClassSection.isExpanded}
+            onToggle={toggleClassSection}
+          >
+            {availableClasses.length === 0 ? (
+              <div className="space-y-2 min-h-[80px]">
+                {[1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center space-x-2 animate-pulse"
+                  >
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div className="space-y-2">
                 {availableClasses
                   .filter((travelClass) => travelClass !== null)
@@ -551,16 +581,28 @@ const Filters = ({
                     </div>
                   ))}
               </div>
-            </CollapsibleSection>
-          )}
+            )}
+          </CollapsibleSection>
           {/* Cartes de réduction */}
-          {availableDiscountCards.length > 0 && (
-            <CollapsibleSection
-              title="Cartes de réduction"
-              icon={Filter}
-              isExpanded={isDiscountCardSection.isExpanded}
-              onToggle={toggleDiscountCardSection}
-            >
+          <CollapsibleSection
+            title="Cartes de réduction"
+            icon={Filter}
+            isExpanded={isDiscountCardSection.isExpanded}
+            onToggle={toggleDiscountCardSection}
+          >
+            {availableDiscountCards.length === 0 ? (
+              <div className="space-y-2 min-h-[100px]">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center space-x-2 animate-pulse"
+                  >
+                    <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-28"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <div className="space-y-2">
                 {availableDiscountCards.map((discountCard) => (
                   <div
@@ -582,8 +624,8 @@ const Filters = ({
                   </div>
                 ))}
               </div>
-            </CollapsibleSection>
-          )}
+            )}
+          </CollapsibleSection>
           {/* Flexibilité */}
           <CollapsibleSection
             title="Flexibilité"

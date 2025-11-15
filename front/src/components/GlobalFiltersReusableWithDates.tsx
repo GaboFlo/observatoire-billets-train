@@ -82,7 +82,7 @@ const GlobalFiltersReusableWithDates = ({
               <Filter className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
+              <h2 className="text-lg font-semibold text-gray-900">Filtres</h2>
               {hasActiveFilters && (
                 <p className="text-sm text-gray-500">
                   {filters.excludedCarriers.length +

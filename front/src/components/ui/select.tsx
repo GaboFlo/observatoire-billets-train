@@ -40,9 +40,10 @@ const SelectScrollUpButton = React.forwardRef<
       "flex cursor-default items-center justify-center py-1",
       className
     )}
+    aria-label="Faire défiler vers le haut"
     {...props}
   >
-    <ChevronUp className="h-4 w-4" />
+    <ChevronUp className="h-4 w-4" aria-hidden="true" />
   </SelectPrimitive.ScrollUpButton>
 ))
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
@@ -57,9 +58,10 @@ const SelectScrollDownButton = React.forwardRef<
       "flex cursor-default items-center justify-center py-1",
       className
     )}
+    aria-label="Faire défiler vers le bas"
     {...props}
   >
-    <ChevronDown className="h-4 w-4" />
+    <ChevronDown className="h-4 w-4" aria-hidden="true" />
   </SelectPrimitive.ScrollDownButton>
 ))
 SelectScrollDownButton.displayName =
