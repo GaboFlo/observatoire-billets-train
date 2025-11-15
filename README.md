@@ -2,6 +2,22 @@
 
 Application web permettant d'analyser et de visualiser les prix des billets de train sur différentes routes, avec des statistiques détaillées et des graphiques d'évolution des tarifs.
 
+## Construction des données
+
+### Les prix relevés
+
+Le prix brut de certains trajets, dates selon mes choix, sont enregistrés à un rythme quasi quotidien, bien qu'aléatoire afin de ne pas se prendre des limites de fetch avec CAPTCHA. Cela peut expliquer des périodes sans prix.
+Mes propres cartes de fidélité sont utilisées.
+
+Une analyse data assez naïve est utilisée dans cette première version de l'observatoire, et ne cherchera qu'à être améliorée.
+
+### Tracé des lignes
+
+Utilisation des services suivants, avec exemples, pour obtenir les geojson des lignes
+
+- [trainmap.ntag.fr](https://trainmap.ntag.fr/api/route/?dep=4916&arr=8490)
+- [signal.eu.org](https://signal.eu.org/osm/eu/route/v1/train/2.315691,48.838255;-0.55565,44.825523?overview=false&alternatives=true&steps=true)
+
 ## Architecture
 
 Le projet est organisé en monorepo avec deux applications principales :
