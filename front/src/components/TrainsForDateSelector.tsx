@@ -73,7 +73,7 @@ const TrainsForDateSelector = ({
                       <span className="font-semibold">
                         Train {train.trainNumber}
                       </span>
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <span className="text-xs text-gray-700 bg-gray-100 px-2 py-1 rounded">
                         {translateCarrier(train.carrier)}
                       </span>
                     </div>

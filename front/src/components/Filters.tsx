@@ -701,7 +701,7 @@ const Filters = ({
                           className={`text-xs px-2 py-1 rounded ${
                             selectedTrain === train.trainNumber
                               ? "text-gray-800 bg-white/90"
-                              : "text-gray-500 bg-gray-100"
+                              : "text-gray-700 bg-gray-100"
                           }`}
                         >
                           {translateCarrier(train.carrier)}
