@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useMatomo } from "../hooks/useMatomo";
+import { trackConsentAction } from "../utils/matomoTracking";
 
 const MATOMO_URL = import.meta.env.VITE_MATOMO_URL || "";
 const MATOMO_SITE_ID = Number(import.meta.env.VITE_MATOMO_SITE_ID) || 0;
@@ -18,6 +19,9 @@ const ConsentBanner = () => {
 
   const handleAccept = () => {
     acceptConsent({ url: MATOMO_URL, siteId: MATOMO_SITE_ID });
+    setTimeout(() => {
+      trackConsentAction("accept");
+    }, 100);
     setShowBanner(false);
   };
 

@@ -1,4 +1,6 @@
+import { trackError } from "@/utils/matomoTracking";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "./ui/button";
 
 interface ErrorDisplayProps {
@@ -6,6 +8,10 @@ interface ErrorDisplayProps {
 }
 
 const ErrorDisplay = ({ error }: ErrorDisplayProps) => {
+  useEffect(() => {
+    trackError("Erreur affichée", error);
+  }, [error]);
+
   const handleRefresh = () => {
     window.location.reload();
   };

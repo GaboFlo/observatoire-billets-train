@@ -3,6 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCollapsibleSection } from "@/hooks/useCollapsibleSection";
 import {
+  trackCarrierFilter,
+  trackClassFilter,
+  trackDateSelection,
+  trackDiscountCardFilter,
+  trackFlexibilityFilter,
+  trackFiltersCollapse,
+  trackResetFilters,
+  trackTrainSelection,
+} from "@/utils/matomoTracking";
+import {
   translateCarrier,
   translateDiscountCard,
   translateFlexibility,
@@ -188,9 +198,14 @@ const Filters = ({
         onDatesSelect(currentDates.filter((d) => d !== date));
       } else {
         onDatesSelect([...currentDates, date]);
+        trackDateSelection(date, true);
       }
     } else if (onDateSelect) {
-      onDateSelect(selectedDate === date ? null : date);
+      const isSelected = selectedDate === date;
+      onDateSelect(isSelected ? null : date);
+      if (!isSelected) {
+        trackDateSelection(date, false);
+      }
     }
   };
 
@@ -198,15 +213,67 @@ const Filters = ({
     return timeString.substring(0, 5); // HH:MM
   };
 
-  // Fonction pour toggle le collapse latéral
   const toggleCollapse = useCallback(() => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
-    // Utiliser requestAnimationFrame pour éviter le clignotement
+    trackFiltersCollapse(newState);
     requestAnimationFrame(() => {
       localStorage.setItem("filters-collapsed", JSON.stringify(newState));
     });
   }, [isCollapsed]);
+
+  const handleCarrierToggle = useCallback(
+    (carrier: string) => {
+      const isSelected = selectedCarriers.includes(carrier);
+      trackCarrierFilter(carrier, !isSelected);
+      onCarrierToggle(carrier);
+    },
+    [selectedCarriers, onCarrierToggle]
+  );
+
+  const handleClassToggle = useCallback(
+    (travelClass: string) => {
+      const isSelected = selectedClasses.includes(travelClass);
+      trackClassFilter(travelClass, !isSelected);
+      onClassToggle(travelClass);
+    },
+    [selectedClasses, onClassToggle]
+  );
+
+  const handleDiscountCardToggle = useCallback(
+    (discountCard: string) => {
+      const isSelected = selectedDiscountCards.includes(discountCard);
+      trackDiscountCardFilter(discountCard, !isSelected);
+      onDiscountCardToggle(discountCard);
+    },
+    [selectedDiscountCards, onDiscountCardToggle]
+  );
+
+  const handleFlexibilityToggle = useCallback(
+    (flexibility: string) => {
+      const isSelected = selectedFlexibilities.includes(flexibility);
+      trackFlexibilityFilter(flexibility, !isSelected);
+      onFlexibilityToggle(flexibility);
+    },
+    [selectedFlexibilities, onFlexibilityToggle]
+  );
+
+  const handleTrainSelect = useCallback(
+    (train: string | null) => {
+      if (train) {
+        trackTrainSelection(train);
+      }
+      onTrainSelect(train);
+    },
+    [onTrainSelect]
+  );
+
+  const handleResetFilters = useCallback(() => {
+    trackResetFilters();
+    if (onResetFilters) {
+      onResetFilters();
+    }
+  }, [onResetFilters]);
 
   const toggleDateSection = useCallback(() => {
     isDateSection.toggle();
@@ -303,7 +370,7 @@ const Filters = ({
             <div className="flex items-center gap-2">
               {onResetFilters && (
                 <Button
-                  onClick={onResetFilters}
+                  onClick={handleResetFilters}
                   variant="outline"
                   size="sm"
                   disabled={filterLoading}
@@ -439,7 +506,7 @@ const Filters = ({
                     <Checkbox
                       id={`carrier-${carrier}`}
                       checked={selectedCarriers.includes(carrier)}
-                      onCheckedChange={() => onCarrierToggle(carrier)}
+                      onCheckedChange={() => handleCarrierToggle(carrier)}
                       disabled={filterLoading}
                     />
                     <label
@@ -472,7 +539,7 @@ const Filters = ({
                       <Checkbox
                         id={`class-${travelClass}`}
                         checked={selectedClasses.includes(travelClass)}
-                        onCheckedChange={() => onClassToggle(travelClass)}
+                        onCheckedChange={() => handleClassToggle(travelClass)}
                         disabled={filterLoading}
                       />
                       <label
@@ -503,7 +570,7 @@ const Filters = ({
                     <Checkbox
                       id={`discount-${discountCard}`}
                       checked={selectedDiscountCards.includes(discountCard)}
-                      onCheckedChange={() => onDiscountCardToggle(discountCard)}
+                      onCheckedChange={() => handleDiscountCardToggle(discountCard)}
                       disabled={filterLoading}
                     />
                     <label
@@ -533,7 +600,7 @@ const Filters = ({
                   <Checkbox
                     id={`flexibility-${flexibility}`}
                     checked={selectedFlexibilities.includes(flexibility)}
-                    onCheckedChange={() => onFlexibilityToggle(flexibility)}
+                    onCheckedChange={() => handleFlexibilityToggle(flexibility)}
                     disabled={filterLoading}
                   />
                   <label
@@ -558,7 +625,7 @@ const Filters = ({
                 <Button
                   variant={selectedTrain === null ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onTrainSelect(null)}
+                  onClick={() => handleTrainSelect(null)}
                   disabled={filterLoading}
                   className="justify-start"
                 >
@@ -573,7 +640,7 @@ const Filters = ({
                         : "outline"
                     }
                     size="sm"
-                    onClick={() => onTrainSelect(train.trainNumber)}
+                    onClick={() => handleTrainSelect(train.trainNumber)}
                     disabled={filterLoading}
                     className="justify-start"
                   >

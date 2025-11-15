@@ -1,5 +1,9 @@
 import { stationTranslations, translateStation } from "@/utils/translations";
 import {
+  trackBackToHome,
+  trackJourneyInversion,
+} from "@/utils/matomoTracking";
+import {
   ArrowLeft,
   ArrowRightLeft,
   Calendar,
@@ -75,7 +79,13 @@ const JourneyHeader = ({
   return (
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center">
-        <Button variant="outline" size="sm" asChild className="mr-4">
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="mr-4"
+          onClick={() => trackBackToHome()}
+        >
           <Link to="/">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Retour
@@ -244,6 +254,7 @@ const JourneyDetails = () => {
 
   const handleInvertJourney = () => {
     if (arrivalStationId && departureStationId) {
+      trackJourneyInversion(departureStation, arrivalStation);
       const newDepartureStation = arrivalStation;
       const newArrivalStation = departureStation;
       const newDepartureStationId = arrivalStationId;
