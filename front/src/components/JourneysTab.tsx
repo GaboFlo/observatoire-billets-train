@@ -16,8 +16,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "../components/ui/tooltip";
-import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { useIsMobile } from "../hooks/use-mobile";
+import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import {
   ALL_TRAVEL_CLASSES,
   DEFAULT_FILTERS,
@@ -397,26 +397,42 @@ const JourneysTab = ({
                 <TableHeader>
                   <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                     <TableHead
-                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${isMobile ? "py-2 px-2 text-xs" : ""}`}
+                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${
+                        isMobile ? "py-2 px-2 text-xs" : ""
+                      }`}
                       onClick={() => handleSort("arrival")}
                     >
-                      <div className={`flex items-center gap-2 ${isMobile ? "gap-1" : ""}`}>
-                        {isMobile ? "Trajet" : "Origine / Destination depuis Paris"}
+                      <div
+                        className={`flex items-center gap-2 ${
+                          isMobile ? "gap-1" : ""
+                        }`}
+                      >
+                        {isMobile
+                          ? "Trajet"
+                          : "Origine / Destination depuis Paris"}
                         {getSortIcon("arrival")}
                       </div>
                     </TableHead>
                     <TableHead
-                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${isMobile ? "py-2 px-2 text-xs" : ""}`}
+                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${
+                        isMobile ? "py-2 px-2 text-xs" : ""
+                      }`}
                       onClick={() => handleSort("minPrice")}
                     >
-                      <div className={`flex items-center gap-2 ${isMobile ? "gap-1" : ""}`}>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          isMobile ? "gap-1" : ""
+                        }`}
+                      >
                         {!isMobile && <TrendingUp className="w-4 h-4" />}
                         {isMobile ? "Min" : "Prix minimum"}
                         {getSortIcon("minPrice")}
                       </div>
                     </TableHead>
                     <TableHead
-                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${isMobile ? "hidden" : ""}`}
+                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${
+                        isMobile ? "hidden" : ""
+                      }`}
                       onClick={() => handleSort("avgPrice")}
                     >
                       <Tooltip>
@@ -436,16 +452,26 @@ const JourneysTab = ({
                       </Tooltip>
                     </TableHead>
                     <TableHead
-                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${isMobile ? "py-2 px-2 text-xs" : ""}`}
+                      className={`cursor-pointer hover:bg-gray-100 transition-colors font-semibold text-gray-700 ${
+                        isMobile ? "py-2 px-2 text-xs" : ""
+                      }`}
                       onClick={() => handleSort("maxPrice")}
                     >
-                      <div className={`flex items-center gap-2 ${isMobile ? "gap-1" : ""}`}>
+                      <div
+                        className={`flex items-center gap-2 ${
+                          isMobile ? "gap-1" : ""
+                        }`}
+                      >
                         {!isMobile && <TrendingUp className="w-4 h-4" />}
                         {isMobile ? "Max" : "Prix maximum"}
                         {getSortIcon("maxPrice")}
                       </div>
                     </TableHead>
-                    <TableHead className={`font-semibold text-gray-700 ${isMobile ? "py-2 px-2 text-xs" : ""}`}></TableHead>
+                    <TableHead
+                      className={`font-semibold text-gray-700 ${
+                        isMobile ? "py-2 px-2 text-xs" : ""
+                      }`}
+                    ></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -462,13 +488,25 @@ const JourneysTab = ({
                     return (
                       <TableRow
                         key={journey.id}
-                        className={`hover:bg-gray-50/50 transition-colors border-b border-gray-100 ${isMobile ? "py-1" : ""}`}
+                        className={`hover:bg-gray-50/50 transition-colors border-b border-gray-100 ${
+                          isMobile ? "py-1" : ""
+                        }`}
                       >
-                        <TableCell className={`font-semibold text-gray-900 ${isMobile ? "py-2 px-2 text-sm" : ""}`}>
+                        <TableCell
+                          className={`font-semibold text-gray-900 ${
+                            isMobile ? "py-2 px-2 text-sm" : ""
+                          }`}
+                        >
                           {translateStation(displayStation)}
                         </TableCell>
                         <TableCell className={isMobile ? "py-2 px-2" : ""}>
-                          <span className={`inline-flex items-center rounded-full font-semibold bg-green-100 text-green-800 ${isMobile ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm"}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full font-semibold bg-green-100 text-green-800 ${
+                              isMobile
+                                ? "px-2 py-0.5 text-xs"
+                                : "px-3 py-1 text-sm"
+                            }`}
+                          >
                             {journeyPrices.minPrice}€
                           </span>
                         </TableCell>
@@ -478,16 +516,24 @@ const JourneysTab = ({
                           </span>
                         </TableCell>
                         <TableCell className={isMobile ? "py-2 px-2" : ""}>
-                          <span className={`inline-flex items-center rounded-full font-semibold bg-red-100 text-red-800 ${isMobile ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm"}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full font-semibold bg-red-100 text-red-800 ${
+                              isMobile
+                                ? "px-2 py-0.5 text-xs"
+                                : "px-3 py-1 text-sm"
+                            }`}
+                          >
                             {journeyPrices.maxPrice}€
                           </span>
                         </TableCell>
                         <TableCell className={isMobile ? "py-2 px-2" : ""}>
                           <Button
                             variant="outline"
-                            size={isMobile ? "sm" : "sm"}
+                            size="sm"
                             asChild
-                            className={`bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400 ${isMobile ? "text-xs px-2 py-1 h-7" : ""}`}
+                            className={`bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400 ${
+                              isMobile ? "text-xs px-2 py-1 h-7" : ""
+                            }`}
                           >
                             <Link
                               to={buildJourneyUrl(
