@@ -15,6 +15,7 @@ import {
 } from "@/utils/translations";
 import { BarChart3, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
+import { useIsMobile } from "../hooks/use-mobile";
 import {
   CartesianGrid,
   Legend,
@@ -63,6 +64,7 @@ const StatisticsChart = ({
   availableDiscountCards = [],
   loading = false,
 }: StatisticsChartProps) => {
+  const isMobile = useIsMobile();
   const chartData = useMemo(() => {
     if (!offers || offers.length === 0) return [];
 
@@ -341,19 +343,19 @@ const StatisticsChart = ({
 
   return (
     <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
+      <CardHeader className={isMobile ? "pb-3" : ""}>
+        <CardTitle className={`flex items-center gap-2 ${isMobile ? "text-base" : ""}`}>
+          <TrendingUp className={isMobile ? "h-4 w-4" : "h-5 w-5"} />
           {getChartTitle()}
         </CardTitle>
-        <CardDescription>{getChartDescription()}</CardDescription>
+        <CardDescription className={isMobile ? "text-xs" : ""}>{getChartDescription()}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-80 w-full">
+      <CardContent className={isMobile ? "pt-0" : ""}>
+        <div className={`w-full ${isMobile ? "h-[400px]" : "h-80"}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 15 }}
+              margin={isMobile ? { top: 5, right: 10, left: -10, bottom: 15 } : { top: 5, right: 30, left: 20, bottom: 15 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
@@ -363,18 +365,22 @@ const StatisticsChart = ({
                   position: "insideBottom",
                   offset: -10,
                 }}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
               />
               <YAxis
-                label={{
+                label={isMobile ? undefined : {
                   value: "Prix (€)",
                   angle: -90,
                   position: "insideLeft",
                 }}
+                tick={{ fontSize: isMobile ? 10 : 12 }}
+                tickFormatter={(value) => `${value}€`}
               />
               <Tooltip formatter={formatTooltip} />
               <Legend
                 formatter={(value) => translateDiscountCard(value)}
-                wrapperStyle={{ paddingTop: "20px" }}
+                iconSize={isMobile ? 8 : 12}
+                wrapperStyle={isMobile ? { paddingTop: "10px", fontSize: "10px" } : { paddingTop: "20px" }}
               />
               {discountCards.map((card) => {
                 const cardColor = getCardColor(card);

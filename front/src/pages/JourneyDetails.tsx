@@ -1,10 +1,8 @@
+import { trackBackToHome, trackJourneyInversion } from "@/utils/matomoTracking";
 import { stationTranslations, translateStation } from "@/utils/translations";
 import {
-  trackBackToHome,
-  trackJourneyInversion,
-} from "@/utils/matomoTracking";
-import {
   ArrowLeft,
+  ArrowRight,
   ArrowRightLeft,
   Calendar,
   ChartLine,
@@ -19,6 +17,7 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import StatCard from "../components/StatCard";
 import StatisticsChart from "../components/StatisticsChart";
 import { Button } from "../components/ui/button";
+import { useIsMobile } from "../hooks/use-mobile";
 import { useFiltersCollapsed } from "../hooks/useFiltersCollapsed";
 import { DEFAULT_FILTERS } from "../hooks/useGlobalFilters";
 import { useJourneyDetails } from "../hooks/useJourneyDetails";
@@ -72,6 +71,62 @@ interface JourneyHeaderProps {
   onInvertJourney: () => void;
 }
 
+interface MobileNavigationHeaderProps {
+  departureStation: string;
+  arrivalStation: string;
+  onInvertJourney: () => void;
+}
+
+const MobileNavigationHeader = ({
+  departureStation,
+  arrivalStation,
+  onInvertJourney,
+}: MobileNavigationHeaderProps) => {
+  return (
+    <div className="w-full bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="flex-1 max-w-[140px]"
+            onClick={() => trackBackToHome()}
+          >
+            <Link to="/" className="flex items-center justify-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Retour
+            </Link>
+          </Button>
+          <div className="flex-1 flex justify-center">
+            <ArrowRight className="h-5 w-5 text-blue-600" />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onInvertJourney}
+            className="flex-1 max-w-[140px] flex items-center justify-center gap-2"
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            Inverser le trajet
+          </Button>
+        </div>
+        <div className="text-center">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent leading-tight">
+            {departureStation
+              ? translateStation(departureStation)
+              : "Station de départ"}{" "}
+            ⟶{" "}
+            {arrivalStation
+              ? translateStation(arrivalStation)
+              : "Station d'arrivée"}
+          </h1>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const JourneyHeader = ({
   departureStation,
   arrivalStation,
@@ -123,14 +178,25 @@ const EmptyState = ({
   arrivalStation,
   onInvertJourney,
 }: EmptyStateProps) => {
+  const isMobile = useIsMobile();
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto">
-        <JourneyHeader
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {isMobile ? (
+        <MobileNavigationHeader
           departureStation={departureStation}
           arrivalStation={arrivalStation}
           onInvertJourney={onInvertJourney}
         />
+      ) : (
+        <div className="container px-4 py-8 mx-auto">
+          <JourneyHeader
+            departureStation={departureStation}
+            arrivalStation={arrivalStation}
+            onInvertJourney={onInvertJourney}
+          />
+        </div>
+      )}
+      <div className="container px-4 py-8 mx-auto flex-1">
         <div className="text-center py-16">
           <Calendar className="mx-auto h-16 w-16 text-gray-400 mb-4" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
@@ -159,16 +225,27 @@ const ErrorState = ({
   error,
   onInvertJourney,
 }: ErrorStateProps) => {
+  const isMobile = useIsMobile();
   const isRateLimitError = error.includes("Trop de requêtes");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto">
-        <JourneyHeader
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {isMobile ? (
+        <MobileNavigationHeader
           departureStation={departureStation}
           arrivalStation={arrivalStation}
           onInvertJourney={onInvertJourney}
         />
+      ) : (
+        <div className="container px-4 py-8 mx-auto">
+          <JourneyHeader
+            departureStation={departureStation}
+            arrivalStation={arrivalStation}
+            onInvertJourney={onInvertJourney}
+          />
+        </div>
+      )}
+      <div className="container px-4 py-8 mx-auto flex-1">
         <div className="text-center py-16">
           <div className="text-red-500 mb-4">
             <svg
@@ -186,9 +263,7 @@ const ErrorState = ({
             </svg>
           </div>
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            {isRateLimitError
-              ? "Trop de requêtes"
-              : "Erreur de chargement"}
+            {isRateLimitError ? "Trop de requêtes" : "Erreur de chargement"}
           </h2>
           <p className="text-gray-500 mb-8">
             {isRateLimitError ? (
@@ -201,8 +276,8 @@ const ErrorState = ({
                   {error}
                 </span>
                 <span className="text-sm text-gray-400 mt-1 block">
-                  Cette limitation permet de garantir la disponibilité du service
-                  pour tous les utilisateurs.
+                  Cette limitation permet de garantir la disponibilité du
+                  service pour tous les utilisateurs.
                 </span>
               </>
             ) : (
@@ -389,6 +464,7 @@ const JourneyDetails = () => {
   };
 
   const { filtersCollapsed, expandFilters } = useFiltersCollapsed();
+  const isMobile = useIsMobile();
 
   if (loading) {
     return <LoadingAnimation />;
@@ -428,45 +504,53 @@ const JourneyDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="w-full pt-6 pb-4">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="mb-4 relative min-h-[60px] flex items-center">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Retour
-                </Link>
-              </Button>
-            </div>
-            <div className="absolute right-0 top-1/2 -translate-y-1/2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleInvertJourney}
-                className="flex items-center gap-2"
-              >
-                <ArrowRightLeft className="h-4 w-4" />
-                Inverser le trajet
-              </Button>
-            </div>
-            <div className="text-center w-full">
-              <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {departureStation
-                  ? translateStation(departureStation)
-                  : "Station de départ"}{" "}
-                ⟶{" "}
-                {arrivalStation
-                  ? translateStation(arrivalStation)
-                  : "Station d'arrivée"}
-              </h1>
-              <p className="text-sm text-gray-500 mb-0"></p>
+      {isMobile ? (
+        <MobileNavigationHeader
+          departureStation={departureStation}
+          arrivalStation={arrivalStation}
+          onInvertJourney={handleInvertJourney}
+        />
+      ) : (
+        <div className="w-full pt-6 pb-4">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="mb-4 relative min-h-[60px] flex items-center">
+              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/" onClick={() => trackBackToHome()}>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Retour
+                  </Link>
+                </Button>
+              </div>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleInvertJourney}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowRightLeft className="h-4 w-4" />
+                  Inverser le trajet
+                </Button>
+              </div>
+              <div className="text-center w-full">
+                <h1 className="text-3xl font-bold mb-1 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  {departureStation
+                    ? translateStation(departureStation)
+                    : "Station de départ"}{" "}
+                  ⟶{" "}
+                  {arrivalStation
+                    ? translateStation(arrivalStation)
+                    : "Station d'arrivée"}
+                </h1>
+                <p className="text-sm text-gray-500 mb-0"></p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="w-full px-4 pb-8">
+      <div className={`w-full ${isMobile ? "px-4 pt-4" : "px-4"} pb-8`}>
         <div className="flex flex-col lg:flex-row gap-6 relative">
           {filtersCollapsed && (
             <FilterCollapseButton onExpand={expandFilters} />
@@ -511,13 +595,23 @@ const JourneyDetails = () => {
 
           {/* Contenu principal - prend toute la largeur si filtres collapsés */}
           <div
-            className={`flex-1 space-y-8 sticky top-4 z-10 max-h-[calc(100vh-2rem)] overflow-y-auto`}
+            className={`flex-1 ${isMobile ? "space-y-4" : "space-y-8"} ${
+              isMobile ? "" : "sticky top-4"
+            } z-10 ${
+              isMobile ? "" : "max-h-[calc(100vh-2rem)] overflow-y-auto"
+            }`}
             style={{
               willChange: "width",
             }}
           >
-            <div className="bg-gray-50 rounded-lg">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className={`bg-gray-50 rounded-lg ${isMobile ? "p-2" : ""}`}>
+              <div
+                className={`grid ${
+                  isMobile
+                    ? "gap-2 grid-cols-1"
+                    : "gap-4 md:grid-cols-2 lg:grid-cols-3"
+                }`}
+              >
                 <StatCard
                   title="Prix minimum"
                   value={`${truncatePrice(calculatedStats.minPrice)}€`}

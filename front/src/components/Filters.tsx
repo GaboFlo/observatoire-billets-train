@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCollapsibleSection } from "@/hooks/useCollapsibleSection";
+import { getFiltersCollapsedInitialState } from "@/hooks/useFiltersCollapsed";
 import {
   trackCarrierFilter,
   trackClassFilter,
@@ -138,10 +139,7 @@ const Filters = ({
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // État de collapse latéral avec persistance
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem("filters-collapsed");
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [isCollapsed, setIsCollapsed] = useState(getFiltersCollapsedInitialState);
 
   const isDateSection = useCollapsibleSection("filter-section-date", true);
   const isCarrierSection = useCollapsibleSection(
@@ -218,6 +216,9 @@ const Filters = ({
     setIsCollapsed(newState);
     trackFiltersCollapse(newState);
     requestAnimationFrame(() => {
+      const isMobileDevice = typeof window !== "undefined" && window.innerWidth < 768;
+      const storageKey = isMobileDevice ? "filters-collapsed-mobile" : "filters-collapsed-desktop";
+      localStorage.setItem(storageKey, JSON.stringify(newState));
       localStorage.setItem("filters-collapsed", JSON.stringify(newState));
     });
   }, [isCollapsed]);
@@ -313,8 +314,7 @@ const Filters = ({
   // Écouter les changements de collapse depuis localStorage
   useEffect(() => {
     const handleStorageChange = () => {
-      const saved = localStorage.getItem("filters-collapsed");
-      const newState = saved ? JSON.parse(saved) : false;
+      const newState = getFiltersCollapsedInitialState();
       if (newState !== isCollapsed) {
         setIsCollapsed(newState);
       }
