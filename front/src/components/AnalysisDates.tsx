@@ -78,13 +78,13 @@ const AnalysisDates = ({
             const isSelected = selectedDate === date;
 
             const statusColors = {
-              past: "bg-gray-100 text-gray-600 border-gray-200",
-              today: "bg-green-100 text-green-700 border-green-300",
-              future: "bg-blue-100 text-blue-700 border-blue-300",
+              past: "bg-gray-100 text-gray-700 border-gray-300",
+              today: "bg-green-100 text-green-800 border-green-400",
+              future: "bg-blue-100 text-blue-800 border-blue-400",
             };
 
             const selectedColors = isSelected
-              ? "bg-blue-500 text-white border-blue-600"
+              ? "bg-blue-600 text-white border-blue-700"
               : statusColors[status];
 
             return (
