@@ -49,6 +49,8 @@ jobs:
       - name: Build frontend
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_MATOMO_URL: ${{ secrets.VITE_MATOMO_URL }}
+          VITE_MATOMO_SITE_ID: ${{ secrets.VITE_MATOMO_SITE_ID }}
         run: cd front && npm run build
 
       - name: Deploy Frontend to FTP

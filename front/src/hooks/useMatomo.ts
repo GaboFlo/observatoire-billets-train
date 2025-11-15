@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const CONSENT_STORAGE_KEY = "matomo_consent";
 const MATOMO_SCRIPT_ID = "matomo-tracker";
@@ -27,7 +27,7 @@ const setConsent = (consent: boolean): void => {
 const loadMatomoScript = (config: MatomoConfig): void => {
   if (document.getElementById(MATOMO_SCRIPT_ID)) return;
 
-  window._paq = window._paq || [];
+  window._paq = window._paq ?? [];
 
   const script = document.createElement("script");
   script.id = MATOMO_SCRIPT_ID;
@@ -111,4 +111,3 @@ export const trackEvent = (
     window._paq.push(event);
   }
 };
-
