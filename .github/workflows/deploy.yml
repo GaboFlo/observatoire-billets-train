@@ -4,7 +4,7 @@ on:
   release:
     types: [created]
 
-concurrency: production
+concurrency: front-production,back-production
 
 permissions:
   contents: write
@@ -14,7 +14,7 @@ permissions:
 jobs:
   deploy-back:
     runs-on: ubuntu-latest
-    environment: production
+    environment: back-production
     steps:
       - name: Déclencher le déploiement Render
         env:
@@ -23,7 +23,7 @@ jobs:
           curl -X POST "$deploy_url"
   deploy-front:
     runs-on: ubuntu-latest
-    environment: production
+    environment: front-production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
