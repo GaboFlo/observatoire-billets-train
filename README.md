@@ -189,9 +189,17 @@ VITE_API_URL=
 
 # .env.production (production locale)
 VITE_API_URL=https://votre-backend.web.com
+
+# Configuration Matomo (optionnel)
+VITE_MATOMO_URL=https://votre-instance-matomo.com
+VITE_MATOMO_SITE_ID=1
 ```
 
-**Important** : Avec Vite, les variables d'environnement sont intégrées au moment du build. Vous devez donc rebuild votre application après avoir modifié `VITE_API_URL`.
+**Important** : Avec Vite, les variables d'environnement sont intégrées au moment du build. Vous devez donc rebuild votre application après avoir modifié `VITE_API_URL` ou les variables Matomo.
+
+### Suivi analytique avec Matomo
+
+L'application intègre Matomo pour l'analyse d'audience, en conformité avec le RGPD.
 
 ### Pages principales
 
