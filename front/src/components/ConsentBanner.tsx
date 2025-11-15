@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
+import { useEffect, useState } from "react";
 import { useMatomo } from "../hooks/useMatomo";
 import { trackConsentAction } from "../utils/matomoTracking";
+import { Button } from "./ui/button";
 
 const MATOMO_URL = import.meta.env.VITE_MATOMO_URL || "";
 const MATOMO_SITE_ID = Number(import.meta.env.VITE_MATOMO_SITE_ID) || 0;
@@ -42,8 +42,8 @@ const ConsentBanner = () => {
             <p className="text-sm">
               Nous utilisons Matomo pour analyser l'utilisation de ce site et
               améliorer votre expérience. Les données collectées sont
-              anonymisées et hébergées sur nos propres serveurs. En continuant
-              à naviguer, vous acceptez l'utilisation de cookies à des fins
+              anonymisées et hébergées sur nos propres serveurs. En continuant à
+              naviguer, vous acceptez l'utilisation de cookies à des fins
               d'analyse.
             </p>
             <p className="text-xs mt-2 text-gray-400">
@@ -73,4 +73,3 @@ const ConsentBanner = () => {
 };
 
 export default ConsentBanner;
-
