@@ -159,6 +159,8 @@ const ErrorState = ({
   error,
   onInvertJourney,
 }: ErrorStateProps) => {
+  const isRateLimitError = error.includes("Trop de requêtes");
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container px-4 py-8 mx-auto">
@@ -184,12 +186,32 @@ const ErrorState = ({
             </svg>
           </div>
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-            Erreur de chargement
+            {isRateLimitError
+              ? "Trop de requêtes"
+              : "Erreur de chargement"}
           </h2>
           <p className="text-gray-500 mb-8">
-            {error} <br />
-            Certainement une panne de signalisation, rafraîchissez la page pour
-            ne pas louper vos correspondances{" "}
+            {isRateLimitError ? (
+              <>
+                Trop de requêtes, votre train est en attente de signalisation.
+                <br />
+                Veuillez patienter quelques instants avant de réessayer.
+                <br />
+                <span className="text-sm text-gray-400 mt-2 block">
+                  {error}
+                </span>
+                <span className="text-sm text-gray-400 mt-1 block">
+                  Cette limitation permet de garantir la disponibilité du service
+                  pour tous les utilisateurs.
+                </span>
+              </>
+            ) : (
+              <>
+                {error} <br />
+                Certainement une panne de signalisation, rafraîchissez la page
+                pour ne pas louper vos correspondances{" "}
+              </>
+            )}
           </p>
           <Button onClick={() => globalThis.location.reload()}>
             Réessayer

@@ -6,6 +6,7 @@ import {
 } from "@/types/journey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { buildApiUrl } from "../config/api";
+import { ApiError, handleApiError } from "../utils/apiErrorHandler";
 import { loadFilters } from "../utils/filterStorage";
 
 interface JourneyDetailsFilters {
@@ -113,9 +114,7 @@ export const useJourneyDetails = (
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Erreur lors du chargement des dates: ${response.status}`
-        );
+        await handleApiError(response);
       }
 
       const dates: string[] = await response.json();
@@ -123,11 +122,15 @@ export const useJourneyDetails = (
       setError(null);
     } catch (err) {
       console.error("❌ Erreur dates:", err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erreur lors du chargement des dates"
-      );
+      if (err instanceof ApiError && err.status === 429) {
+        setError(err.message);
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erreur lors du chargement des dates"
+        );
+      }
     } finally {
       setLoading(false);
       setBaseDataLoaded(true);
@@ -153,9 +156,7 @@ export const useJourneyDetails = (
         });
 
         if (!response.ok) {
-          throw new Error(
-            `Erreur lors du chargement des trains: ${response.status}`
-          );
+          await handleApiError(response);
         }
 
         const trains: TrainInfo[] = await response.json();
@@ -163,11 +164,15 @@ export const useJourneyDetails = (
         setError(null);
       } catch (err) {
         console.error("❌ Erreur trains:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Erreur lors du chargement des trains"
-        );
+        if (err instanceof ApiError && err.status === 429) {
+          setError(err.message);
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erreur lors du chargement des trains"
+          );
+        }
       } finally {
         setFilterLoading(false);
       }
@@ -319,9 +324,7 @@ export const useJourneyDetails = (
         });
 
         if (!response.ok) {
-          throw new Error(
-            `Erreur lors du chargement des options: ${response.status}`
-          );
+          await handleApiError(response);
         }
 
         const responseData = await response.json();
@@ -591,7 +594,7 @@ export const useJourneyDetails = (
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de l'analyse : ${response.status}`);
+        await handleApiError(response);
       }
 
       const responseData = await response.json();
@@ -727,7 +730,7 @@ export const useJourneyDetails = (
       });
 
       if (!response.ok) {
-        throw new Error(`Erreur lors de l'analyse : ${response.status}`);
+        await handleApiError(response);
       }
 
       const result: ChartStatsResult = await response.json();
@@ -760,7 +763,11 @@ export const useJourneyDetails = (
       setChartDataLoaded(true);
     } catch (err) {
       console.error("❌ Erreur statistiques:", err);
-      setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
+      if (err instanceof ApiError && err.status === 429) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
+      }
     } finally {
       setFilterLoading(false);
     }
@@ -776,7 +783,11 @@ export const useJourneyDetails = (
       processAnalysisResult(analysisResult);
     } catch (err) {
       console.error("❌ Erreur analyse:", err);
-      setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
+      if (err instanceof ApiError && err.status === 429) {
+        setError(err.message);
+      } else {
+        setError(err instanceof Error ? err.message : "Erreur lors de l'analyse");
+      }
     } finally {
       setFilterLoading(false);
     }
@@ -828,9 +839,7 @@ export const useJourneyDetails = (
       });
 
       if (!response.ok) {
-        throw new Error(
-          `Erreur lors du chargement des trains: ${response.status}`
-        );
+        await handleApiError(response);
       }
 
       const trains: TrainInfo[] = await response.json();
