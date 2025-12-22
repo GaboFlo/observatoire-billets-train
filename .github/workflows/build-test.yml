@@ -8,6 +8,9 @@ on:
 jobs:
   build-front:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front # This ensures all 'run' commands start inside the front folder
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,20 +20,16 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Clean and install dependencies
+      - name: Install dependencies
         run: |
-          cd front
-          rm -rf node_modules package-lock.json
+          # Use ci (clean install) for more reliable builds if you have a lockfile
+          # Or stick to 'install' if you prefer deleting the lockfile manually
           npm install --legacy-peer-deps
-          cd node_modules/rollup
-          npm install @rollup/rollup-linux-x64-gnu --save-optional --force || true
-          cd ../..
-          cd node_modules/@swc/core
-          npm install @swc/core-linux-x64-gnu --save-optional --force || true
-          cd ../../..
+
+      - name: Fix platform-specific binaries
+        run: |
+          # Install the linux-specific binaries directly from the 'front' root
+          npm install @rollup/rollup-linux-x64-gnu @swc/core-linux-x64-gnu --save-optional
 
       - name: Build frontend
-        run: cd front && npm run build
+        run: npm run build
