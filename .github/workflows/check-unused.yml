@@ -1,5 +1,8 @@
 name: Vérification des exports et dépendances non utilisés
 
+permissions:
+  contents: read
+
 on:
   push:
 
