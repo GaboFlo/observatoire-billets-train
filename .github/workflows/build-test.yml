@@ -1,4 +1,6 @@
 name: Test du build
+permissions:
+  contents: read
 
 on:
   push:
